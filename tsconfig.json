@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@eventualize/entities-types": ["packages/entities-types/src"],
+      "@eventualize/entities-types/*": ["packages/entities-types/src/*"]
+    }
+  }
+}

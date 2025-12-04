@@ -10,3 +10,5 @@ class Event2 implements IEvDbPayload {
     readonly payloadType = 'event_2';
     constructor(public readonly value2: number) { }
 }
+
+
