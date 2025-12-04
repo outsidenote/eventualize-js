@@ -1,3 +1,3 @@
-export interface IEvDbPayload {
+export default interface IEvDbEventPayload {
   readonly payloadType: string;
 }

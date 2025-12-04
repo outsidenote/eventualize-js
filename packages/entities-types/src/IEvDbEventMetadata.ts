@@ -1,6 +1,6 @@
 import EvDbStreamCursor from "./StreamCursor";
 
-interface IEvDbEventMetadata {
+export default interface IEvDbEventMetadata {
   /**
    * The full address of the stream including the offset
    */
