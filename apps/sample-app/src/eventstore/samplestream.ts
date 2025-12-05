@@ -12,17 +12,17 @@ import StorageAdapterStub from './StorageAdapterStub.js';
 import EvDbStreamAddress from '@eventualize/entities-types/EvDbStreamAddress';
 
 
-class Event1 implements IEvDbEventPayload {
+export class Event1 implements IEvDbEventPayload {
     readonly payloadType = 'Event1';
     constructor(public readonly value1: number) { }
 }
 
-class Event2 implements IEvDbEventPayload {
+export class Event2 implements IEvDbEventPayload {
     readonly payloadType = 'Event2';
     constructor(public readonly value2: number) { }
 }
 
-class State1 {
+export class State1 {
     constructor(public sum: number = 0) { };
     Empty() {
         return new State1(0);
@@ -31,7 +31,7 @@ class State1 {
 
 type ExampleStreamEvents = Event1 | Event2;
 
-class View1 extends EvDbView<State1> implements IEvDbViewAppliesSet<State1, ExampleStreamEvents> {
+export class View1 extends EvDbView<State1> implements IEvDbViewAppliesSet<State1, ExampleStreamEvents> {
     applyEvent1(oldState: State1, newEvent: Event1, eventMetadata: IEvDbEventMetadata) {
         const newState =  new State1(oldState.sum + newEvent.value1);
         return newState;
@@ -53,51 +53,4 @@ class View1 extends EvDbView<State1> implements IEvDbViewAppliesSet<State1, Exam
         const viewAddress = new EvDbViewAddress(streamAddress, 'View1');
         super(viewAddress, storedAt, storeOffset, memoryOffset, storageAdapter, snapshot);
     };
-}
-
-const storageAdapterStub = new StorageAdapterStub();
-
-const stream1 = new EvDbStream(
-    'ExampleStream',
-    [new View1('stream1', storageAdapterStub, EvDbStoredSnapshotResult.getEmptyState<State1>())],
-    storageAdapterStub,
-    'exampleStream1',
-    0
-);
-
-console.log('Intial Views:\n=========\n',stream1.getViews());
-const event1 = new Event1(10);
-const event2 = new Event2(20);
-
-stream1.appendEvent(event1, 'tester');
-stream1.appendEvent(event2, 'tester');
-
-console.log(stream1.getEvents());
-console.log(stream1.getViews());
-
-
-
-
-
-// Usage
-class ExampleEventsSet implements IEvDbEventsSet<Event1 | Event2> {
-    async applyEvent1(event: Event1): Promise<IEvDbEventMetadata> {
-        console.log('Handling Event1:', event.value1);
-        return {
-            eventType: event.payloadType,
-            streamCursor: new EvDbStreamCursor('exampleStream', 'streamId', 0),
-            capturedAt: new Date(),
-            capturedBy: 'user123',
-        }
-    }
-
-    async applyEvent2(event: Event2): Promise<IEvDbEventMetadata> {
-        console.log('Handling Event2:', event.value2);
-        return {
-            eventType: event.payloadType,
-            streamCursor: new EvDbStreamCursor('exampleStream', 'streamId', 1),
-            capturedAt: new Date(),
-            capturedBy: 'user123',
-        }
-    }
 }
