@@ -22,5 +22,5 @@ const event2 = new Event2(20);
 stream1.appendEvent(event1, 'tester');
 stream1.appendEvent(event2, 'tester');
 
-console.log(stream1.getEvents());
-console.log(stream1.getViews());
+console.log('Pending Events:\n=========\n', stream1.getEvents());
+console.log('Views Current State:\n=========\n',stream1.getViews());
