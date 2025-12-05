@@ -2,11 +2,13 @@
   "name": "sample-app",
   "version": "1.0.0",
   "description": "",
-  "main": "./dist/index.js", 
+  "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsc --build"
+    "build": "tsc --build",
+    "clean": "rimraf dist",
+    "rebuild": "npm run clean && npm run build"
   },
   "keywords": [],
   "author": "",

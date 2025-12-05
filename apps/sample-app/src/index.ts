@@ -1,26 +1,15 @@
-import EvDbStream from "@eventualize/entities-types/EvDbStream";
-import { EvDbStoredSnapshotResult } from "@eventualize/entities-types/EvDbStoredSnapshotResult";
-
 import StorageAdapterStub from "./eventstore/StorageAdapterStub.js";
-import { View1, State1, Event1, Event2 } from "./eventstore/samplestream.js";
-
+import PointsStream from "./eventstore/PointsStream/index.js";
+import { PointsAdded, PointsSubtracted } from "./eventstore/PointsStream/StreamEvents.js";
 
 const storageAdapterStub = new StorageAdapterStub();
 
-const stream1 = new EvDbStream(
-    'ExampleStream',
-    [new View1('stream1', storageAdapterStub, EvDbStoredSnapshotResult.getEmptyState<State1>())],
-    storageAdapterStub,
-    'exampleStream1',
-    0
-);
+const pointsStream = PointsStream.createStream('pointsStream1', storageAdapterStub, storageAdapterStub);
 
-console.log('Intial Views:\n=========\n', stream1.getViews());
-const event1 = new Event1(10);
-const event2 = new Event2(20);
+const pointsAddedEvent = new PointsAdded(50);
+const pointsSubtractedEvent = new PointsSubtracted(20);
+pointsStream.appendEvent(pointsAddedEvent, 'tester');
+pointsStream.appendEvent(pointsSubtractedEvent, 'tester');
 
-stream1.appendEvent(event1, 'tester');
-stream1.appendEvent(event2, 'tester');
-
-console.log('Pending Events:\n=========\n', stream1.getEvents());
-console.log('Views Current State:\n=========\n',stream1.getViews());
+console.log('Points Stream Pending Events:\n=========\n', pointsStream.getEvents());
+console.log('Points Stream Views Current State:\n=========\n',pointsStream.getViews());
