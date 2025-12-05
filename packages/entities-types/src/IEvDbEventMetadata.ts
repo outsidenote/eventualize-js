@@ -1,4 +1,4 @@
-import EvDbStreamCursor from "./StreamCursor";
+import EvDbStreamCursor from "./EvDbStreamCursor";
 
 export default interface IEvDbEventMetadata {
   /**

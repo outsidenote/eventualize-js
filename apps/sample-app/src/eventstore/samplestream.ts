@@ -1,7 +1,7 @@
 import IEvDbEventPayload from '@eventualize/entities-types/IEvDbEventPayload';
 import IEvDbEventsSet from '@eventualize/entities-types/IEvDbEventsSet';
 import IEvDbEventMetadata from '@eventualize/entities-types/IEvDbEventMetadata';
-import EvDbStreamCursor from '@eventualize/entities-types/StreamCursor';
+import EvDbStreamCursor from '@eventualize/entities-types/EvDbStreamCursor';
 
 
 class Event1 implements IEvDbEventPayload {
@@ -13,6 +13,12 @@ class Event2 implements IEvDbEventPayload {
     readonly payloadType = 'Event2';
     constructor(public readonly value2: number) { }
 }
+
+class State1 {
+    public sum: number = 0;
+}
+
+
 
 
 

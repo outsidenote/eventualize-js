@@ -1,0 +1,83 @@
+import EvDbStreamCursor from "./EvDbStreamCursor";
+
+export default class EvDbMessage {
+
+
+    public static readonly Empty: EvDbMessage = EvDbMessage.createWithId(
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        new Date(0),
+        '',
+        {} as EvDbStreamCursor,
+        undefined
+    );
+
+    private constructor(
+        public readonly id: string,
+        public readonly eventType: string,
+        public readonly channel: string,
+        public readonly shardName: string,
+        public readonly messageType: string,
+        public readonly serializeType: string,
+        public readonly capturedAt: Date,
+        public readonly capturedBy: string,
+        public readonly streamCursor: EvDbStreamCursor,
+        public readonly payload: any,
+        public readonly storedAt?: Date | null
+    ) { }
+
+    public static createWithId(
+        id: string,
+        eventType: string,
+        channel: string,
+        shardName: string,
+        messageType: string,
+        serializeType: string,
+        capturedAt: Date,
+        capturedBy: string,
+        streamCursor: EvDbStreamCursor,
+        payload: any
+    ): EvDbMessage {
+        return new EvDbMessage(
+            id,
+            eventType,
+            channel,
+            shardName,
+            messageType,
+            serializeType,
+            capturedAt,
+            capturedBy,
+            streamCursor,
+            payload
+        );
+    }
+
+    public static create(
+        eventType: string,
+        channel: string,
+        shardName: string,
+        messageType: string,
+        serializeType: string,
+        capturedAt: Date,
+        capturedBy: string,
+        streamCursor: EvDbStreamCursor,
+        payload: any
+    ): EvDbMessage {
+        return new EvDbMessage(
+            crypto.randomUUID(),
+            eventType,
+            channel,
+            shardName,
+            messageType,
+            serializeType,
+            capturedAt,
+            capturedBy,
+            streamCursor,
+            payload
+        );
+    }
+}

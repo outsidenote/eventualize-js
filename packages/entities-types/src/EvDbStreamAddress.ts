@@ -1,4 +1,4 @@
-import EvDbStreamCursor from "./StreamCursor";
+import EvDbStreamCursor from "./EvDbStreamCursor";
 
 export default class EvDbStreamAddress {
     constructor(public readonly streamType: string, public readonly streamId: string) { }
