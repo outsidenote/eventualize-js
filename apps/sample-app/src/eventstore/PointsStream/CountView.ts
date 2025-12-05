@@ -3,33 +3,33 @@ import IEvDbViewAppliesSet from '@eventualize/entities-types/IEvDbViewAppliesSet
 import IEvDbEventMetadata from '@eventualize/entities-types/IEvDbEventMetadata';
 import { EvDbView } from '@eventualize/entities-types/EvDbView';
 import IEvDbStorageSnapshotAdapter from '@eventualize/entities-types/IEvDbStorageSnapshotAdapter';
-import {EvDbStoredSnapshotResult} from '@eventualize/entities-types/EvDbStoredSnapshotResult';
+import { EvDbStoredSnapshotResult } from '@eventualize/entities-types/EvDbStoredSnapshotResult';
 import EvDbStreamAddress from '@eventualize/entities-types/EvDbStreamAddress';
 import EvDbViewAddress from '@eventualize/entities-types/EvDbViewAddress';
 
-export class SumViewState {
-    constructor(public sum: number = 0) { };
+export class CountViewState {
+    constructor(public count: number = 0) { };
     Empty() {
-        return new SumViewState(0);
+        return new CountViewState(0);
     }
 }
 
-export default class SumView extends EvDbView<SumViewState> implements IEvDbViewAppliesSet<SumViewState, PointsStreamEvents> {
-    applyPointsAdded(oldState: SumViewState, newEvent: PointsAdded) {
-        const newState = new SumViewState(oldState.sum + newEvent.points);
+export default class CountView extends EvDbView<CountViewState> implements IEvDbViewAppliesSet<CountViewState, PointsStreamEvents> {
+    applyPointsAdded(oldState: CountViewState, newEvent: PointsAdded) {
+        const newState = new CountViewState(oldState.count + 1);
         return newState;
     };
-    applyPointsSubtracted(oldState: SumViewState, newEvent: PointsSubtracted, eventMetadata: IEvDbEventMetadata) { return new SumViewState(oldState.sum - newEvent.points) };
+    applyPointsSubtracted(oldState: CountViewState, newEvent: PointsSubtracted, eventMetadata: IEvDbEventMetadata) { return new CountViewState(oldState.count + 1) };
 
-    public getDefaultState(): SumViewState {
-        return new SumViewState();
+    public getDefaultState(): CountViewState {
+        return new CountViewState();
     }
 
     constructor(
         streamId: string,
         storageAdapter: IEvDbStorageSnapshotAdapter,
         storedAt: Date | undefined = undefined,
-        snapshot: EvDbStoredSnapshotResult<SumViewState> = EvDbStoredSnapshotResult.getEmptyState<SumViewState>(),
+        snapshot: EvDbStoredSnapshotResult<CountViewState> = EvDbStoredSnapshotResult.getEmptyState<CountViewState>(),
         storeOffset: number = 0,
         memoryOffset: number = 0,
     ) {

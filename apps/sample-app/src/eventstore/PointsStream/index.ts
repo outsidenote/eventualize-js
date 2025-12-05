@@ -13,6 +13,7 @@ import EvDbStreamAddress from '@eventualize/entities-types/EvDbStreamAddress';
 import { EvDbStreamType } from '@eventualize/entities-types/primitiveTypes';
 import IEvDbStorageStreamAdapter from '@eventualize/entities-types/IEvDbStorageStreamAdapter';
 import SumView from './SumView.js';
+import CountView from './CountView.js';
 
 export default class PointsStream {
     public static createStream(
@@ -22,9 +23,10 @@ export default class PointsStream {
     ): EvDbStream {
         const streamType = 'ExampleStream';
         const sumView = new SumView(streamId, snapshotStorageAdapter)
+        const countView = new CountView(streamId, snapshotStorageAdapter)
         return new EvDbStream(
             streamType,
-            [sumView],
+            [sumView, countView],
             streamStorageAdapter,
             streamId,
             0
