@@ -10,7 +10,7 @@ export default class PointsStream {
         streamStorageAdapter: IEvDbStorageStreamAdapter,
         snapshotStorageAdapter: IEvDbStorageSnapshotAdapter,
     ): EvDbStream {
-        const streamType = 'ExampleStream';
+        const streamType = 'PointsStream';
         const sumView = sumViewFactory.create(streamId, snapshotStorageAdapter);
         const countView = countViewFactory.create(streamId, snapshotStorageAdapter)
         return new EvDbStream(
