@@ -12,6 +12,7 @@ import IEvDbEventMetadata from "./IEvDbEventMetadata";
 import EvDbStreamCursor from "./EvDbStreamCursor";
 import IEvDbStreamConfig from "./IEvDbStreamConfig";
 import IEvDbOutboxProducer from "./IEvDbOutboxProducer";
+import OCCException from "./OCCException";
 
 export default abstract class EvDbStream implements IEvDbStreamStore, IEvDbStreamStoreData {
 
@@ -29,7 +30,7 @@ export default abstract class EvDbStream implements IEvDbStreamStore, IEvDbStrea
     private readonly _storageAdapter: IEvDbStorageStreamAdapter;
 
     // Views
-    protected readonly _views: ReadonlyArray<IEvDbView>;
+    protected readonly _views: ReadonlyArray<IEvDbViewStore>;
 
     getViews(): ReadonlyArray<IEvDbView> {
         return this._views;
@@ -67,39 +68,32 @@ export default abstract class EvDbStream implements IEvDbStreamStore, IEvDbStrea
     }
 
     // AppendEventAsync
-    protected async appendEventAsync<T extends IEvDbEventPayload>(
+    protected appendEvent<T extends IEvDbEventPayload>(
         payload: T,
         capturedBy?: string | null
-    ): Promise<IEvDbEventMetadata> {
+    ): IEvDbEventMetadata {
         capturedBy = capturedBy ?? EvDbStream.DEFAULT_CAPTURE_BY;
         const json = JSON.stringify(payload); // Or use custom serializer
 
-        // Lock and add to pending events
-        const release = await this._sync.acquire();
-        try {
-            const pending = this._pendingEvents;
-            const cursor = this.getNextCursor(pending);
-            const e = new EvDbEvent(
-                payload.payloadType,
-                cursor,
-                json,
-                new Date(),
-                capturedBy,
-            );
-            this._pendingEvents = [...pending, e];
+        const cursor = this.getNextCursor(this._pendingEvents);
+        const e = new EvDbEvent(
+            payload.payloadType,
+            cursor,
+            json,
+            new Date(),
+            capturedBy,
+        );
+        this._pendingEvents = [...this._pendingEvents, e];
 
-            // Apply to views
-            for (const folding of this._views) {
-                folding.applyEvent(e);
-            }
-
-            // Outbox producer
-            this.outboxProducer?.onProduceOutboxMessages(e, this._views);
-
-            return e;
-        } finally {
-            release();
+        // Apply to views
+        for (const folding of this._views) {
+            folding.applyEvent(e);
         }
+
+        // Outbox producer
+        this.outboxProducer?.onProduceOutboxMessages(e, this._views);
+
+        return e;
     }
 
     private getNextCursor(events: ReadonlyArray<EvDbEvent>): EvDbStreamCursor {
@@ -129,62 +123,41 @@ export default abstract class EvDbStream implements IEvDbStreamStore, IEvDbStrea
     }
 
     // StoreAsync
-    async storeAsync(cancellation?: AbortSignal): Promise<StreamStoreAffected> {
+    async store(): Promise<StreamStoreAffected> {
         // Telemetry
         // const tags = this.streamAddress.toOtelTags();
         // const duration = EvDbStream._sysMeters.measureStoreEventsDuration(tags);
         // const activity = EvDbStream._trace.startActivity(tags, 'EvDb.Store');
 
-        const release = await this._sync.acquire();
         try {
-            const events = this._pendingEvents;
-            const outbox = this._pendingOutput;
-
-            if (events.length === 0) {
+            if (this._pendingEvents.length === 0) {
                 return StreamStoreAffected.Empty;
             }
 
-            try {
-                const affected = await this._storageAdapter.storeStreamAsync(
-                    events,
-                    outbox,
-                    cancellation
-                );
+            const affected = await this._storageAdapter.storeStreamAsync(
+                this._pendingEvents,
+                this._pendingOutput,
+            );
 
-                // Telemetry
-                EvDbStream._sysMeters.eventsStored.add(affected.events, tags);
-                for (const [shardName, count] of Object.entries(affected.messages)) {
-                    const tgs = { ...tags, [TAG_SHARD_NAME]: shardName };
-                    EvDbStream._sysMeters.messagesStored.add(count, tgs);
-                }
 
-                const lastEvent = events[events.length - 1];
-                this.storedOffset = lastEvent.streamCursor.offset;
+            const lastEvent = this._pendingEvents[this._pendingEvents.length - 1];
+            this.storedOffset = lastEvent.streamCursor.offset;
 
-                const viewSaveTasks = this._views.map(v => v.saveAsync(cancellation));
-                await Promise.all(viewSaveTasks);
+            const viewSaveTasks = this._views.map(v => v.save());
+            await Promise.all(viewSaveTasks);
 
-                const clearPendingActivity = EvDbStream._trace.startActivity(
-                    tags,
-                    'EvDb.ClearPending'
-                );
-                this._pendingEvents = [];
-                this._pendingOutput = [];
+            
+            this._pendingEvents = [];
+            this._pendingOutput = [];
 
-                clearPendingActivity?.dispose();
-                return affected;
-            } catch (error) {
-                if (error instanceof OCCException) {
-                    EvDbStream._sysMeters.occ.add(1);
-                    throw error;
-                }
+            return affected;
+        } catch (error) {
+            if (error instanceof OCCException) {
                 throw error;
             }
-        } finally {
-            release();
-            duration?.dispose();
-            activity?.dispose();
+            throw error;
         }
+
     }
 
     // CountOfPendingEvents
@@ -203,14 +176,6 @@ export default abstract class EvDbStream implements IEvDbStreamStore, IEvDbStrea
         return this._pendingOutput;
     }
 
-    // Dispose Pattern
-    /**
-     * Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
-     */
-    public dispose(): void {
-        this._sync.dispose();
-        this.disposeCore(true);
-    }
 
     protected disposeCore(disposed: boolean): void {
         // Override in derived classes

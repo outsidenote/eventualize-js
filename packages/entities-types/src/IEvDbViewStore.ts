@@ -26,5 +26,5 @@ export default interface IEvDbViewStore extends IEvDbView {
     /**
      * Save snapshot data.
      */
-    saveAsync(signal?: AbortSignal): Promise<void>;
+    save(signal?: AbortSignal): Promise<void>;
 }

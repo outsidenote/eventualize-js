@@ -18,8 +18,5 @@ export default interface IEvDbStreamStore {
      * @param signal Optional AbortSignal to cancel the operation
      * @returns Count of added events
      */
-    storeAsync(signal?: AbortSignal): Promise<StreamStoreAffected>;
-
-    /** Release any resources */
-    dispose(): void;
+    store(signal?: AbortSignal): Promise<StreamStoreAffected>;
 }
