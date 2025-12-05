@@ -4,7 +4,6 @@ import IEvDbStorageSnapshotAdapter from "./IEvDbStorageSnapshotAdapter.js";
 import EvDbEvent from "./EvDbEvent.js";
 import { EvDbStoredSnapshotData } from "./EvDbStoredSnapshotData.js";
 import { EvDbStoredSnapshotResult } from "./EvDbStoredSnapshotResult.js";
-import IEvDbEventsSet from "./IEvDbEventsSet.js";
 import IEvDbEventMetadata from "./IEvDbEventMetadata.js";
 import IEvDbEventPayload from "./IEvDbEventPayload.js";
 
@@ -44,19 +43,22 @@ type ApplyMethodType<TState> = (oldState: TState, payload: IEvDbEventPayload, me
 
 
 export abstract class EvDbView<TState> extends EvDbViewRaw implements IEvDbViewStoreGeneric<TState> {
-    protected abstract getDefaultState(): TState;
+    protected getDefaultState(): TState {
+        return this.defaultState;
+    };
     protected state: TState = this.getDefaultState();
     public getState(): TState {
         return this.state;
     }
 
-    protected constructor(
+    public constructor(
         address: EvDbViewAddress,
         storedAt: Date = new Date(),
         storeOffset: number = 0,
         memoryOffset: number = 0,
         storageAdapter: IEvDbStorageSnapshotAdapter,
-        snapshot: EvDbStoredSnapshotResult<TState>
+        snapshot: EvDbStoredSnapshotResult<TState>,
+        public readonly defaultState: TState
     ) {
         super(address, storedAt, storeOffset, memoryOffset, storageAdapter);
         if (snapshot.offset === 0)
@@ -76,17 +78,18 @@ export abstract class EvDbView<TState> extends EvDbViewRaw implements IEvDbViewS
         );
     }
 
+    public abstract handleOnApply(oldState: TState, event: IEvDbEventPayload, metadata: IEvDbEventMetadata): TState
+
     protected onApplyEvent(e: EvDbEvent): void {
-        const methodName = `apply${[e.payload.payloadType]}`;
-        const method = (this as any)[methodName] as ApplyMethodType<TState>;
-        if (typeof method === 'function') {
-            const newState = method(this.state, e.payload, e);
-            this.state = newState;
-        } else {
-            throw new Error(`Method '${methodName}' not found or not a function in the child class.`);
-        }
-
-
+        this.state = this.handleOnApply(this.state, e.payload, e);
+        // const handlerName = [e.payload.payloadType];
+        // const method = (this as any)[methodName] as ApplyMethodType<TState>;
+        // if (typeof method === 'function') {
+        //     const newState = method(this.state, e.payload, e);
+        //     this.state = newState;
+        // } else {
+        //     throw new Error(`Method '${methodName}' not found or not a function in the child class.`);
+        // }
 
     }
 
