@@ -1,18 +1,9 @@
 import EvDbStreamAddress from "./EvDbStreamAddress";
 import EvDbSnapshotCursor from "./EvDbSnapshotCursor";
 import { EvDbStoredSnapshotResultRaw } from "./EvDbStoredSnapshotResult";
-
-// Replace these with your real types
-export interface EvDbStoredSnapshotResult {
-    offset: number;
-    storedAt: number; // timestamp in ms
-    state: Uint8Array;
-}
+import EvDbViewAddress from "./EvDbViewAddress";
 
 
-export interface EvDbViewAddress extends EvDbStreamAddress {
-    viewName: string;
-}
 
 // Base class equivalent
 export abstract class EvDbStoredSnapshotDataBase {
@@ -23,7 +14,7 @@ export abstract class EvDbStoredSnapshotDataBase {
         public readonly viewName: string,
         public readonly offset: number,
         public readonly storeOffset: number,
-        public readonly storedAt: number = Date.now()
+        public readonly storedAt: Date = new Date()
     ) { }
 
     toStreamAddress(): EvDbStreamAddress {
@@ -32,7 +23,7 @@ export abstract class EvDbStoredSnapshotDataBase {
 }
 
 export class EvDbStoredSnapshotData extends EvDbStoredSnapshotDataBase {
-    readonly state: Uint8Array;
+    readonly state: any;
 
     // Primary constructor equivalent
     constructor(
@@ -42,7 +33,7 @@ export class EvDbStoredSnapshotData extends EvDbStoredSnapshotDataBase {
         viewName: string,
         offset: number,
         storeOffset: number,
-        state: Uint8Array
+        state: any
     ) {
         super(id, streamType, streamId, viewName, offset, storeOffset);
         this.state = state;
@@ -53,7 +44,7 @@ export class EvDbStoredSnapshotData extends EvDbStoredSnapshotDataBase {
         address: EvDbViewAddress,
         offset: number,
         storeOffset: number,
-        state: Uint8Array
+        state: any
     ): EvDbStoredSnapshotData {
         return new EvDbStoredSnapshotData(
             crypto.randomUUID(),
@@ -73,7 +64,7 @@ export class EvDbStoredSnapshotData extends EvDbStoredSnapshotDataBase {
     private isEquals(obj: EvDbStoredSnapshotResultRaw): boolean {
         if (this.offset !== obj.offset) return false;
 
-        // Compare Uint8Array references (same as C# byte[] reference equality)
+        // Compare any references (same as C# byte[] reference equality)
         if (this.state !== obj.state) return false;
 
         return true;
@@ -106,7 +97,7 @@ export class EvDbStoredSnapshotData extends EvDbStoredSnapshotDataBase {
     // ------------------------------------------------------------------------------------
     // Casting Overload (implicit operator in C# → explicit method in TS)
     // ------------------------------------------------------------------------------------
-    toSnapshotResult(): EvDbStoredSnapshotResult {
+    toSnapshotResult(): EvDbStoredSnapshotResultRaw {
         return {
             offset: this.offset,
             storedAt: this.storedAt,

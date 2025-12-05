@@ -28,3 +28,10 @@ export default interface IEvDbViewStore extends IEvDbView {
      */
     save(signal?: AbortSignal): Promise<void>;
 }
+
+export interface IEvDbViewStoreGeneric<TState> extends IEvDbViewStore {
+    /**
+     * Get the current state of the view.
+     */
+    getState: () => TState;
+}

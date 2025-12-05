@@ -10,11 +10,11 @@ import IEvDbEventPayload from "./IEvDbEventPayload";
 import StreamStoreAffected from "./StreamStoreAffected";
 import IEvDbEventMetadata from "./IEvDbEventMetadata";
 import EvDbStreamCursor from "./EvDbStreamCursor";
-import IEvDbStreamConfig from "./IEvDbStreamConfig";
 import IEvDbOutboxProducer from "./IEvDbOutboxProducer";
 import OCCException from "./OCCException";
+import { EvDbStreamType } from "./primitiveTypes";
 
-export default abstract class EvDbStream implements IEvDbStreamStore, IEvDbStreamStoreData {
+export default class EvDbStream implements IEvDbStreamStore, IEvDbStreamStoreData {
 
     protected _pendingEvents: ReadonlyArray<EvDbEvent> = [];
     protected _pendingOutput: ReadonlyArray<EvDbMessage> = [];
@@ -51,8 +51,8 @@ export default abstract class EvDbStream implements IEvDbStreamStore, IEvDbStrea
     public storedOffset: number;
 
     // Constructor
-    protected constructor(
-        streamConfiguration: IEvDbStreamConfig,
+    public constructor(
+        streamType: EvDbStreamType,
         views: ReadonlyArray<IEvDbViewStore>,
         storageAdapter: IEvDbStorageStreamAdapter,
         streamId: string,
@@ -60,26 +60,22 @@ export default abstract class EvDbStream implements IEvDbStreamStore, IEvDbStrea
     ) {
         this._views = views;
         this._storageAdapter = storageAdapter;
-        this.streamAddress = new EvDbStreamAddress(
-            streamConfiguration.streamType,
-            streamId
-        );
+        this.streamAddress = new EvDbStreamAddress(streamType, streamId);
         this.storedOffset = lastStoredOffset;
     }
 
-    // AppendEventAsync
-    protected appendEvent<T extends IEvDbEventPayload>(
-        payload: T,
+    public appendEvent(
+        payload: IEvDbEventPayload,
         capturedBy?: string | null
     ): IEvDbEventMetadata {
         capturedBy = capturedBy ?? EvDbStream.DEFAULT_CAPTURE_BY;
-        const json = JSON.stringify(payload); // Or use custom serializer
+        // const json = JSON.stringify(payload); // Or use custom serializer
 
         const cursor = this.getNextCursor(this._pendingEvents);
         const e = new EvDbEvent(
             payload.payloadType,
             cursor,
-            json,
+            payload,
             new Date(),
             capturedBy,
         );
@@ -123,7 +119,7 @@ export default abstract class EvDbStream implements IEvDbStreamStore, IEvDbStrea
     }
 
     // StoreAsync
-    async store(): Promise<StreamStoreAffected> {
+    public async store(): Promise<StreamStoreAffected> {
         // Telemetry
         // const tags = this.streamAddress.toOtelTags();
         // const duration = EvDbStream._sysMeters.measureStoreEventsDuration(tags);
@@ -146,7 +142,7 @@ export default abstract class EvDbStream implements IEvDbStreamStore, IEvDbStrea
             const viewSaveTasks = this._views.map(v => v.save());
             await Promise.all(viewSaveTasks);
 
-            
+
             this._pendingEvents = [];
             this._pendingOutput = [];
 
@@ -164,7 +160,7 @@ export default abstract class EvDbStream implements IEvDbStreamStore, IEvDbStrea
     /**
      * number of events that were not stored yet.
      */
-    get countOfPendingEvents(): number {
+    public get countOfPendingEvents(): number {
         return this._pendingEvents.length;
     }
 
@@ -172,12 +168,7 @@ export default abstract class EvDbStream implements IEvDbStreamStore, IEvDbStrea
     /**
      * Unspecialized messages
      */
-    getMessages(): ReadonlyArray<EvDbMessage> {
+    public getMessages(): ReadonlyArray<EvDbMessage> {
         return this._pendingOutput;
-    }
-
-
-    protected disposeCore(disposed: boolean): void {
-        // Override in derived classes
     }
 }

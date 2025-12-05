@@ -1,11 +1,11 @@
 import EvDbStoredSnapshotResultBase from "./EvDbStoredSnapshotResultBase"
 
 export class EvDbStoredSnapshotResultRaw extends EvDbStoredSnapshotResultBase {
-    public readonly state: Uint8Array;
+    public readonly state: any;
 
     constructor(
         offset: number,
-        storedAt: Date | null,
+        storedAt: Date | undefined,
         state: any
     ) {
         super(offset, storedAt);
@@ -14,8 +14,8 @@ export class EvDbStoredSnapshotResultRaw extends EvDbStoredSnapshotResultBase {
 
     static readonly Empty = new EvDbStoredSnapshotResultRaw(
         0,
-        null,
-        new Uint8Array()
+        undefined,
+        undefined
     );
 }
 
@@ -27,17 +27,17 @@ export class EvDbStoredSnapshotResult<TState>
 
     constructor(
         offset: number,
-        storedAt: Date | null,
+        storedAt: Date | undefined,
         state: TState
     ) {
         super(offset, storedAt);
         this.state = state;
     }
 
-    static Empty<TState>(): EvDbStoredSnapshotResult<TState> {
+    static getEmptyState<TState>(): EvDbStoredSnapshotResult<TState> {
         return new EvDbStoredSnapshotResult<TState>(
             0,
-            null,
+            undefined,
             undefined as unknown as TState
         );
     }
