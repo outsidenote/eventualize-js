@@ -1,9 +1,23 @@
 {
   "compilerOptions": {
+    "target": "ES2020", // The language features you want to use
+    "module": "NodeNext", // Output code appropriate for modern Node.js
+    "moduleResolution": "NodeNext", // Use Node.js specific resolution logic
+    "composite": true,
+    "declaration": true,
+    "declarationMap": true,
     "baseUrl": ".",
     "paths": {
-      "@eventualize/entities-types": ["packages/entities-types/src"],
-      "@eventualize/entities-types/*": ["packages/entities-types/src/*"]
+      "@eventualize/entities-types": [
+        "packages/entities-types/src"
+      ],
+      "@eventualize/entities-types/*": [
+        "packages/entities-types/src/*"
+      ]
     }
-  }
+  },
+  "references": [
+    { "path": "./packages/entities-types"},
+    { "path": "./apps/sample-app"},
+  ]
 }

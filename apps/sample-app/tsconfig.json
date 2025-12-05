@@ -1,15 +1,10 @@
 {
-   "extends": "../../tsconfig.json",
+  "extends": "../../tsconfig.json",
   "compilerOptions": {
     "outDir": "./dist",
     "rootDir": "./src",
-    "declaration": true, // Generates .d.ts files
-    "composite": true, // Required for monorepo project references
-    "moduleResolution": "node",
-    "module": "es2020",
-    "target": "es2020",
     "strict": true,
-    "esModuleInterop": true
+    "esModuleInterop": true,
   },
   "references": [
     {
@@ -19,4 +14,4 @@
   "include": [
     "src/**/*"
   ]
-} 
+}

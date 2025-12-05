@@ -8,7 +8,7 @@ import EvDbStream from '@eventualize/entities-types/EvDbStream';
 import EvDbViewAddress from '@eventualize/entities-types/EvDbViewAddress';
 import IEvDbStorageSnapshotAdapter from '@eventualize/entities-types/IEvDbStorageSnapshotAdapter';
 import { EvDbStoredSnapshotResult } from '@eventualize/entities-types/EvDbStoredSnapshotResult';
-import StorageAdapterStub from './storageAdapterStub';
+import StorageAdapterStub from './StorageAdapterStub.js';
 import EvDbStreamAddress from '@eventualize/entities-types/EvDbStreamAddress';
 
 

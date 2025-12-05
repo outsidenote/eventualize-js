@@ -3,8 +3,6 @@
   "compilerOptions": {
     "outDir": "./dist",
     "rootDir": "./src",
-    "declaration": true,      // Generates .d.ts files
-    "composite": true,        // Required for monorepo project references
     "moduleResolution": "node",
     "module": "es2020",
     "target": "es2020",
