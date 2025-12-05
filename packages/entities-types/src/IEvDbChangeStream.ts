@@ -1,7 +1,7 @@
-import { EvDbShardName } from "./primitiveTypes";
-import EvDbMessageFilter from "./EvDbMessageFilter";
-import EvDbContinuousFetchOptions from "./EvDbContinuousFetchOptions";
-import EvDbMessage from "./EvDbMessage";
+import { EvDbShardName } from "./primitiveTypes.js";
+import EvDbMessageFilter from "./EvDbMessageFilter.js";
+import EvDbContinuousFetchOptions from "./EvDbContinuousFetchOptions.js";
+import EvDbMessage from "./EvDbMessage.js";
 
 
 

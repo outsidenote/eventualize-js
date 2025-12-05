@@ -1,4 +1,4 @@
-import EvDbStreamCursor from "./EvDbStreamCursor";
+import EvDbStreamCursor from "./EvDbStreamCursor.js";
 
 export default class EvDbMessage {
 

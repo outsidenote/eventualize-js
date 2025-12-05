@@ -1,18 +1,18 @@
-import EvDbEvent from "./EvDbEvent";
-import EvDbMessage from "./EvDbMessage";
-import IEvDbStorageStreamAdapter from "./IEvDbStorageStreamAdapter";
-import IEvDbView from "./IEvDbView";
-import EvDbStreamAddress from "./EvDbStreamAddress";
-import IEvDbViewStore from "./IEvDbViewStore";
-import IEvDbStreamStore from "./IEvDbStreamStore";
-import IEvDbStreamStoreData from "./IEvDbStreamStoreData";
-import IEvDbEventPayload from "./IEvDbEventPayload";
-import StreamStoreAffected from "./StreamStoreAffected";
-import IEvDbEventMetadata from "./IEvDbEventMetadata";
-import EvDbStreamCursor from "./EvDbStreamCursor";
-import IEvDbOutboxProducer from "./IEvDbOutboxProducer";
-import OCCException from "./OCCException";
-import { EvDbStreamType } from "./primitiveTypes";
+import EvDbEvent from "./EvDbEvent.js";
+import EvDbMessage from "./EvDbMessage.js";
+import IEvDbStorageStreamAdapter from "./IEvDbStorageStreamAdapter.js";
+import IEvDbView from "./IEvDbView.js";
+import EvDbStreamAddress from "./EvDbStreamAddress.js";
+import IEvDbViewStore from "./IEvDbViewStore.js";
+import IEvDbStreamStore from "./IEvDbStreamStore.js";
+import IEvDbStreamStoreData from "./IEvDbStreamStoreData.js";
+import IEvDbEventPayload from "./IEvDbEventPayload.js";
+import StreamStoreAffected from "./StreamStoreAffected.js";
+import IEvDbEventMetadata from "./IEvDbEventMetadata.js";
+import EvDbStreamCursor from "./EvDbStreamCursor.js";
+import IEvDbOutboxProducer from "./IEvDbOutboxProducer.js";
+import OCCException from "./OCCException.js";
+import { EvDbStreamType } from "./primitiveTypes.js";
 
 export default class EvDbStream implements IEvDbStreamStore, IEvDbStreamStoreData {
 

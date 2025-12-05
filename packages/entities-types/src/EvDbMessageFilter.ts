@@ -1,4 +1,4 @@
-import { EvDbChannelName, EvDbMessageTypeName } from "./primitiveTypes";
+import { EvDbChannelName, EvDbMessageTypeName } from "./primitiveTypes.js";
 
 export default class EvDbMessageFilter {
   public readonly since: Date;

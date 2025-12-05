@@ -6,6 +6,7 @@
     "composite": true,
     "declaration": true,
     "declarationMap": true,
+    "sourceMap": true,
     "baseUrl": ".",
     "paths": {
       "@eventualize/entities-types": [

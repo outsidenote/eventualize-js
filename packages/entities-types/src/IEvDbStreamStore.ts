@@ -1,5 +1,5 @@
-import EvDbStreamAddress from "./EvDbStreamAddress";
-import StreamStoreAffected from "./StreamStoreAffected";
+import EvDbStreamAddress from "./EvDbStreamAddress.js";
+import StreamStoreAffected from "./StreamStoreAffected.js";
 
 
 

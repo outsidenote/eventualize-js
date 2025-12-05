@@ -1,5 +1,5 @@
-import EvDbStreamAddress from "./EvDbStreamAddress";
-import EvDbViewAddress from "./EvDbViewAddress";
+import EvDbStreamAddress from "./EvDbStreamAddress.js";
+import EvDbViewAddress from "./EvDbViewAddress.js";
 
 
 export default class EvDbSnapshotCursor {

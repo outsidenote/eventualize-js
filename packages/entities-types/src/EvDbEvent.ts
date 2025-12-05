@@ -1,6 +1,6 @@
-import EvDbStreamCursor from "./EvDbStreamCursor";
-import IEvDbEventMetadata from "./IEvDbEventMetadata";
-import IEvDbEventPayload from "./IEvDbEventPayload";
+import EvDbStreamCursor from "./EvDbStreamCursor.js";
+import IEvDbEventMetadata from "./IEvDbEventMetadata.js";
+import IEvDbEventPayload from "./IEvDbEventPayload.js";
 
 export default class EvDbEvent implements IEvDbEventMetadata {
 

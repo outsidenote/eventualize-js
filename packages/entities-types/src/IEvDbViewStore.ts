@@ -1,6 +1,6 @@
-import IEvDbView from "./IEvDbView";
-import EvDbEvent from "./EvDbEvent";
-import { EvDbStoredSnapshotData } from "./EvDbStoredSnapshotData";
+import IEvDbView from "./IEvDbView.js";
+import EvDbEvent from "./EvDbEvent.js";
+import { EvDbStoredSnapshotData } from "./EvDbStoredSnapshotData.js";
 
 /// View store contract.
 export default interface IEvDbViewStore extends IEvDbView {

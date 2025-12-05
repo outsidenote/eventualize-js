@@ -1,5 +1,5 @@
-import EvDbEvent from "./EvDbEvent";
-import IEvDbViewStore from "./IEvDbViewStore";
+import EvDbEvent from "./EvDbEvent.js";
+import IEvDbViewStore from "./IEvDbViewStore.js";
 
 export default interface IEvDbOutboxProducer {
     /**

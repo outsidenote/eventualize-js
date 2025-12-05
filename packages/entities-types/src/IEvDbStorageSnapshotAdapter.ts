@@ -1,6 +1,6 @@
-import { EvDbStoredSnapshotResultRaw } from "./EvDbStoredSnapshotResult";
-import { EvDbStoredSnapshotData } from "./EvDbStoredSnapshotData";
-import EvDbViewAddress from "./EvDbViewAddress";
+import { EvDbStoredSnapshotResultRaw } from "./EvDbStoredSnapshotResult.js";
+import { EvDbStoredSnapshotData } from "./EvDbStoredSnapshotData.js";
+import EvDbViewAddress from "./EvDbViewAddress.js";
 
 /**
  * Adapter for storing and retrieving view snapshots

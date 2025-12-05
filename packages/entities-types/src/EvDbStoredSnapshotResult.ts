@@ -1,4 +1,4 @@
-import EvDbStoredSnapshotResultBase from "./EvDbStoredSnapshotResultBase"
+import EvDbStoredSnapshotResultBase from "./EvDbStoredSnapshotResultBase.js"
 
 export class EvDbStoredSnapshotResultRaw extends EvDbStoredSnapshotResultBase {
     public readonly state: any;

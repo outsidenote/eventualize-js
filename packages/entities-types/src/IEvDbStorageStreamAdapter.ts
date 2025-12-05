@@ -1,9 +1,9 @@
-import EvDbStreamCursor from "./EvDbStreamCursor";
-import EvDbEvent from "./EvDbEvent";
-import EvDbMessage from "./EvDbMessage";
-import EvDbStreamAddress from "./EvDbStreamAddress";
-import StreamStoreAffected from "./StreamStoreAffected";
-import IEvDbChangeStream from "./IEvDbChangeStream";
+import EvDbStreamCursor from "./EvDbStreamCursor.js";
+import EvDbEvent from "./EvDbEvent.js";
+import EvDbMessage from "./EvDbMessage.js";
+import EvDbStreamAddress from "./EvDbStreamAddress.js";
+import StreamStoreAffected from "./StreamStoreAffected.js";
+import IEvDbChangeStream from "./IEvDbChangeStream.js";
 
 export default interface IEvDbStorageStreamAdapter extends IEvDbChangeStream {
     /**

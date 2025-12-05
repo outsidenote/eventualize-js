@@ -24,12 +24,18 @@ class Event2 implements IEvDbEventPayload {
 
 class State1 {
     constructor(public sum: number = 0) { };
+    Empty() {
+        return new State1(0);
+    }
 }
 
 type ExampleStreamEvents = Event1 | Event2;
 
 class View1 extends EvDbView<State1> implements IEvDbViewAppliesSet<State1, ExampleStreamEvents> {
-    applyEvent1(oldState: State1, newEvent: Event1, eventMetadata: IEvDbEventMetadata) { return new State1(oldState.sum + newEvent.value1) };
+    applyEvent1(oldState: State1, newEvent: Event1, eventMetadata: IEvDbEventMetadata) {
+        const newState =  new State1(oldState.sum + newEvent.value1);
+        return newState;
+    };
     applyEvent2(oldState: State1, newEvent: Event2, eventMetadata: IEvDbEventMetadata) { return new State1(oldState.sum + newEvent.value2) };
     public getDefaultState(): State1 {
         return new State1();
@@ -59,7 +65,7 @@ const stream1 = new EvDbStream(
     0
 );
 
-console.log(stream1.getViews());
+console.log('Intial Views:\n=========\n',stream1.getViews());
 const event1 = new Event1(10);
 const event2 = new Event2(20);
 

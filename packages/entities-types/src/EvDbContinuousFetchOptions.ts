@@ -1,4 +1,4 @@
-import DelayStrategy from "./DelayStrategy";
+import DelayStrategy from "./DelayStrategy.js";
 
 export default class EvDbContinuousFetchOptions {
     private static readonly MAX_DELAY_SEC = 3;

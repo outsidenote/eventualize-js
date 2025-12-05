@@ -1,10 +1,12 @@
-import IEvDbViewStore, { IEvDbViewStoreGeneric } from "./IEvDbViewStore";
-import EvDbViewAddress from "./EvDbViewAddress";
-import IEvDbStorageSnapshotAdapter from "./IEvDbStorageSnapshotAdapter";
-import EvDbEvent from "./EvDbEvent";
-import { EvDbStoredSnapshotData } from "./EvDbStoredSnapshotData";
-import { EvDbStoredSnapshotResult } from "./EvDbStoredSnapshotResult";
-import IEvDbEventsSet from "./IEvDbEventsSet";
+import IEvDbViewStore, { IEvDbViewStoreGeneric } from "./IEvDbViewStore.js";
+import EvDbViewAddress from "./EvDbViewAddress.js";
+import IEvDbStorageSnapshotAdapter from "./IEvDbStorageSnapshotAdapter.js";
+import EvDbEvent from "./EvDbEvent.js";
+import { EvDbStoredSnapshotData } from "./EvDbStoredSnapshotData.js";
+import { EvDbStoredSnapshotResult } from "./EvDbStoredSnapshotResult.js";
+import IEvDbEventsSet from "./IEvDbEventsSet.js";
+import IEvDbEventMetadata from "./IEvDbEventMetadata.js";
+import IEvDbEventPayload from "./IEvDbEventPayload.js";
 
 
 export abstract class EvDbViewRaw implements IEvDbViewStore {
@@ -35,19 +37,10 @@ export abstract class EvDbViewRaw implements IEvDbViewStore {
         throw new Error("Method not implemented.");
     }
 
-    protected onApplyEvent(e: EvDbEvent): void {
-        const methodName = `apply${[e.payload.payloadType]}`;
-        const method = (this as any)[methodName];
-        if (typeof method === 'function') {
-            method();
-        } else {
-            throw new Error(`Method '${methodName}' not found or not a function in the child class.`);
-        }
-
-
-
-    }
+    protected abstract onApplyEvent(e: EvDbEvent): void;
 }
+
+type ApplyMethodType<TState> = (oldState: TState, payload: IEvDbEventPayload, metadata: IEvDbEventMetadata) => TState;
 
 
 export abstract class EvDbView<TState> extends EvDbViewRaw implements IEvDbViewStoreGeneric<TState> {
@@ -81,6 +74,20 @@ export abstract class EvDbView<TState> extends EvDbViewRaw implements IEvDbViewS
             this.storeOffset,
             this.state
         );
+    }
+
+    protected onApplyEvent(e: EvDbEvent): void {
+        const methodName = `apply${[e.payload.payloadType]}`;
+        const method = (this as any)[methodName] as ApplyMethodType<TState>;
+        if (typeof method === 'function') {
+            const newState = method(this.state, e.payload, e);
+            this.state = newState;
+        } else {
+            throw new Error(`Method '${methodName}' not found or not a function in the child class.`);
+        }
+
+
+
     }
 
 }

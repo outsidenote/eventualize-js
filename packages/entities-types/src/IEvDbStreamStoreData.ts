@@ -1,7 +1,7 @@
-import EvDbStreamAddress from "./EvDbStreamAddress";
-import IEvDbView from "./IEvDbView";
-import EvDbEvent from "./EvDbEvent";
-import EvDbMessage from "./EvDbMessage";
+import EvDbStreamAddress from "./EvDbStreamAddress.js";
+import IEvDbView from "./IEvDbView.js";
+import EvDbEvent from "./EvDbEvent.js";
+import EvDbMessage from "./EvDbMessage.js";
 
 export default interface IEvDbStreamStoreData {
     /** Serialization options (optional) */
