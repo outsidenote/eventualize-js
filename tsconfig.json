@@ -7,6 +7,10 @@
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
     "baseUrl": ".",
     "paths": {
       "@eventualize/entities-types": [
@@ -18,7 +22,11 @@
     }
   },
   "references": [
-    { "path": "./packages/entities-types"},
-    { "path": "./apps/sample-app"},
+    {
+      "path": "./packages/entities-types"
+    },
+    {
+      "path": "./apps/sample-app"
+    },
   ]
 }
