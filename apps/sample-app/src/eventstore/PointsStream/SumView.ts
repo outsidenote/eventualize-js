@@ -34,7 +34,7 @@ export default class SumView extends EvDbView<SumViewState> implements IEvDbView
         memoryOffset: number = 0,
     ) {
         const streamAddress = new EvDbStreamAddress('ExampleStream', streamId);
-        const viewAddress = new EvDbViewAddress(streamAddress, 'View1');
+        const viewAddress = new EvDbViewAddress(streamAddress, 'SumView');
         super(viewAddress, storedAt, storeOffset, memoryOffset, storageAdapter, snapshot);
     }
     ;

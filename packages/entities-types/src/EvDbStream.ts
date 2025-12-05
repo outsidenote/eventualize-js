@@ -3,7 +3,7 @@ import EvDbMessage from "./EvDbMessage.js";
 import IEvDbStorageStreamAdapter from "./IEvDbStorageStreamAdapter.js";
 import IEvDbView from "./IEvDbView.js";
 import EvDbStreamAddress from "./EvDbStreamAddress.js";
-import IEvDbViewStore from "./IEvDbViewStore.js";
+import IEvDbViewStore, { ImmutableIEvDbViewStoreMap } from "./IEvDbViewStore.js";
 import IEvDbStreamStore from "./IEvDbStreamStore.js";
 import IEvDbStreamStoreData from "./IEvDbStreamStoreData.js";
 import IEvDbEventPayload from "./IEvDbEventPayload.js";
@@ -13,6 +13,8 @@ import EvDbStreamCursor from "./EvDbStreamCursor.js";
 import IEvDbOutboxProducer from "./IEvDbOutboxProducer.js";
 import OCCException from "./OCCException.js";
 import { EvDbStreamType } from "./primitiveTypes.js";
+
+
 
 export default class EvDbStream implements IEvDbStreamStore, IEvDbStreamStoreData {
 
@@ -30,10 +32,14 @@ export default class EvDbStream implements IEvDbStreamStore, IEvDbStreamStoreDat
     private readonly _storageAdapter: IEvDbStorageStreamAdapter;
 
     // Views
-    protected readonly _views: ReadonlyArray<IEvDbViewStore>;
+    protected readonly _views: ImmutableIEvDbViewStoreMap;
 
-    getViews(): ReadonlyArray<IEvDbView> {
+    getViews(): ImmutableIEvDbViewStoreMap {
         return this._views;
+    }
+
+    getView(viewName: string): Readonly<IEvDbView> | undefined {
+        return this._views[viewName];
     }
 
     // Events
@@ -58,7 +64,11 @@ export default class EvDbStream implements IEvDbStreamStore, IEvDbStreamStoreDat
         streamId: string,
         lastStoredOffset: number
     ) {
-        this._views = views;
+        this._views = views.reduce((acc, view) => {
+            const viewName = view.address.viewName;
+            acc[viewName] = view;
+            return acc;
+        }, {} as Record<string, IEvDbViewStore>);
         this._storageAdapter = storageAdapter;
         this.streamAddress = new EvDbStreamAddress(streamType, streamId);
         this.storedOffset = lastStoredOffset;
@@ -82,12 +92,12 @@ export default class EvDbStream implements IEvDbStreamStore, IEvDbStreamStoreDat
         this._pendingEvents = [...this._pendingEvents, e];
 
         // Apply to views
-        for (const folding of this._views) {
+        for (const folding of Object.values(this._views)) {
             folding.applyEvent(e);
         }
 
         // Outbox producer
-        this.outboxProducer?.onProduceOutboxMessages(e, this._views);
+        this.outboxProducer?.onProduceOutboxMessages(e, Object.values(this._views));
 
         return e;
     }
@@ -139,7 +149,7 @@ export default class EvDbStream implements IEvDbStreamStore, IEvDbStreamStoreDat
             const lastEvent = this._pendingEvents[this._pendingEvents.length - 1];
             this.storedOffset = lastEvent.streamCursor.offset;
 
-            const viewSaveTasks = this._views.map(v => v.save());
+            const viewSaveTasks = Object.values(this._views).map(v => v.save());
             await Promise.all(viewSaveTasks);
 
 

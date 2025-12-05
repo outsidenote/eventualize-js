@@ -16,8 +16,8 @@ describe('Stream Tests', () => {
     pointsStream.appendEvent(pointsAddedEvent, 'tester');
     pointsStream.appendEvent(pointsSubtractedEvent, 'tester');
 
-    assert.strictEqual((pointsStream.getViews()[0] as SumView).getState().sum, 30);
-    assert.strictEqual((pointsStream.getViews()[1] as CountView).getState().count, 2);
+    assert.strictEqual((pointsStream.getView('SumView') as SumView).getState().sum, 30);
+    assert.strictEqual((pointsStream.getView('CountView') as CountView).getState().count, 2);
     assert.strictEqual(pointsStream.getEvents().length, 2);
   });
 });

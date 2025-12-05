@@ -2,6 +2,9 @@ import IEvDbView from "./IEvDbView.js";
 import EvDbEvent from "./EvDbEvent.js";
 import { EvDbStoredSnapshotData } from "./EvDbStoredSnapshotData.js";
 
+type ImmutableIEvDbViewStore = Readonly<IEvDbViewStore>;
+export type ImmutableIEvDbViewStoreMap = Readonly<Record<string, ImmutableIEvDbViewStore>>;
+
 /// View store contract.
 export default interface IEvDbViewStore extends IEvDbView {
     /**

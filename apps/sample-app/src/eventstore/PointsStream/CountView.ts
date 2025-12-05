@@ -34,7 +34,7 @@ export default class CountView extends EvDbView<CountViewState> implements IEvDb
         memoryOffset: number = 0,
     ) {
         const streamAddress = new EvDbStreamAddress('ExampleStream', streamId);
-        const viewAddress = new EvDbViewAddress(streamAddress, 'View1');
+        const viewAddress = new EvDbViewAddress(streamAddress, 'CountView');
         super(viewAddress, storedAt, storeOffset, memoryOffset, storageAdapter, snapshot);
     }
     ;
