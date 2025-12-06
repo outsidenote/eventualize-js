@@ -1,21 +1,27 @@
 import * as assert from 'node:assert';
 import StorageAdapterStub from "./StorageAdapterStub.js";
 import PointsStreamFactory from "../eventstore/PointsStream/index.js";
-import IEvDbStorageSnapshotAdapter from "@eventualize/entities-types/IEvDbStorageSnapshotAdapter";
-import IEvDbStorageStreamAdapter from "@eventualize/entities-types/IEvDbStorageStreamAdapter";
 import { PointsAdded, PointsSubtracted } from "../eventstore/PointsStream/StreamEvents.js";
 import EvDbStream from "@eventualize/entities-types/EvDbStream";
 import { EvDbView } from '@eventualize/entities-types/EvDbView';
 import { SumViewState } from '../eventstore/PointsStream/SumView.js';
 import { CountViewState } from '../eventstore/PointsStream/CountView.js';
+import { EvDbEventStoreBuilder, StreamMap, EvDbEventStoreType } from '@eventualize/entities-types/EvDbEventStore';
 
 export default class Steps {
-    public static createStubStorageAdapter() {
-        return new StorageAdapterStub();
+    public static createStubEventStore() {
+        const storageAdapter = new StorageAdapterStub();
+
+        const eventstore = new EvDbEventStoreBuilder()
+            .withAdapter(storageAdapter)
+            .withStreamFactory(PointsStreamFactory)
+            .build();
+        
+        return eventstore;
 
     }
-    public static createPointsStream(streamId: string, storageAdapter: IEvDbStorageSnapshotAdapter & IEvDbStorageStreamAdapter) {
-        return PointsStreamFactory.create(streamId, storageAdapter, storageAdapter);
+    public static createPointsStream<TStreams extends StreamMap>(streamId: string, eventStore: EvDbEventStoreType<TStreams>): EvDbStream {
+        return eventStore.createPointsStream(streamId);
     }
     public static addPointsEventsToStream(stream: EvDbStream) {
         stream.appendEvent(new PointsAdded(50));

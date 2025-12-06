@@ -7,7 +7,7 @@ import Steps from './steps.js';
 describe('Stream Tests', () => {
   test('Local execution', () => {
     // GIVEN
-    const storageAdapterStub = Steps.createStubStorageAdapter();
+    const storageAdapterStub = Steps.createStubEventStore();
     const pointsStream = Steps.createPointsStream('pointsStream1', storageAdapterStub);
 
     // WHEN
