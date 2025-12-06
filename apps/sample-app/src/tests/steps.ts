@@ -1,6 +1,6 @@
 import * as assert from 'node:assert';
 import StorageAdapterStub from "./StorageAdapterStub.js";
-import PointsStream from "../eventstore/PointsStream/index.js";
+import PointsStreamFactory from "../eventstore/PointsStream/index.js";
 import IEvDbStorageSnapshotAdapter from "@eventualize/entities-types/IEvDbStorageSnapshotAdapter";
 import IEvDbStorageStreamAdapter from "@eventualize/entities-types/IEvDbStorageStreamAdapter";
 import { PointsAdded, PointsSubtracted } from "../eventstore/PointsStream/StreamEvents.js";
@@ -15,7 +15,7 @@ export default class Steps {
 
     }
     public static createPointsStream(streamId: string, storageAdapter: IEvDbStorageSnapshotAdapter & IEvDbStorageStreamAdapter) {
-        return PointsStream.createStream(streamId, storageAdapter, storageAdapter);
+        return PointsStreamFactory.create(streamId, storageAdapter, storageAdapter);
     }
     public static addPointsEventsToStream(stream: EvDbStream) {
         stream.appendEvent(new PointsAdded(50));

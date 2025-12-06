@@ -1,312 +1,274 @@
-// // ============================================================================
-// // Core Factory Types
-// // ============================================================================
+import EvDbStream from '@eventualize/entities-types/EvDbStream';
+import IEvDbStorageSnapshotAdapter from '@eventualize/entities-types/IEvDbStorageSnapshotAdapter';
+import IEvDbStorageStreamAdapter from '@eventualize/entities-types/IEvDbStorageStreamAdapter';
+import IEvDbEventPayload from "@eventualize/entities-types/IEvDbEventPayload";
+import { ViewFactory } from './ViewFactory.js';
 
-// import EvDbStream from '@eventualize/entities-types/EvDbStream';
-// import { EvDbView } from '@eventualize/entities-types/EvDbView';
-// import IEvDbStorageSnapshotAdapter from '@eventualize/entities-types/IEvDbStorageSnapshotAdapter';
-// import IEvDbStorageStreamAdapter from '@eventualize/entities-types/IEvDbStorageStreamAdapter';
-// import IEvDbEventPayload from "@eventualize/entities-types/IEvDbEventPayload";
-// import EvDbStreamAddress from '@eventualize/entities-types/EvDbStreamAddress';
-// import EvDbViewAddress from '@eventualize/entities-types/EvDbViewAddress';
-// import { EvDbStoredSnapshotResult } from '@eventualize/entities-types/EvDbStoredSnapshotResult';
+/**
+ * Configuration for creating a stream factory
+ */
+export interface StreamFactoryConfig<TEvents extends IEvDbEventPayload> {
+  streamType: string;
+  viewFactories: ViewFactory<any, TEvents>[];
+}
 
-// /**
-//  * View factory function type
-//  */
-// type ViewFactory<TState> = (
-//     streamId: string,
-//     snapshotAdapter: IEvDbStorageSnapshotAdapter
-// ) => EvDbView<TState>;
+/**
+ * Stream Factory - creates stream instances with configured views
+ */
+export class StreamFactory<TEvents extends IEvDbEventPayload> {
+  constructor(private readonly config: StreamFactoryConfig<TEvents>) {}
 
-// /**
-//  * Stream configuration
-//  */
-// interface StreamConfig<TEvents extends IEvDbEventPayload = IEvDbEventPayload> {
-//     streamType: string;
-//     views: ViewFactory<any>[];
-// }
+  /**
+   * Creates a stream instance with all configured views
+   */
+  public create(
+    streamId: string,
+    streamStorageAdapter: IEvDbStorageStreamAdapter,
+    snapshotStorageAdapter: IEvDbStorageSnapshotAdapter
+  ): EvDbStream {
+    // Create all views using their factories
+    const views = this.config.viewFactories.map(factory =>
+      factory.create(streamId, snapshotStorageAdapter)
+    );
 
-// /**
-//  * Base class for stream builders
-//  */
-// abstract class StreamBuilder<TEvents extends IEvDbEventPayload = IEvDbEventPayload> {
-//     protected config: StreamConfig<TEvents>;
+    return new EvDbStream(
+      this.config.streamType,
+      views,
+      streamStorageAdapter,
+      streamId,
+      0
+    );
+  }
+}
 
-//     constructor(streamType: string) {
-//         this.config = {
-//             streamType,
-//             views: []
-//         };
-//     }
+/**
+ * Factory function to create a StreamFactory
+ */
+export function createStreamFactory<TEvents extends IEvDbEventPayload>(
+  config: StreamFactoryConfig<TEvents>
+): StreamFactory<TEvents> {
+  return new StreamFactory(config);
+}
 
-//     /**
-//      * Creates a stream instance
-//      */
-//     public create(
-//         streamId: string,
-//         streamAdapter: IEvDbStorageStreamAdapter,
-//         snapshotAdapter: IEvDbStorageSnapshotAdapter
-//     ): EvDbStream {
-//         const views = this.config.views.map(factory => factory(streamId, snapshotAdapter));
+/**
+ * Fluent builder for creating stream factories
+ */
+export class StreamFactoryBuilder<TEvents extends IEvDbEventPayload> {
+  private streamType: string;
+  private viewFactories: ViewFactory<any, TEvents>[] = [];
 
-//         return new EvDbStream(
-//             this.config.streamType,
-//             views,
-//             streamAdapter,
-//             streamId,
-//             0
-//         );
-//     }
+  constructor(streamType: string) {
+    this.streamType = streamType;
+  }
 
-//     /**
-//      * Registers a view with the stream
-//      */
-//     protected registerView<TState>(factory: ViewFactory<TState>): this {
-//         this.config.views.push(factory);
-//         return this;
-//     }
-// }
+  /**
+   * Add a view factory to the stream
+   */
+  public withView<TState>(viewFactory: ViewFactory<TState, TEvents>): this {
+    this.viewFactories.push(viewFactory);
+    return this;
+  }
 
-// // ============================================================================
-// // View Builder Pattern
-// // ============================================================================
+  /**
+   * Add multiple view factories at once
+   */
+  public withViews(...viewFactories: ViewFactory<any, TEvents>[]): this {
+    this.viewFactories.push(...viewFactories);
+    return this;
+  }
 
-// /**
-//  * Helper to create view factories with less boilerplate
-//  */
-// abstract class ViewBuilder<TState, TEvents extends IEvDbEventPayload = IEvDbEventPayload> {
-//     constructor(
-//         protected readonly viewName: string,
-//         protected readonly streamType: string
-//     ) { }
+  /**
+   * Build the stream factory
+   */
+  public build(): StreamFactory<TEvents> {
+    return new StreamFactory({
+      streamType: this.streamType,
+      viewFactories: this.viewFactories
+    });
+  }
+}
 
-//     /**
-//      * Creates the view factory function
-//      */
-//     public build(): ViewFactory<TState> {
-//         return (streamId: string, storageAdapter: IEvDbStorageSnapshotAdapter) => {
-//             const streamAddress = new EvDbStreamAddress(this.streamType, streamId);
-//             const viewAddress = new EvDbViewAddress(streamAddress, this.viewName);
+// ============================================================================
+// EXAMPLE USAGE
+// ============================================================================
 
-//             return this.createView(
-//                 viewAddress,
-//                 storageAdapter,
-//                 streamId
-//             );
-//         };
-//     }
+import { createViewFactory } from './ViewFactory';
+import IEvDbEventMetadata from '@eventualize/entities-types/IEvDbEventMetadata';
 
-//     /**
-//      * Override this to create your specific view instance
-//      */
-//     protected abstract createView(
-//         viewAddress: EvDbViewAddress,
-//         storageAdapter: IEvDbStorageSnapshotAdapter,
-//         streamId: string
-//     ): EvDbView<TState>;
+// Step 1: Define Events (same as before)
+export class PointsAdded implements IEvDbEventPayload {
+  readonly payloadType = 'PointsAdded';
+  constructor(public readonly points: number) {}
+}
 
-//     /**
-//      * Override this to provide the default state
-//      */
-//     protected abstract getDefaultState(): TState;
-// }
+export class PointsSubtracted implements IEvDbEventPayload {
+  readonly payloadType = 'PointsSubtracted';
+  constructor(public readonly points: number) {}
+}
 
-// // ============================================================================
-// // EXAMPLE USAGE: Points Stream
-// // ============================================================================
+export type PointsStreamEvents = PointsAdded | PointsSubtracted;
 
-// // Step 1: Define Events (same as before)
-// export class PointsAdded implements IEvDbEventPayload {
-//     readonly payloadType = 'PointsAdded';
-//     constructor(public readonly points: number) { }
-// }
+// Step 2: Define View States
+export class SumViewState {
+  constructor(public sum: number = 0) {}
+}
 
-// export class PointsSubtracted implements IEvDbEventPayload {
-//     readonly payloadType = 'PointsSubtracted';
-//     constructor(public readonly points: number) { }
-// }
+export class CountViewState {
+  constructor(public count: number = 0) {}
+}
 
-// export type PointsStreamEvents = PointsAdded | PointsSubtracted;
+// Step 3: Create View Factories
+const sumViewFactory = createViewFactory<SumViewState, PointsStreamEvents>({
+  viewName: 'SumView',
+  streamType: 'PointsStream',
+  defaultState: new SumViewState(0),
+  handlers: {
+    PointsAdded: (oldState, event, metadata) => {
+      return new SumViewState(oldState.sum + event.points);
+    },
+    PointsSubtracted: (oldState, event, metadata) => {
+      return new SumViewState(oldState.sum - event.points);
+    }
+  }
+});
 
-// // Step 2: Define View States
-// export class SumViewState {
-//     constructor(public sum: number = 0) { }
-// }
+const countViewFactory = createViewFactory<CountViewState, PointsStreamEvents>({
+  viewName: 'CountView',
+  streamType: 'PointsStream',
+  defaultState: new CountViewState(0),
+  handlers: {
+    PointsAdded: (oldState, event, metadata) => {
+      return new CountViewState(oldState.count + 1);
+    },
+    PointsSubtracted: (oldState, event, metadata) => {
+      return new CountViewState(oldState.count + 1);
+    }
+  }
+});
 
-// export class CountViewState {
-//     constructor(public count: number = 0) { }
-// }
+// Step 4: Create Stream Factory - THREE WAYS!
 
-// // Step 3: Create View Classes (simplified)
-// import IEvDbViewAppliesSet from '@eventualize/entities-types/IEvDbViewAppliesSet';
-// import IEvDbEventMetadata from '@eventualize/entities-types/IEvDbEventMetadata';
+// Way 1: Using createStreamFactory function
+export const pointsStreamFactory1 = createStreamFactory<PointsStreamEvents>({
+  streamType: 'PointsStream',
+  viewFactories: [sumViewFactory, countViewFactory]
+});
 
-// class SumView extends EvDbView<SumViewState>
-//     implements IEvDbViewAppliesSet<SumViewState, PointsStreamEvents> {
+// Way 2: Using fluent builder (RECOMMENDED)
+export const pointsStreamFactory2 = new StreamFactoryBuilder<PointsStreamEvents>('PointsStream')
+  .withView(sumViewFactory)
+  .withView(countViewFactory)
+  .build();
 
-//     applyPointsAdded(oldState: SumViewState, newEvent: PointsAdded) {
-//         return new SumViewState(oldState.sum + newEvent.points);
-//     }
+// Way 3: Using fluent builder with multiple views at once
+export const pointsStreamFactory3 = new StreamFactoryBuilder<PointsStreamEvents>('PointsStream')
+  .withViews(sumViewFactory, countViewFactory)
+  .build();
 
-//     applyPointsSubtracted(oldState: SumViewState, newEvent: PointsSubtracted) {
-//         return new SumViewState(oldState.sum - newEvent.points);
-//     }
+// ============================================================================
+// USAGE - IT'S THIS SIMPLE NOW!
+// ============================================================================
 
-//     public getDefaultState(): SumViewState {
-//         return new SumViewState();
-//     }
-// }
+/*
+// Create a stream instance:
+const stream = pointsStreamFactory2.create(
+  'user-123',
+  streamStorageAdapter,
+  snapshotStorageAdapter
+);
 
-// class CountView extends EvDbView<CountViewState>
-//     implements IEvDbViewAppliesSet<CountViewState, PointsStreamEvents> {
+// That's it! All views are automatically created and configured.
+*/
 
-//     applyPointsAdded(oldState: CountViewState, newEvent: PointsAdded) {
-//         return new CountViewState(oldState.count + 1);
-//     }
+// ============================================================================
+// COMPARISON: BEFORE vs AFTER
+// ============================================================================
 
-//     applyPointsSubtracted(oldState: CountViewState, newEvent: PointsSubtracted) {
-//         return new CountViewState(oldState.count + 1);
-//     }
+/*
+// BEFORE (manual):
+export default class PointsStream {
+  public static createStream(
+    streamId: string,
+    streamStorageAdapter: IEvDbStorageStreamAdapter,
+    snapshotStorageAdapter: IEvDbStorageSnapshotAdapter,
+  ): EvDbStream {
+    const streamType = 'PointsStream';
+    const sumView = sumViewFactory.create(streamId, snapshotStorageAdapter);
+    const countView = countViewFactory.create(streamId, snapshotStorageAdapter);
+    return new EvDbStream(
+      streamType,
+      [sumView, countView],
+      streamStorageAdapter,
+      streamId,
+      0
+    );
+  }
+}
 
-//     public getDefaultState(): CountViewState {
-//         return new CountViewState();
-//     }
-// }
+// Usage:
+const stream = PointsStream.createStream('user-123', streamAdapter, snapshotAdapter);
 
-// // Step 4: Create View Builders
-// class SumViewBuilder extends ViewBuilder<SumViewState, PointsStreamEvents> {
-//     constructor(streamType: string) {
-//         super('SumView', streamType);
-//     }
+// AFTER (factory):
+export const PointsStream = new StreamFactoryBuilder<PointsStreamEvents>('PointsStream')
+  .withViews(sumViewFactory, countViewFactory)
+  .build();
 
-//     protected createView(
-//         viewAddress: EvDbViewAddress,
-//         storageAdapter: IEvDbStorageSnapshotAdapter,
-//         streamId: string
-//     ): EvDbView<SumViewState> {
-//         return new SumView(
-//             viewAddress,
-//             undefined,
-//             0,
-//             0,
-//             storageAdapter,
-//             EvDbStoredSnapshotResult.getEmptyState<SumViewState>()
-//         );
-//     }
+// Usage (same simplicity):
+const stream = PointsStream.create('user-123', streamAdapter, snapshotAdapter);
+*/
 
-//     protected getDefaultState(): SumViewState {
-//         return new SumViewState();
-//     }
-// }
+// ============================================================================
+// ADVANCED: ORGANIZING IN SEPARATE FILES
+// ============================================================================
 
-// class CountViewBuilder extends ViewBuilder<CountViewState, PointsStreamEvents> {
-//     constructor(streamType: string) {
-//         super('CountView', streamType);
-//     }
+/*
+// File: pointsStreamEvents.ts
+export class PointsAdded implements IEvDbEventPayload {
+  readonly payloadType = 'PointsAdded';
+  constructor(public readonly points: number) {}
+}
 
-//     protected createView(
-//         viewAddress: EvDbViewAddress,
-//         storageAdapter: IEvDbStorageSnapshotAdapter,
-//         streamId: string
-//     ): EvDbView<CountViewState> {
-//         return new CountView(
-//             viewAddress,
-//             undefined,
-//             0,
-//             0,
-//             storageAdapter,
-//             EvDbStoredSnapshotResult.getEmptyState<CountViewState>()
-//         );
-//     }
+export class PointsSubtracted implements IEvDbEventPayload {
+  readonly payloadType = 'PointsSubtracted';
+  constructor(public readonly points: number) {}
+}
 
-//     protected getDefaultState(): CountViewState {
-//         return new CountViewState();
-//     }
-// }
+export type PointsStreamEvents = PointsAdded | PointsSubtracted;
 
-// // Step 5: Create the Stream Builder (SIMPLIFIED!)
-// class PointsStreamBuilder extends StreamBuilder<PointsStreamEvents> {
-//     constructor() {
-//         super('PointsStream');
+// File: sumView.ts
+export const sumViewFactory = createViewFactory<SumViewState, PointsStreamEvents>({
+  viewName: 'SumView',
+  streamType: 'PointsStream',
+  defaultState: new SumViewState(0),
+  handlers: {
+    PointsAdded: (oldState, event) => new SumViewState(oldState.sum + event.points),
+    PointsSubtracted: (oldState, event) => new SumViewState(oldState.sum - event.points)
+  }
+});
 
-//         // Register views in constructor
-//         this.registerView(new SumViewBuilder(this.config.streamType).build());
-//         this.registerView(new CountViewBuilder(this.config.streamType).build());
-//     }
-// }
+// File: countView.ts
+export const countViewFactory = createViewFactory<CountViewState, PointsStreamEvents>({
+  viewName: 'CountView',
+  streamType: 'PointsStream',
+  defaultState: new CountViewState(0),
+  handlers: {
+    PointsAdded: (oldState) => new CountViewState(oldState.count + 1),
+    PointsSubtracted: (oldState) => new CountViewState(oldState.count + 1)
+  }
+});
 
-// // Step 6: Export singleton instance
-// export const PointsStream = new PointsStreamBuilder();
+// File: pointsStream.ts (THIS IS ALL YOU NEED!)
+import { StreamFactoryBuilder } from '@eventualize/core';
+import { PointsStreamEvents } from './pointsStreamEvents';
+import { sumViewFactory } from './sumView';
+import { countViewFactory } from './countView';
 
-// // ============================================================================
-// // USAGE EXAMPLES
-// // ============================================================================
+export const PointsStream = new StreamFactoryBuilder<PointsStreamEvents>('PointsStream')
+  .withViews(sumViewFactory, countViewFactory)
+  .build();
 
-// /*
-// // Creating a stream is now super simple:
-// const stream = PointsStream.create(
-//   'user-123',
-//   streamStorageAdapter,
-//   snapshotStorageAdapter
-// );
+// Usage anywhere:
+import { PointsStream } from './pointsStream';
 
-// // That's it! All views are automatically created and configured.
-// */
-
-// // ============================================================================
-// // ALTERNATIVE: Even More Simplified API
-// // ============================================================================
-
-// /**
-//  * Fluent API for building streams
-//  */
-// class FluentStreamBuilder<TEvents extends IEvDbEventPayload = IEvDbEventPayload>
-//     extends StreamBuilder<TEvents> {
-
-//     /**
-//      * Add a view using a class constructor
-//      */
-//     public withView<TState>(
-//         viewName: string,
-//         ViewClass: new (
-//             viewAddress: EvDbViewAddress,
-//             storedAt: Date | undefined,
-//             storeOffset: number,
-//             memoryOffset: number,
-//             storageAdapter: IEvDbStorageSnapshotAdapter,
-//             snapshot: EvDbStoredSnapshotResult<TState>
-//         ) => EvDbView<TState>
-//     ): this {
-//         const factory: ViewFactory<TState> = (streamId, storageAdapter) => {
-//             const streamAddress = new EvDbStreamAddress(this.config.streamType, streamId);
-//             const viewAddress = new EvDbViewAddress(streamAddress, viewName);
-
-//             return new ViewClass(
-//                 viewAddress,
-//                 undefined,
-//                 0,
-//                 0,
-//                 storageAdapter,
-//                 EvDbStoredSnapshotResult.getEmptyState<TState>()
-//             );
-//         };
-
-//         this.registerView(factory);
-//         return this;
-//     }
-// }
-
-// // Even simpler usage:
-// export const PointsStreamFluent = new FluentStreamBuilder<PointsStreamEvents>('PointsStream')
-//     .withView('SumView', SumView)
-//     .withView('CountView', CountView);
-
-// /*
-// // Usage is identical:
-// const stream = PointsStreamFluent.create(
-//   'user-123',
-//   streamStorageAdapter,
-//   snapshotStorageAdapter
-// );
-// */
+const stream = PointsStream.create('user-123', streamAdapter, snapshotAdapter);
+*/
