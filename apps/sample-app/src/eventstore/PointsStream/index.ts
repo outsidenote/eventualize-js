@@ -1,9 +1,8 @@
-import sumViewFactory from './SumView.js';
-import countViewFactory from './CountView.js';
-import { PointsStreamEvents } from './StreamEvents.js';
+import {SumViewFactory, CountViewFactory} from './views.js';
+import { PointsStreamEvents } from './events.js';
 import { StreamFactoryBuilder } from '@eventualize/entities-types/EvDbStreamFactory';
 
 export default new StreamFactoryBuilder<PointsStreamEvents, "PointsStream">('PointsStream')
-    .withView(sumViewFactory)
-    .withView(countViewFactory)
+    .withView(SumViewFactory)
+    .withView(CountViewFactory)
     .build();

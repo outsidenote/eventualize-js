@@ -1,11 +1,10 @@
 import * as assert from 'node:assert';
 import StorageAdapterStub from "./StorageAdapterStub.js";
 import PointsStreamFactory from "../eventstore/PointsStream/index.js";
-import { PointsAdded, PointsSubtracted } from "../eventstore/PointsStream/StreamEvents.js";
+import { PointsAdded, PointsSubtracted } from "../eventstore/PointsStream/events.js";
 import EvDbStream from "@eventualize/entities-types/EvDbStream";
 import { EvDbView } from '@eventualize/entities-types/EvDbView';
-import { SumViewState } from '../eventstore/PointsStream/SumView.js';
-import { CountViewState } from '../eventstore/PointsStream/CountView.js';
+import { SumViewState, CountViewState } from '../eventstore/PointsStream/views.js';
 import { EvDbEventStoreBuilder, StreamMap, EvDbEventStoreType } from '@eventualize/entities-types/EvDbEventStore';
 
 export default class Steps {
@@ -16,7 +15,7 @@ export default class Steps {
             .withAdapter(storageAdapter)
             .withStreamFactory(PointsStreamFactory)
             .build();
-        
+
         return eventstore;
 
     }
