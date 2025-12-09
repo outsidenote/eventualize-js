@@ -7,7 +7,13 @@ import { EvDbView } from '@eventualize/entities-types/EvDbView';
 import { SumViewState, CountViewState } from '../eventstore/PointsStream/views.js';
 import { EvDbEventStoreBuilder, StreamMap, EvDbEventStoreType } from '@eventualize/entities-types/EvDbEventStore';
 import { EvDbPrismaStorageAdapter } from '@eventualize/relational-storage-adapter/EvDbPrismaStorageAdapter'
-import { PrismaClient, Prisma } from '@eventualize/relational-storage-adapter/generated/prisma/client';
+import { PrismaClient } from '@eventualize/relational-storage-adapter/generated/prisma/client';
+import 'dotenv/config'
+import { PrismaPg } from '@prisma/adapter-pg'
+
+
+const connectionString = `${process.env.DATABASE_URL}`
+const adapter = new PrismaPg({ connectionString })
 
 export default class Steps {
     public static createStubEventStore() {
@@ -23,8 +29,16 @@ export default class Steps {
     }
 
     public static createPostgresEventStore() {
-        const client = new PrismaClient();
-        const storageAdapter = new EvDbPrismaStorageAdapter(new PrismaClient())
+        const client = new PrismaClient({ adapter })
+        const storageAdapter = new EvDbPrismaStorageAdapter(client)
+
+        const eventstore = new EvDbEventStoreBuilder()
+            .withAdapter(storageAdapter)
+            .withStreamFactory(PointsStreamFactory)
+            .build();
+
+        return eventstore;
+
     }
 
     public static createPointsStream<TStreams extends StreamMap>(streamId: string, eventStore: EvDbEventStoreType<TStreams>): EvDbStream {

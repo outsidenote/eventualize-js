@@ -7,8 +7,8 @@ import Steps from './steps.js';
 describe('Stream Tests', () => {
   test('Local execution', () => {
     // GIVEN
-    const storageAdapterStub = Steps.createStubEventStore();
-    const pointsStream = Steps.createPointsStream('pointsStream1', storageAdapterStub);
+    const eventStoreStub = Steps.createStubEventStore();
+    const pointsStream = Steps.createPointsStream('pointsStream1', eventStoreStub);
 
     // WHEN
     Steps.addPointsEventsToStream(pointsStream);
@@ -17,13 +17,14 @@ describe('Stream Tests', () => {
     Steps.assertStreamStateIsCorrect(pointsStream);
   });
 
-  test('Postgres execution', () => {
+  test('Postgres execution', async () => {
     // GIVEN
-    const storageAdapterStub = Steps.createPostgresEventStore();
-    const pointsStream = Steps.createPointsStream('pointsStream1', storageAdapterStub);
+    const eventStorePG = Steps.createPostgresEventStore();
+    const pointsStream = Steps.createPointsStream('pointsStream1', eventStorePG);
 
     // WHEN
     Steps.addPointsEventsToStream(pointsStream);
+    await pointsStream.store()
 
     // THEN
     Steps.assertStreamStateIsCorrect(pointsStream);
