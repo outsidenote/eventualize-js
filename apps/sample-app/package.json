@@ -16,6 +16,7 @@
   "type": "module",
   "dependencies": {
     "@eventualize/entities-types": "^1.0.0",
-    "@eventualize/types": "^1.0.0"
+    "@eventualize/types": "^1.0.0",
+    "@eventualize/relational-storage-adapter": "^1.0.0"
   }
 }

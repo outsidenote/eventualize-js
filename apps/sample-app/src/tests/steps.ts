@@ -6,6 +6,8 @@ import EvDbStream from "@eventualize/types/EvDbStream";
 import { EvDbView } from '@eventualize/entities-types/EvDbView';
 import { SumViewState, CountViewState } from '../eventstore/PointsStream/views.js';
 import { EvDbEventStoreBuilder, StreamMap, EvDbEventStoreType } from '@eventualize/entities-types/EvDbEventStore';
+import { EvDbPrismaStorageAdapter } from '@eventualize/relational-storage-adapter/EvDbPrismaStorageAdapter'
+import { PrismaClient, Prisma } from '@eventualize/relational-storage-adapter/generated/prisma/client';
 
 export default class Steps {
     public static createStubEventStore() {
@@ -19,6 +21,12 @@ export default class Steps {
         return eventstore;
 
     }
+
+    public static createPostgresEventStore() {
+        const client = new PrismaClient();
+        const storageAdapter = new EvDbPrismaStorageAdapter(new PrismaClient())
+    }
+
     public static createPointsStream<TStreams extends StreamMap>(streamId: string, eventStore: EvDbEventStoreType<TStreams>): EvDbStream {
         return eventStore.createPointsStream(streamId);
     }

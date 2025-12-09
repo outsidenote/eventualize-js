@@ -17,6 +17,18 @@ describe('Stream Tests', () => {
     Steps.assertStreamStateIsCorrect(pointsStream);
   });
 
+  test('Postgres execution', () => {
+    // GIVEN
+    const storageAdapterStub = Steps.createPostgresEventStore();
+    const pointsStream = Steps.createPointsStream('pointsStream1', storageAdapterStub);
+
+    // WHEN
+    Steps.addPointsEventsToStream(pointsStream);
+
+    // THEN
+    Steps.assertStreamStateIsCorrect(pointsStream);
+  });
+
   // test('Persist and reload', async () => {
   //   const numEvents = await pointsStream.store();
   //   assert.strictEqual(numEvents, 2);

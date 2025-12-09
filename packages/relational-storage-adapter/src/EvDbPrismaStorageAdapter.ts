@@ -4,7 +4,6 @@ import { IEvDbPayloadData } from '@eventualize/types/IEvDbEventPayload';
 import IEvDbEventMetadata from '@eventualize/types/IEvDbEventMetadata';
 import EvDbStreamCursor from '@eventualize/types/EvDbStreamCursor';
 import { eventsCreateManyInput } from './generated/prisma/models';
-import { outboxCreateManyInput } from './generated/prisma/models';
 import EvDbMessage from '@eventualize/types/EvDbMessage';
 import IEvDbStorageSnapshotAdapter from '@eventualize/types/IEvDbStorageSnapshotAdapter';
 import IEvDbStorageStreamAdapter from '@eventualize/types/IEvDbStorageStreamAdapter';
@@ -61,16 +60,12 @@ const deserializePayload = (payload: any): IEvDbPayloadData => {
  */
 export class EvDbPrismaStorageAdapter implements IEvDbStorageSnapshotAdapter, IEvDbStorageStreamAdapter {
     private readonly queryProvider: PrismaQueryProvider;
-    private readonly transformers: IEvDbOutboxTransformer[];
     protected readonly databaseType: string = 'prisma';
 
     constructor(
         private readonly prisma: PrismaClient,
-        private readonly context: EvDbStorageContext,
-        transformers: IEvDbOutboxTransformer[]
     ) {
         this.queryProvider = new PrismaQueryProvider(prisma);
-        this.transformers = transformers || [];
     }
     getFromOutbox(filter: EvDbMessageFilter, options?: EvDbContinuousFetchOptions | null): Promise<AsyncIterable<EvDbMessage>> {
         throw new Error('Method not implemented.');
@@ -296,19 +291,6 @@ export class EvDbPrismaStorageAdapter implements IEvDbStorageSnapshotAdapter, IE
      */
     async dispose(): Promise<void> {
         await this.prisma.$disconnect();
-    }
-}
-
-/**
- * Factory for creating storage adapters
- */
-export class EvDbStorageAdapterFactory {
-    static create(
-        prisma: PrismaClient,
-        context: EvDbStorageContext,
-        transformers: IEvDbOutboxTransformer[] = []
-    ): EvDbPrismaStorageAdapter {
-        return new EvDbPrismaStorageAdapter(prisma, context, transformers);
     }
 }
 
