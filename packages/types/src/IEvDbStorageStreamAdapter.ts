@@ -34,4 +34,10 @@ export default interface IEvDbStorageStreamAdapter extends IEvDbChangeStream {
         events: ReadonlyArray<EvDbEvent>,
         messages: ReadonlyArray<EvDbMessage>,
     ): Promise<StreamStoreAffected>;
+
+    /**
+     * Close the storage adapter connection
+     * @returns Promise of void
+     */
+    close(): Promise<void>
 }

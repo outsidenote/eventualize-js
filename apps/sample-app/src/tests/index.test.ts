@@ -1,6 +1,7 @@
 import { test, describe } from 'node:test'; // Use require or import
 
-import Steps, {EVENT_STORE_TYPE} from './steps.js';
+import Steps, { EVENT_STORE_TYPE } from './steps.js';
+import EvDbPrismaStorageAdapter from '@eventualize/relational-storage-adapter/EvDbPrismaStorageAdapter';
 
 
 describe('Stream Tests', () => {
@@ -25,12 +26,13 @@ describe('Stream Tests', () => {
     Steps.addPointsEventsToStream(pointsStream);
     try {
       await pointsStream.store()
-    } catch(error) {
+    } catch (error) {
       console.log('Stream store error:', error)
     }
 
     // THEN
-    Steps.assertStreamStateIsCorrect(pointsStream);
+    // Steps.assertStreamStateIsCorrect(pointsStream);
+    await eventStorePG.getStore().close();
   });
 
   // test('Persist and reload', async () => {

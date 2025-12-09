@@ -14,6 +14,9 @@ import StreamStoreAffected from '@eventualize/types/StreamStoreAffected';
 
 
 export default class StorageAdapterStub implements IEvDbStorageSnapshotAdapter, IEvDbStorageStreamAdapter {
+    close(): Promise<void> {
+        throw new Error('Method not implemented.');
+    }
     getEventsAsync(streamCursor: EvDbStreamCursor): AsyncGenerator<EvDbEvent, void, undefined> {
         throw new Error('Method not implemented.');
     }

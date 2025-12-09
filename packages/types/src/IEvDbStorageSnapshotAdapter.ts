@@ -20,4 +20,10 @@ export default interface IEvDbStorageSnapshotAdapter {
      * @param signal Optional AbortSignal for cancellation
      */
     storeSnapshotAsync(snapshotData: EvDbStoredSnapshotData): Promise<void>;
+
+    /**
+     * Close the storage adapter connection
+     * @returns Promise of void
+     */
+    close(): Promise<void>
 }

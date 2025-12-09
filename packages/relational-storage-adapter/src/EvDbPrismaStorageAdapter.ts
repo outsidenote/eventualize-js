@@ -290,7 +290,7 @@ export class EvDbPrismaStorageAdapter implements IEvDbStorageSnapshotAdapter, IE
     /**
      * Close the database connection
      */
-    async dispose(): Promise<void> {
+    async close(): Promise<void> {
         await this.prisma.$disconnect();
     }
 }

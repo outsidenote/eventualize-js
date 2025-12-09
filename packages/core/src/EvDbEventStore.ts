@@ -76,6 +76,11 @@ class BaseStore {
   public static builder(): BaseStoreBuilder {
     return new BaseStoreBuilder();
   }
+
+  public async close(): Promise<void> {
+    await Promise.all([this.storage.snapshotAdapter.close(), this.storage.streamAdapter.close()]);
+    return;
+  }
 }
 
 /**
