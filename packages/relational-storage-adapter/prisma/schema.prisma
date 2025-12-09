@@ -1,0 +1,61 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model events {
+  id                String   @db.Uuid
+  stream_type       String   @db.VarChar(150)
+  stream_id         String   @db.VarChar(150)
+  offset            BigInt
+  event_type        String   @db.VarChar(150)
+  telemetry_context Json?    @db.Json
+  captured_by       String   @db.VarChar(150)
+  captured_at       DateTime @db.Timestamptz(6)
+  stored_at         DateTime @default(now()) @db.Timestamptz(6)
+  payload           Json     @db.Json
+
+  @@id([stream_type, stream_id, offset])
+  @@index([stream_type, stream_id, offset], map: "ix_event_7ae7ea3b165349e09b3fe6d66a69fd72")
+  @@index([stored_at], map: "ix_event_stored_at_7ae7ea3b165349e09b3fe6d66a69fd72")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model outbox {
+  id                String   @db.Uuid
+  stream_type       String   @db.VarChar(150)
+  stream_id         String   @db.VarChar(150)
+  offset            BigInt
+  event_type        String   @db.VarChar(150)
+  channel           String   @db.VarChar(150)
+  message_type      String   @db.VarChar(150)
+  serialize_type    String   @db.VarChar(150)
+  telemetry_context Bytes?
+  captured_by       String   @db.VarChar(150)
+  captured_at       DateTime @db.Timestamptz(6)
+  stored_at         DateTime @default(now()) @db.Timestamptz(6)
+  payload           Bytes
+
+  @@id([captured_at, stream_type, stream_id, offset, channel, message_type])
+  @@index([stream_type, stream_id, offset, channel, message_type], map: "ix_outbox_7ae7ea3b165349e09b3fe6d66a69fd72")
+  @@index([stored_at, channel, message_type, offset], map: "ix_storedat_outbox_captured_at_7ae7ea3b165349e09b3fe6d66a69fd72")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model snapshot {
+  id          String   @db.Uuid
+  stream_type String   @db.VarChar(150)
+  stream_id   String   @db.VarChar(150)
+  view_name   String   @db.VarChar(150)
+  offset      BigInt
+  state       Json     @db.Json
+  stored_at   DateTime @default(now()) @db.Timestamptz(6)
+
+  @@id([stream_type, stream_id, view_name, offset])
+  @@index([stream_type, stream_id, view_name, stored_at], map: "ix_snapshot_earlier_stored_at_7ae7ea3b165349e09b3fe6d66a69fd72")
+}

@@ -18,12 +18,21 @@
       ],
       "@eventualize/entities-types/*": [
         "packages/entities-types/src/*"
-      ]
+      ],
+      "@eventualize/relational-storage-adapter": [
+        "packages/relational-storage-adapter/src"
+      ],
+      "@eventualize/relational-storage-adapter/*": [
+        "packages/relational-storage-adapter/src/*"
+      ],
     }
   },
   "references": [
     {
       "path": "./packages/entities-types"
+    },
+    {
+      "path": "./packages/relational-storage-adapter"
     },
     {
       "path": "./apps/sample-app"
