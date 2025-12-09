@@ -12,18 +12,12 @@ export default interface IEvDbStorageSnapshotAdapter {
      * @param signal Optional AbortSignal for cancellation
      * @returns The stored snapshot result
      */
-    getSnapshotAsync(
-        viewAddress: EvDbViewAddress,
-        signal?: AbortSignal
-    ): Promise<EvDbStoredSnapshotResultRaw>;
+    getSnapshotAsync(viewAddress: EvDbViewAddress): Promise<EvDbStoredSnapshotResultRaw>;
 
     /**
      * Stores the view's state as a snapshot.
      * @param snapshotData Snapshot data and metadata
      * @param signal Optional AbortSignal for cancellation
      */
-    storeSnapshotAsync(
-        snapshotData: EvDbStoredSnapshotData,
-        signal?: AbortSignal
-    ): Promise<void>;
+    storeSnapshotAsync(snapshotData: EvDbStoredSnapshotData): Promise<void>;
 }

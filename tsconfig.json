@@ -13,6 +13,12 @@
     "forceConsistentCasingInFileNames": true,
     "baseUrl": ".",
     "paths": {
+      "@eventualize/types": [
+        "packages/types/src"
+      ],
+      "@eventualize/types/*": [
+        "packages/types/src/*"
+      ],
       "@eventualize/entities-types": [
         "packages/entities-types/src"
       ],
@@ -28,6 +34,9 @@
     }
   },
   "references": [
+    {
+      "path": "./packages/types"
+    },
     {
       "path": "./packages/entities-types"
     },

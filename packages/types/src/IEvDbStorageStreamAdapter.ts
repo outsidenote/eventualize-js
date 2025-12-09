@@ -1,7 +1,7 @@
 import EvDbStreamCursor from "./EvDbStreamCursor.js";
 import EvDbEvent from "./EvDbEvent.js";
 import EvDbMessage from "./EvDbMessage.js";
-import EvDbStreamAddress from "./EvDbStreamAddress.js";
+import EvDbStreamAddress from "./EvDbStreamAddress";
 import StreamStoreAffected from "./StreamStoreAffected.js";
 import IEvDbChangeStream from "./IEvDbChangeStream.js";
 
@@ -11,10 +11,7 @@ export default interface IEvDbStorageStreamAdapter extends IEvDbChangeStream {
      * @param streamCursor - The streamCursor.
      * @returns Async iterable of EvDbEvent
      */
-    getEvents(
-        streamCursor: EvDbStreamCursor,
-        cancellation?: AbortSignal
-    ): Promise<AsyncIterable<EvDbEvent>>;
+    getEventsAsync(streamCursor: EvDbStreamCursor): AsyncGenerator<EvDbEvent, void, undefined>;
 
     /**
      * Gets last stored event's offset.

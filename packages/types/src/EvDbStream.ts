@@ -1,17 +1,17 @@
-import EvDbEvent from "./EvDbEvent.js";
+import EvDbEvent from "@eventualize/types/EvDbEvent.js";
 import EvDbMessage from "./EvDbMessage.js";
 import IEvDbStorageStreamAdapter from "./IEvDbStorageStreamAdapter.js";
 import IEvDbView from "./IEvDbView.js";
-import EvDbStreamAddress from "./EvDbStreamAddress.js";
+import EvDbStreamAddress from "@eventualize/types/EvDbStreamAddress.js";
 import IEvDbViewStore, { ImmutableIEvDbViewStoreMap } from "./IEvDbViewStore.js";
 import IEvDbStreamStore from "./IEvDbStreamStore.js";
 import IEvDbStreamStoreData from "./IEvDbStreamStoreData.js";
 import IEvDbEventPayload from "./IEvDbEventPayload.js";
-import StreamStoreAffected from "./StreamStoreAffected.js";
+import StreamStoreAffected from "@eventualize/types/StreamStoreAffected.js";
 import IEvDbEventMetadata from "./IEvDbEventMetadata.js";
 import EvDbStreamCursor from "./EvDbStreamCursor.js";
 import IEvDbOutboxProducer from "./IEvDbOutboxProducer.js";
-import OCCException from "./OCCException.js";
+import OCCException from "@eventualize/entities-types/OCCException";
 import { EvDbStreamType } from "./primitiveTypes.js";
 
 

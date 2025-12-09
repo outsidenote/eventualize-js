@@ -9,5 +9,10 @@
     "strict": true,
     "esModuleInterop": true,
   },
-  "include": ["src/**/*"]
+  "references": [
+    {
+      "path": "../types"
+    }
+  ],
+  "include": ["src/**/*", "../types/src/primitiveTypes.ts", "../types/src/EvDbStream.ts", "../types/src/EvDbStreamAddress.ts", "../types/src/EvDbEvent.ts", "../types/src/StreamStoreAffected.ts", "../types/src/EvDbStoredSnapshotData.ts", "../types/src/EvDbStoredSnapshotResultBase.ts"]
 }

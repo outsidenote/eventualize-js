@@ -3,7 +3,7 @@ import IEvDbEventPayload from "@eventualize/entities-types/IEvDbEventPayload";
 import IEvDbEventMetadata from '@eventualize/entities-types/IEvDbEventMetadata';
 import IEvDbStorageSnapshotAdapter from '@eventualize/entities-types/IEvDbStorageSnapshotAdapter';
 import EvDbViewAddress from '@eventualize/entities-types/EvDbViewAddress';
-import EvDbStreamAddress from '@eventualize/entities-types/EvDbStreamAddress';
+import EvDbStreamAddress from '@eventualize/types/EvDbStreamAddress';
 import { EvDbStoredSnapshotResult } from '@eventualize/entities-types/EvDbStoredSnapshotResult';
 
 /**

@@ -1,8 +1,8 @@
 import IEvDbViewStore, { IEvDbViewStoreGeneric } from "./IEvDbViewStore.js";
 import EvDbViewAddress from "./EvDbViewAddress.js";
 import IEvDbStorageSnapshotAdapter from "./IEvDbStorageSnapshotAdapter.js";
-import EvDbEvent from "./EvDbEvent.js";
-import { EvDbStoredSnapshotData } from "./EvDbStoredSnapshotData.js";
+import EvDbEvent from "../../types/src/EvDbEvent.js";
+import { EvDbStoredSnapshotData } from "../../types/src/EvDbStoredSnapshotData.js";
 import { EvDbStoredSnapshotResult } from "./EvDbStoredSnapshotResult.js";
 import IEvDbEventMetadata from "./IEvDbEventMetadata.js";
 import IEvDbEventPayload from "./IEvDbEventPayload.js";

@@ -1,4 +1,5 @@
 import EvDbStreamCursor from "./EvDbStreamCursor.js";
+import { IEvDbPayloadData } from "./IEvDbEventPayload.js";
 
 export default class EvDbMessage {
 
@@ -26,7 +27,7 @@ export default class EvDbMessage {
         public readonly capturedAt: Date,
         public readonly capturedBy: string,
         public readonly streamCursor: EvDbStreamCursor,
-        public readonly payload: any,
+        public readonly payload: IEvDbPayloadData,
         public readonly storedAt?: Date | null
     ) { }
 

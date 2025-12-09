@@ -9,8 +9,8 @@ import EvDbMessage from '@eventualize/entities-types/EvDbMessage';
 import EvDbMessageFilter from '@eventualize/entities-types/EvDbMessageFilter';
 import EvDbStreamAddress from '@eventualize/entities-types/EvDbStreamAddress';
 import EvDbStreamCursor from '@eventualize/entities-types/EvDbStreamCursor';
-import { EvDbShardName } from '@eventualize/entities-types/primitiveTypes';
-import StreamStoreAffected from '@eventualize/entities-types/StreamStoreAffected';
+import { EvDbShardName } from '@eventualize/types/primitiveTypes.js';
+import StreamStoreAffected from '@eventualize/types/StreamStoreAffected.js';
 
 
 export default class StorageAdapterStub implements IEvDbStorageSnapshotAdapter, IEvDbStorageStreamAdapter {

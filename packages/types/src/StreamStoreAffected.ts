@@ -1,18 +1,18 @@
- /**
- * Indicate how many events and messages were affected.
- */
+/**
+* Indicate how many events and messages were affected.
+*/
 
- type EvDbOutboxShardName = string;
+type EvDbOutboxShardName = string;
 
 export default class StreamStoreAffected {
   public readonly numEvents: number;
-  public readonly numMessages: ReadonlyMap<EvDbOutboxShardName, number>;
+  public readonly numMessages: ReadonlyMap<EvDbOutboxShardName, number> | undefined;
 
   public static readonly Empty = new StreamStoreAffected(0, new Map());
 
   constructor(
     numEvents: number,
-    numMessages: ReadonlyMap<EvDbOutboxShardName, number>
+    numMessages: ReadonlyMap<EvDbOutboxShardName, number> | undefined
   ) {
     this.numEvents = numEvents;
     this.numMessages = numMessages;

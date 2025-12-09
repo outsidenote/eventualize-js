@@ -1,4 +1,4 @@
-import EvDbStreamAddress from "./EvDbStreamAddress.js";
+import EvDbStreamAddress from "../../types/src/EvDbStreamAddress.js";
 import EvDbViewAddress from "./EvDbViewAddress.js";
 
 

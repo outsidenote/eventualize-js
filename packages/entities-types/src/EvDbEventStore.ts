@@ -1,7 +1,7 @@
-import EvDbStream from '@eventualize/entities-types/EvDbStream';
-import IEvDbStorageSnapshotAdapter from '@eventualize/entities-types/IEvDbStorageSnapshotAdapter';
-import IEvDbStorageStreamAdapter from '@eventualize/entities-types/IEvDbStorageStreamAdapter';
-import IEvDbEventPayload from "@eventualize/entities-types/IEvDbEventPayload";
+import EvDbStream from '@eventualize/types/EvDbStream';
+import IEvDbStorageSnapshotAdapter from '@eventualize/types/IEvDbStorageSnapshotAdapter';
+import IEvDbStorageStreamAdapter from '@eventualize/types/IEvDbStorageStreamAdapter';
+import IEvDbEventPayload from "@eventualize/types/IEvDbEventPayload";
 import { EvDbStreamFactory } from './EvDbStreamFactory';
 
 /**
