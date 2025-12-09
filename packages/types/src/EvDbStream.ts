@@ -149,7 +149,7 @@ export default class EvDbStream implements IEvDbStreamStore, IEvDbStreamStoreDat
             const lastEvent = this._pendingEvents[this._pendingEvents.length - 1];
             this.storedOffset = lastEvent.streamCursor.offset;
 
-            const viewSaveTasks = Object.values(this._views).map(v => v.save());
+            const viewSaveTasks = Object.values(this._views).map(v => v.store());
             await Promise.all(viewSaveTasks);
 
 

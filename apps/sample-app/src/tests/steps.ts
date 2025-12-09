@@ -5,33 +5,47 @@ import { PointsAdded, PointsSubtracted } from "../eventstore/PointsStream/events
 import EvDbStream from "@eventualize/types/EvDbStream";
 import { EvDbView } from '@eventualize/core/EvDbView';
 import { SumViewState, CountViewState } from '../eventstore/PointsStream/views.js';
-import { EvDbEventStoreBuilder, StreamMap, EvDbEventStoreType } from '@eventualize/core/EvDbEventStore';
+import { EvDbEventStoreBuilder, StreamMap, EvDbEventStoreType, IEvDbStorageAdapter } from '@eventualize/core/EvDbEventStore';
 import { EvDbPrismaStorageAdapter } from '@eventualize/relational-storage-adapter/EvDbPrismaStorageAdapter'
 import { PrismaClient } from '@eventualize/relational-storage-adapter/generated/prisma/client';
-import 'dotenv/config'
 import { PrismaPg } from '@prisma/adapter-pg'
+import * as dotenv from 'dotenv';
+import * as path from 'path';
+import { fileURLToPath } from 'node:url';
 
 
-const connectionString = `${process.env.DATABASE_URL}`
-const adapter = new PrismaPg({ connectionString })
+const getEnvPath = () => {
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+    const projectRoot = path.resolve(__dirname, '..', '..');
+    return path.join(projectRoot, '.env')
+}
+
+const envPath = getEnvPath();
+console.log('.env path:', envPath)
+dotenv.config({ path: envPath });
+
+export enum EVENT_STORE_TYPE {
+    STUB,
+    POSTGRES
+}
 
 export default class Steps {
-    public static createStubEventStore() {
-        const storageAdapter = new StorageAdapterStub();
-
-        const eventstore = new EvDbEventStoreBuilder()
-            .withAdapter(storageAdapter)
-            .withStreamFactory(PointsStreamFactory)
-            .build();
-
-        return eventstore;
-
-    }
-
-    public static createPostgresEventStore() {
-        const client = new PrismaClient({ adapter })
-        const storageAdapter = new EvDbPrismaStorageAdapter(client)
-
+    public static createEventStore(eventStoreType: EVENT_STORE_TYPE = EVENT_STORE_TYPE.STUB) {
+        let storageAdapter: IEvDbStorageAdapter;
+        switch (eventStoreType) {
+            case EVENT_STORE_TYPE.POSTGRES: {
+                const connectionString = `${process.env.DATABASE_URL}`
+                const adapter = new PrismaPg({ connectionString })
+                const client = new PrismaClient({ adapter })
+                storageAdapter = new EvDbPrismaStorageAdapter(client)
+                break;
+            }
+            case EVENT_STORE_TYPE.STUB:
+            default:
+                storageAdapter = new StorageAdapterStub();
+                break;
+        }
         const eventstore = new EvDbEventStoreBuilder()
             .withAdapter(storageAdapter)
             .withStreamFactory(PointsStreamFactory)

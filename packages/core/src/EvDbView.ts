@@ -32,8 +32,14 @@ export abstract class EvDbViewRaw implements IEvDbViewStore {
         this.memoryOffset
     }
 
-    save(signal?: AbortSignal): Promise<void> {
-        throw new Error("Method not implemented.");
+    async store(): Promise<void> {
+        const eventsSinceLatestSnapshot = this.memoryOffset - this.storeOffset;
+        const secondsSinceLatestSnapshot = new Date().getTime() - this.storedAt.getTime();
+        if (!this.shouldStoreSnapshot(eventsSinceLatestSnapshot, secondsSinceLatestSnapshot)) {
+            return;
+        }
+        const snapshotData = this.getSnapshotData();
+        await this._storageAdapter.storeSnapshotAsync(snapshotData);
     }
 
     protected abstract onApplyEvent(e: EvDbEvent): void;
@@ -87,7 +93,6 @@ export abstract class EvDbView<TState> extends EvDbViewRaw implements IEvDbViewS
         // } else {
         //     throw new Error(`Method '${methodName}' not found or not a function in the child class.`);
         // }
-
     }
 
 }

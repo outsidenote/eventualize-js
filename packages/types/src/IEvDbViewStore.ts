@@ -29,7 +29,7 @@ export default interface IEvDbViewStore extends IEvDbView {
     /**
      * Save snapshot data.
      */
-    save(signal?: AbortSignal): Promise<void>;
+    store(): Promise<void>;
 }
 
 export interface IEvDbViewStoreGeneric<TState> extends IEvDbViewStore {

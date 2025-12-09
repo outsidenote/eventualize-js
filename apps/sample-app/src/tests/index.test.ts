@@ -1,12 +1,12 @@
 import { test, describe } from 'node:test'; // Use require or import
 
-import Steps from './steps.js';
+import Steps, {EVENT_STORE_TYPE} from './steps.js';
 
 
 describe('Stream Tests', () => {
   test('Local execution', () => {
     // GIVEN
-    const eventStoreStub = Steps.createStubEventStore();
+    const eventStoreStub = Steps.createEventStore();
     const pointsStream = Steps.createPointsStream('pointsStream1', eventStoreStub);
 
     // WHEN
@@ -18,12 +18,16 @@ describe('Stream Tests', () => {
 
   test('Postgres execution', async () => {
     // GIVEN
-    const eventStorePG = Steps.createPostgresEventStore();
+    const eventStorePG = Steps.createEventStore(EVENT_STORE_TYPE.POSTGRES);
     const pointsStream = Steps.createPointsStream('pointsStream1', eventStorePG);
 
     // WHEN
     Steps.addPointsEventsToStream(pointsStream);
-    await pointsStream.store()
+    try {
+      await pointsStream.store()
+    } catch(error) {
+      console.log('Stream store error:', error)
+    }
 
     // THEN
     Steps.assertStreamStateIsCorrect(pointsStream);

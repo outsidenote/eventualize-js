@@ -106,7 +106,8 @@ export class EvDbPrismaStorageAdapter implements IEvDbStorageSnapshotAdapter, IE
                 } as eventsCreateManyInput
             });
 
-            const numEvents = (await this.queryProvider.saveEvents(eventsToInsert)).count;
+            const queryResult = await this.queryProvider.saveEvents(eventsToInsert) 
+            const numEvents = queryResult.count;
             return new StreamStoreAffected(numEvents, undefined);
         } catch (error) {
             if (this.isOccException(error)) {
