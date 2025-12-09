@@ -1,4 +1,4 @@
-import { PrismaClient, Prisma } from './generated/prisma/client';
+import { PrismaClient, Prisma } from './generated/prisma/client.js';
 
 // ============================================================================
 // Prisma-based Query Methods (Type-safe alternatives to raw SQL)

@@ -19,11 +19,11 @@
       "@eventualize/types/*": [
         "packages/types/src/*"
       ],
-      "@eventualize/entities-types": [
-        "packages/entities-types/src"
+      "@eventualize/core": [
+        "@eventualize/core"
       ],
-      "@eventualize/entities-types/*": [
-        "packages/entities-types/src/*"
+      "@eventualize/core/*": [
+        "@eventualize/core/*"
       ],
       "@eventualize/relational-storage-adapter": [
         "packages/relational-storage-adapter/src"
@@ -38,7 +38,7 @@
       "path": "./packages/types"
     },
     {
-      "path": "./packages/entities-types"
+      "path": "./packages/core"
     },
     {
       "path": "./packages/relational-storage-adapter"

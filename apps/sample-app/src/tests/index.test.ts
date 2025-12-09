@@ -1,5 +1,4 @@
 import { test, describe } from 'node:test'; // Use require or import
-import { PointsAdded, PointsSubtracted } from "../eventstore/PointsStream/events.js";
 
 import Steps from './steps.js';
 

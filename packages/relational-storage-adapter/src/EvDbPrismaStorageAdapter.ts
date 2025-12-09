@@ -1,4 +1,4 @@
-import { PrismaClient, Prisma } from './generated/prisma/client';
+import { PrismaClient, Prisma } from './generated/prisma/client.js';
 import { PrismaQueryProvider } from './EvDbRelationalStorageAdapterQueries.js';
 import { IEvDbPayloadData } from '@eventualize/types/IEvDbEventPayload';
 import IEvDbEventMetadata from '@eventualize/types/IEvDbEventMetadata';

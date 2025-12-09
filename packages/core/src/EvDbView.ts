@@ -39,9 +39,6 @@ export abstract class EvDbViewRaw implements IEvDbViewStore {
     protected abstract onApplyEvent(e: EvDbEvent): void;
 }
 
-type ApplyMethodType<TState> = (oldState: TState, payload: IEvDbEventPayload, metadata: IEvDbEventMetadata) => TState;
-
-
 export abstract class EvDbView<TState> extends EvDbViewRaw implements IEvDbViewStoreGeneric<TState> {
     protected getDefaultState(): TState {
         return this.defaultState;

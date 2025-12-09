@@ -1,5 +1,5 @@
 import { PointsAdded, PointsSubtracted, PointsStreamEvents } from "./events.js";
-import { createViewFactory } from "@eventualize/entities-types/ViewFactory";
+import { createViewFactory } from "@eventualize/core/ViewFactory";
 
 export class CountViewState {
     constructor(public count: number = 0) { };

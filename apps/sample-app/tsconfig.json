@@ -8,7 +8,10 @@
   },
   "references": [
     {
-      "path": "../../packages/entities-types"
+      "path": "../../packages/types"
+    },
+    {
+      "path": "../../packages/core"
     },
     {
       "path": "../../packages/relational-storage-adapter"

@@ -2,7 +2,7 @@ import EvDbStream from '@eventualize/types/EvDbStream';
 import IEvDbStorageSnapshotAdapter from '@eventualize/types/IEvDbStorageSnapshotAdapter';
 import IEvDbStorageStreamAdapter from '@eventualize/types/IEvDbStorageStreamAdapter';
 import IEvDbEventPayload from "@eventualize/types/IEvDbEventPayload";
-import { EvDbStreamFactory } from './EvDbStreamFactory';
+import { EvDbStreamFactory } from './EvDbStreamFactory.js';
 
 /**
  * Combined storage adapter interface
