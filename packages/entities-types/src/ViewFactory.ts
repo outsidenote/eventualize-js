@@ -1,10 +1,10 @@
 import { EvDbView } from '@eventualize/entities-types/EvDbView';
-import IEvDbEventPayload from "@eventualize/entities-types/IEvDbEventPayload";
-import IEvDbEventMetadata from '@eventualize/entities-types/IEvDbEventMetadata';
-import IEvDbStorageSnapshotAdapter from '@eventualize/entities-types/IEvDbStorageSnapshotAdapter';
-import EvDbViewAddress from '@eventualize/entities-types/EvDbViewAddress';
+import IEvDbEventPayload from "@eventualize/types/IEvDbEventPayload";
+import IEvDbEventMetadata from '@eventualize/types/IEvDbEventMetadata';
+import IEvDbStorageSnapshotAdapter from '@eventualize/types/IEvDbStorageSnapshotAdapter';
+import EvDbViewAddress from '@eventualize/types/EvDbViewAddress';
 import EvDbStreamAddress from '@eventualize/types/EvDbStreamAddress';
-import { EvDbStoredSnapshotResult } from '@eventualize/entities-types/EvDbStoredSnapshotResult';
+import { EvDbStoredSnapshotResult } from '@eventualize/types/EvDbStoredSnapshotResult';
 
 /**
  * Handler function type for applying an event to state

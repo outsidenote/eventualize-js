@@ -1,4 +1,4 @@
-import EvDbSnapshotCursor from "./EvDbSnapshotCursor.js";
+import EvDbSnapshotCursor from "@eventualize/types/EvDbSnapshotCursor";
 
 /**
  * Optimistic Concurrency Collisions Exception

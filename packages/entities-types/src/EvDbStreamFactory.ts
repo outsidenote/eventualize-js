@@ -1,7 +1,7 @@
 import EvDbStream from '@eventualize/types/EvDbStream.js';
-import IEvDbStorageSnapshotAdapter from '@eventualize/entities-types/IEvDbStorageSnapshotAdapter';
-import IEvDbStorageStreamAdapter from '@eventualize/entities-types/IEvDbStorageStreamAdapter';
-import IEvDbEventPayload from "@eventualize/entities-types/IEvDbEventPayload";
+import IEvDbStorageSnapshotAdapter from '@eventualize/types/IEvDbStorageSnapshotAdapter';
+import IEvDbStorageStreamAdapter from '@eventualize/types/IEvDbStorageStreamAdapter';
+import IEvDbEventPayload from "@eventualize/types/IEvDbEventPayload";
 import { ViewFactory } from './ViewFactory.js';
 
 /**
@@ -97,7 +97,6 @@ export class StreamFactoryBuilder<TEvents extends IEvDbEventPayload, TStreamType
 // ============================================================================
 
 import { createViewFactory } from './ViewFactory.js';
-import IEvDbEventMetadata from '@eventualize/entities-types/IEvDbEventMetadata';
 
 // Step 1: Define Events (same as before)
 export class PointsAdded implements IEvDbEventPayload {

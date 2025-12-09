@@ -5,7 +5,7 @@
     "moduleResolution": "NodeNext", // Use Node.js specific resolution logic
     "composite": true,
     "declaration": true,
-    "declarationMap": true,
+    "declarationMap": false,
     "sourceMap": true,
     "strict": true,
     "esModuleInterop": true,

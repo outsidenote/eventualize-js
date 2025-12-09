@@ -2,7 +2,7 @@ import * as assert from 'node:assert';
 import StorageAdapterStub from "./StorageAdapterStub.js";
 import PointsStreamFactory from "../eventstore/PointsStream/index.js";
 import { PointsAdded, PointsSubtracted } from "../eventstore/PointsStream/events.js";
-import EvDbStream from "@eventualize/entities-types/EvDbStream";
+import EvDbStream from "@eventualize/types/EvDbStream";
 import { EvDbView } from '@eventualize/entities-types/EvDbView';
 import { SumViewState, CountViewState } from '../eventstore/PointsStream/views.js';
 import { EvDbEventStoreBuilder, StreamMap, EvDbEventStoreType } from '@eventualize/entities-types/EvDbEventStore';

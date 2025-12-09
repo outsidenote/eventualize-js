@@ -1,4 +1,4 @@
-import IEvDbEventPayload from "@eventualize/entities-types/IEvDbEventPayload";
+import IEvDbEventPayload from "@eventualize/types/IEvDbEventPayload";
 
 export class PointsAdded implements IEvDbEventPayload {
     readonly payloadType = 'PointsAdded';

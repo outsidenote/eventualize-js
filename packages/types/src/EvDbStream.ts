@@ -11,7 +11,7 @@ import StreamStoreAffected from "@eventualize/types/StreamStoreAffected.js";
 import IEvDbEventMetadata from "./IEvDbEventMetadata.js";
 import EvDbStreamCursor from "./EvDbStreamCursor.js";
 import IEvDbOutboxProducer from "./IEvDbOutboxProducer.js";
-import OCCException from "@eventualize/entities-types/OCCException";
+import OCCException from "@eventualize/types/OCCException";
 import { EvDbStreamType } from "./primitiveTypes.js";
 
 

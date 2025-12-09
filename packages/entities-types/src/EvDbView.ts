@@ -1,11 +1,11 @@
-import IEvDbViewStore, { IEvDbViewStoreGeneric } from "./IEvDbViewStore.js";
-import EvDbViewAddress from "./EvDbViewAddress.js";
-import IEvDbStorageSnapshotAdapter from "./IEvDbStorageSnapshotAdapter.js";
-import EvDbEvent from "../../types/src/EvDbEvent.js";
-import { EvDbStoredSnapshotData } from "../../types/src/EvDbStoredSnapshotData.js";
-import { EvDbStoredSnapshotResult } from "./EvDbStoredSnapshotResult.js";
-import IEvDbEventMetadata from "./IEvDbEventMetadata.js";
-import IEvDbEventPayload from "./IEvDbEventPayload.js";
+import IEvDbViewStore, { IEvDbViewStoreGeneric } from "@eventualize/types/IEvDbViewStore";
+import EvDbViewAddress from "@eventualize/types/EvDbViewAddress";
+import IEvDbStorageSnapshotAdapter from "@eventualize/types/IEvDbStorageSnapshotAdapter";
+import EvDbEvent from "@eventualize/types/src/EvDbEvent";
+import { EvDbStoredSnapshotData } from "@eventualize/types/EvDbStoredSnapshotData";
+import { EvDbStoredSnapshotResult } from "@eventualize/types/EvDbStoredSnapshotResult";
+import IEvDbEventMetadata from "@eventualize/types/IEvDbEventMetadata";
+import IEvDbEventPayload from "@eventualize/types/IEvDbEventPayload";
 
 
 export abstract class EvDbViewRaw implements IEvDbViewStore {
