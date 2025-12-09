@@ -10,7 +10,7 @@
     "apps/*"
   ],
   "scripts": {
-    "test": "tsx --test",
+    "test": "node --import tsx --test 'packages/**/src/**/*.test.ts' 'apps/**/src/**/*.test.ts'",
     "build": "tsc --build",
     "clean": "rimraf tsconfig.tsbuildinfo",
     "clear": " npm run clean && npm run clean --workspaces --if-present",

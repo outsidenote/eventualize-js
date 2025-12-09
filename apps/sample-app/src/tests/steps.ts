@@ -22,7 +22,6 @@ const getEnvPath = () => {
 }
 
 const envPath = getEnvPath();
-console.log('.env path:', envPath)
 dotenv.config({ path: envPath });
 
 export enum EVENT_STORE_TYPE {
