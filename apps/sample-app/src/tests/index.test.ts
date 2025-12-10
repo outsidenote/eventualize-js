@@ -27,6 +27,7 @@ describe('Stream Tests', () => {
     try {
       await assert.doesNotReject(pointsStream.store());
       const fetchedStream = await eventStorePG.getStream("PointsStream", streamId);
+      Steps.compareFetchedAndStoredStreams(pointsStream,fetchedStream);
     } catch (error) {
       assert.fail(error as Error);
     } finally {

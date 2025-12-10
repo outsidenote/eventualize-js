@@ -74,4 +74,13 @@ export default class Steps {
         assert.strictEqual((stream.getView('CountView') as EvDbView<CountViewState>).getState().count, 2);
         assert.strictEqual(stream.getEvents().length, 2);
     }
+
+    public static compareFetchedAndStoredStreams(storedStream: EvDbStream, fetchedStream: EvDbStream) {
+        assert.strictEqual(fetchedStream.getEvents().length, 0);
+        assert.strictEqual(fetchedStream.storedOffset, storedStream.storedOffset);
+        const fetchedSumView = fetchedStream.getView('SumView') as EvDbView<SumViewState>;
+        const storedSumView = storedStream.getView('SumView') as EvDbView<SumViewState>;
+        assert.strictEqual(storedSumView.getState().sum, fetchedSumView.getState().sum);
+        assert.strictEqual(storedSumView.storeOffset, fetchedSumView.memoryOffset);
+    }
 }
