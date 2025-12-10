@@ -14,7 +14,8 @@ import { EvDbView } from '@eventualize/core/EvDbView';
 import { EvDbPrismaStorageAdapter } from '@eventualize/relational-storage-adapter/EvDbPrismaStorageAdapter'
 import { PrismaClient } from '@eventualize/relational-storage-adapter/generated/prisma/client';
 import { EvDbEventStoreBuilder, StreamMap, EvDbEventStoreType, IEvDbStorageAdapter } from '@eventualize/core/EvDbEventStore';
-import IEvDbEventPayload from '@eventualize/types/IEvDbEventPayload';
+import EvDbPrismaStorageAdmin from '@eventualize/relational-storage-adapter/EvDBPrismaStorageAdmin';
+import { EvDbEventStore } from '@eventualize/core/EvDbEventStore'
 
 
 const getEnvPath = () => {
@@ -60,7 +61,7 @@ export default class Steps {
     public static createPointsStream<TStreams extends StreamMap>(streamId: string, eventStore: EvDbEventStoreType<TStreams>): EvDbStream {
         return eventStore.createPointsStream(streamId);
     }
-    
+
     public static addPointsEventsToStream(stream: EvDbStream) {
         stream.appendEvent(new PointsAdded(50));
         stream.appendEvent(new PointsSubtracted(20));
@@ -84,5 +85,17 @@ export default class Steps {
         const storedSumView = storedStream.getView('SumView') as EvDbView<SumViewState>;
         assert.strictEqual(storedSumView.getState().sum, fetchedSumView.getState().sum);
         assert.strictEqual(storedSumView.storeOffset, fetchedSumView.memoryOffset);
+    }
+
+    public static async clearEnvironment(eventStore: EvDbEventStore<any>, eventStoreType: EVENT_STORE_TYPE = EVENT_STORE_TYPE.POSTGRES) {
+        if (eventStoreType === EVENT_STORE_TYPE.POSTGRES) {
+            const connectionString = `${process.env.DATABASE_URL}`
+            const adapter = new PrismaPg({ connectionString })
+            const client = new PrismaClient({ adapter })
+            const admin = new EvDbPrismaStorageAdmin(client);
+            await eventStore.getStore().close();
+            await admin.clearEnvironmentAsync();
+            await admin.close();
+        }
     }
 }

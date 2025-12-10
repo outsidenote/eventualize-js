@@ -8,24 +8,21 @@ describe('Postgres Tests', () => {
     const testData: any = {};
     t.test('Given: local stream with events', () => {
       testData.streamId = 'pointsStream1';
-      testData.eventStorePG = Steps.createEventStore(EVENT_STORE_TYPE.POSTGRES);
-      testData.pointsStream = Steps.createPointsStream(testData.streamId, testData.eventStorePG);
+      testData.eventStore = Steps.createEventStore(EVENT_STORE_TYPE.POSTGRES);
+      testData.pointsStream = Steps.createPointsStream(testData.streamId, testData.eventStore);
       Steps.addPointsEventsToStream(testData.pointsStream);
     })
 
     t.test('When: stream stored and fetched', async () => {
-      try {
-        await assert.doesNotReject(testData.pointsStream.store());
-        testData.fetchedStream = await testData.eventStorePG.getStream("PointsStream", testData.streamId);
-      } catch (error) {
-        assert.fail(error as Error);
-      } finally {
-        await testData.eventStorePG.getStore().close();
-      }
+      await assert.doesNotReject(testData.pointsStream.store());
+      testData.fetchedStream = await testData.eventStore.getStream("PointsStream", testData.streamId);
     })
 
     t.test('Then: fetched stream is correct', async () => {
       Steps.compareFetchedAndStoredStreams(testData.pointsStream, testData.fetchedStream);
+    })
+    t.after(async () => {
+      await Steps.clearEnvironment(testData.eventStore, EVENT_STORE_TYPE.POSTGRES);
     })
   });
 })
