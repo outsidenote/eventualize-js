@@ -9,18 +9,26 @@ import IEvDbEventPayload from "@eventualize/types/IEvDbEventPayload";
 
 
 export abstract class EvDbViewRaw implements IEvDbViewStore {
+    private _memoryOffset: number;
+    private _storeOffset: number;
+    private _storedAt: Date;
 
     protected constructor(
-        public readonly address: EvDbViewAddress,
-        public readonly storedAt: Date = new Date(),
-        public storeOffset: number = 0,
-        private _memoryOffset: number = 0,
         private readonly _storageAdapter: IEvDbStorageSnapshotAdapter,
+        public readonly address: EvDbViewAddress,
+        snapshot: EvDbStoredSnapshotResult<any>
 
     ) {
+        const storeOffset = snapshot.offset ?? 0;
+        this._memoryOffset = storeOffset;
+        this._storeOffset = storeOffset;
+
+        this._storedAt = snapshot.storedAt ?? new Date();
     }
     public abstract getSnapshotData(): EvDbStoredSnapshotData;
 
+    get storedAt(): Date { return this._storedAt };
+    get storeOffset(): number { return this._storeOffset };
     get memoryOffset(): number { return this._memoryOffset };
 
     shouldStoreSnapshot(offsetGapFromLastSave: number, durationSinceLastSaveMs: number): boolean {
@@ -43,6 +51,7 @@ export abstract class EvDbViewRaw implements IEvDbViewStore {
         }
         const snapshotData = this.getSnapshotData();
         await this._storageAdapter.storeSnapshotAsync(snapshotData);
+        this._storeOffset = this._memoryOffset;
     }
 
     protected abstract onApplyEvent(e: EvDbEvent): void;
@@ -59,14 +68,11 @@ export abstract class EvDbView<TState> extends EvDbViewRaw implements IEvDbViewS
 
     public constructor(
         address: EvDbViewAddress,
-        storedAt: Date = new Date(),
-        storeOffset: number = 0,
-        memoryOffset: number = 0,
         storageAdapter: IEvDbStorageSnapshotAdapter,
         snapshot: EvDbStoredSnapshotResult<TState>,
         public readonly defaultState: TState
     ) {
-        super(address, storedAt, storeOffset, memoryOffset, storageAdapter);
+        super(storageAdapter, address, snapshot);
         if (snapshot.offset === 0)
             this.state = this.getDefaultState();
         else

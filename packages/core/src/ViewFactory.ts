@@ -42,14 +42,11 @@ class GenericView<TState, TEvents extends IEvDbEventPayload> extends EvDbView<TS
 
     constructor(
         viewAddress: EvDbViewAddress,
-        storedAt: Date | undefined,
-        storeOffset: number,
-        memoryOffset: number,
         storageAdapter: IEvDbStorageSnapshotAdapter,
         snapshot: EvDbStoredSnapshotResult<TState>,
         public readonly config: ViewConfig<TState, TEvents>
     ) {
-        super(viewAddress, storedAt, storeOffset, memoryOffset, storageAdapter, snapshot, config.defaultState);
+        super(viewAddress, storageAdapter, snapshot, config.defaultState);
         this.config = config;
     }
 
@@ -88,9 +85,6 @@ export class ViewFactory<TState, TEvents extends IEvDbEventPayload> {
 
         return new GenericView<TState, TEvents>(
             viewAddress,
-            undefined,
-            0,
-            0,
             storageAdapter,
             EvDbStoredSnapshotResult.getEmptyState<TState>(),
             this.config
@@ -111,11 +105,8 @@ export class ViewFactory<TState, TEvents extends IEvDbEventPayload> {
 
         return new GenericView<TState, TEvents>(
             viewAddress,
-            snapshot.storedAt,
-            snapshot.offset,
-            snapshot.offset,
             storageAdapter,
-            snapshot.state,
+            snapshot,
             this.config
         );
     }

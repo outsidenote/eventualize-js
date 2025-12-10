@@ -50,8 +50,8 @@ export class EvDbStreamFactory<TEvents extends IEvDbEventPayload, TStreamType ex
   }
 
   private getViews(streamId: string, snapshotStorageAdapter: IEvDbStorageSnapshotAdapter): Promise<EvDbView<any>>[] {
-    const getViewPromises = this.config.viewFactories.map(factory =>
-      factory.get(streamId, snapshotStorageAdapter)
+    const getViewPromises = this.config.viewFactories.map(viewFactory =>
+      viewFactory.get(streamId, snapshotStorageAdapter)
     );
     return getViewPromises;
   }
