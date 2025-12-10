@@ -1,0 +1,32 @@
+{
+  "name": "@eventualize/mysql-storage-adapter",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./*": "./dist/*.js"
+  },
+  "scripts": {
+    "build": "tsc --build",
+    "clean": "rimraf dist",
+    "rebuild": "npm run clean && npm run build",
+    "test": "echo not tests implemented yet."
+  },
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "@eventualize/relational-storage-adapter": "^1.0.0",
+    "@prisma/adapter-mariadb": "^7.1.0",
+    "@prisma/client": "^7.1.0"
+  },
+  "devDependencies": {
+    "@prisma/client": "^7.1.0",
+    "dotenv": "^17.2.3",
+    "prisma": "^7.1.0"
+  }
+}

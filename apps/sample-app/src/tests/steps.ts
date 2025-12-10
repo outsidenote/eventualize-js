@@ -12,11 +12,11 @@ import { PrismaPg } from '@prisma/adapter-pg'
 import EvDbStream from "@eventualize/types/EvDbStream";
 import { EvDbView } from '@eventualize/core/EvDbView';
 import { EvDbPrismaStorageAdapter } from '@eventualize/relational-storage-adapter/EvDbPrismaStorageAdapter'
-import { PrismaClient } from '@eventualize/relational-storage-adapter/generated/prisma/client';
 import { EvDbEventStoreBuilder, StreamMap, EvDbEventStoreType, IEvDbStorageAdapter } from '@eventualize/core/EvDbEventStore';
 import EvDbPrismaStorageAdmin from '@eventualize/relational-storage-adapter/EvDBPrismaStorageAdmin';
 import { EvDbEventStore } from '@eventualize/core/EvDbEventStore'
-import EvDbPostgresPrismaClientFactory from '@eventualize/postgres-storage-adapter/EvDbPostgresPrismaClientFactory.js'
+import EvDbPostgresPrismaClientFactory from '@eventualize/postgres-storage-adapter/EvDbPostgresPrismaClientFactory';
+import EvDbMySqlPrismaClientFactory from '@eventualize/mysql-storage-adapter/EvDbMySqlPrismaClientFactory';
 
 
 const getEnvPath = () => {
@@ -31,7 +31,8 @@ dotenv.config({ path: envPath });
 
 export enum EVENT_STORE_TYPE {
     STUB,
-    POSTGRES
+    POSTGRES,
+    MYSQL
 }
 
 export default class Steps {
@@ -40,6 +41,11 @@ export default class Steps {
         switch (eventStoreType) {
             case EVENT_STORE_TYPE.POSTGRES: {
                 const client = EvDbPostgresPrismaClientFactory.create();
+                storageAdapter = new EvDbPrismaStorageAdapter(client)
+                break;
+            }
+            case EVENT_STORE_TYPE.MYSQL: {
+                const client = EvDbMySqlPrismaClientFactory.create();
                 storageAdapter = new EvDbPrismaStorageAdapter(client)
                 break;
             }
@@ -87,7 +93,7 @@ export default class Steps {
     }
 
     public static async clearEnvironment(eventStore: EvDbEventStore<any>, eventStoreType: EVENT_STORE_TYPE = EVENT_STORE_TYPE.POSTGRES) {
-        if (eventStoreType === EVENT_STORE_TYPE.POSTGRES) {
+        if ([EVENT_STORE_TYPE.POSTGRES, EVENT_STORE_TYPE.MYSQL].includes(eventStoreType)) {
             const client = EvDbPostgresPrismaClientFactory.create();
             const admin = new EvDbPrismaStorageAdmin(client);
             await eventStore.getStore().close();

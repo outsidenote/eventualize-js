@@ -37,6 +37,12 @@
       "@eventualize/postgres-storage-adapter/*": [
         "packages/postgres-storage-adapter/src/*"
       ],
+      "@eventualize/mysql-storage-adapter": [
+        "packages/mysql-storage-adapter/src"
+      ],
+      "@eventualize/mysql-storage-adapter/*": [
+        "packages/mysql-storage-adapter/src/*"
+      ],
     }
   },
   "references": [
@@ -51,6 +57,9 @@
     },
     {
       "path": "./packages/postgres-storage-adapter"
+    },
+    {
+      "path": "./packages/mysql-storage-adapter"
     },
     {
       "path": "./apps/sample-app"

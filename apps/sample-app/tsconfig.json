@@ -19,6 +19,9 @@
     {
       "path": "../../packages/postgres-storage-adapter"
     },
+    {
+      "path": "../../packages/mysql-storage-adapter"
+    },
   ],
   "include": [
     "src/**/*"
