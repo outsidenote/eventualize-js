@@ -14,22 +14,25 @@ export abstract class EvDbViewRaw implements IEvDbViewStore {
         public readonly address: EvDbViewAddress,
         public readonly storedAt: Date = new Date(),
         public storeOffset: number = 0,
-        readonly memoryOffset: number = 0,
+        private _memoryOffset: number = 0,
         private readonly _storageAdapter: IEvDbStorageSnapshotAdapter,
 
     ) {
     }
     public abstract getSnapshotData(): EvDbStoredSnapshotData;
 
+    get memoryOffset(): number { return this._memoryOffset };
+
     shouldStoreSnapshot(offsetGapFromLastSave: number, durationSinceLastSaveMs: number): boolean {
         return true;
     }
     applyEvent(e: EvDbEvent): void {
         const offset = e.streamCursor.offset;
-        if (this.memoryOffset >= offset)
+        if (this.memoryOffset >= offset) {
             return;
+        }
         this.onApplyEvent(e);
-        this.memoryOffset
+        this._memoryOffset = offset;
     }
 
     async store(): Promise<void> {
@@ -85,14 +88,6 @@ export abstract class EvDbView<TState> extends EvDbViewRaw implements IEvDbViewS
 
     protected onApplyEvent(e: EvDbEvent): void {
         this.state = this.handleOnApply(this.state, e.payload, e);
-        // const handlerName = [e.payload.payloadType];
-        // const method = (this as any)[methodName] as ApplyMethodType<TState>;
-        // if (typeof method === 'function') {
-        //     const newState = method(this.state, e.payload, e);
-        //     this.state = newState;
-        // } else {
-        //     throw new Error(`Method '${methodName}' not found or not a function in the child class.`);
-        // }
     }
 
 }

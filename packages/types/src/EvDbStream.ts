@@ -92,8 +92,8 @@ export default class EvDbStream implements IEvDbStreamStore, IEvDbStreamStoreDat
         this._pendingEvents = [...this._pendingEvents, e];
 
         // Apply to views
-        for (const folding of Object.values(this._views)) {
-            folding.applyEvent(e);
+        for (const view of Object.values(this._views)) {
+            view.applyEvent(e);
         }
 
         // Outbox producer
