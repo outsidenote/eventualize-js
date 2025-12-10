@@ -7,7 +7,8 @@ describe('Unit Tests', () => {
   test('Add events to empty stream', t => {
     const testData: any = {};
     t.test('Given: empty stream', () => {
-      testData.eventStoreStub = Steps.createEventStore();
+      testData.client = Steps.createStoreClient(EVENT_STORE_TYPE.STUB);
+      testData.eventStoreStub = Steps.createEventStore(testData.client);
       testData.pointsStream = Steps.createPointsStream('pointsStream1', testData.eventStoreStub);
     });
 

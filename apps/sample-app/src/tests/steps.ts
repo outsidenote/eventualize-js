@@ -8,16 +8,13 @@ import PointsStreamFactory from "../eventstore/PointsStream/index.js";
 import { SumViewState, CountViewState } from '../eventstore/PointsStream/views.js';
 import { PointsAdded, PointsSubtracted } from "../eventstore/PointsStream/events.js";
 
-import { PrismaPg } from '@prisma/adapter-pg'
 import EvDbStream from "@eventualize/types/EvDbStream";
 import { EvDbView } from '@eventualize/core/EvDbView';
 import { EvDbPrismaStorageAdapter } from '@eventualize/relational-storage-adapter/EvDbPrismaStorageAdapter'
 import { EvDbEventStoreBuilder, StreamMap, EvDbEventStoreType, IEvDbStorageAdapter } from '@eventualize/core/EvDbEventStore';
 import EvDbPrismaStorageAdmin from '@eventualize/relational-storage-adapter/EvDBPrismaStorageAdmin';
-import { EvDbEventStore } from '@eventualize/core/EvDbEventStore'
 import EvDbPostgresPrismaClientFactory from '@eventualize/postgres-storage-adapter/EvDbPostgresPrismaClientFactory';
 import EvDbMySqlPrismaClientFactory from '@eventualize/mysql-storage-adapter/EvDbMySqlPrismaClientFactory';
-import { PrismaClient } from '@eventualize/relational-storage-adapter/generated/prisma/client';
 import { PrismaClient as PostgresPrismaClient } from '@eventualize/postgres-storage-adapter/generated/prisma/client';
 import { PrismaClient as MySqlPrismaClient } from '@eventualize/mysql-storage-adapter/generated/prisma/client';
 
@@ -38,10 +35,10 @@ export enum EVENT_STORE_TYPE {
     MYSQL
 }
 
-type StoreClientType = PostgresPrismaClient<never, any, any> | MySqlPrismaClient<never, any, any>;
+type StoreClientType = PostgresPrismaClient<never, any, any> | MySqlPrismaClient<never, any, any> | undefined;
 
 export default class Steps {
-    public static createStoreClient(storeType: EVENT_STORE_TYPE = EVENT_STORE_TYPE.STUB): StoreClientType | undefined {
+    public static createStoreClient(storeType: EVENT_STORE_TYPE = EVENT_STORE_TYPE.STUB): StoreClientType {
         switch (storeType) {
             case EVENT_STORE_TYPE.POSTGRES:
                 return EvDbPostgresPrismaClientFactory.create();
@@ -52,7 +49,7 @@ export default class Steps {
                 return undefined;
         }
     }
-    public static createEventStore(storeClient: PrismaClient<never, any, any>) {
+    public static createEventStore(storeClient: StoreClientType) {
         const storageAdapter = storeClient ? new EvDbPrismaStorageAdapter(storeClient) : new StorageAdapterStub();
 
         const eventstore = new EvDbEventStoreBuilder()
@@ -93,7 +90,7 @@ export default class Steps {
         assert.strictEqual(storedSumView.storeOffset, fetchedSumView.memoryOffset);
     }
 
-    public static async clearEnvironment(storeClient: PrismaClient<never, any, any>) {
+    public static async clearEnvironment(storeClient: StoreClientType) {
         if (!storeClient) {
             return;
         }

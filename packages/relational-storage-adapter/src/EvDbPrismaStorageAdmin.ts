@@ -1,9 +1,8 @@
-import { PrismaClient, Prisma } from './generated/prisma/client.js';
 import IEvDbStorageAdmin from "@eventualize/types/IEvDbStorageAdmin";
 
 
 export default class EvDbPrismaStorageAdmin implements IEvDbStorageAdmin {
-    constructor(private prisma: PrismaClient) { }
+    constructor(private prisma: any) { }
     async clearEnvironmentAsync(): Promise<void> {
         await Promise.all([
             this.prisma.events.deleteMany({}),
