@@ -57,6 +57,26 @@ class BaseStore {
   }
 
   /**
+   * Get a stream instance from the event store by stream type and ID
+   */
+  public async getStream(streamType: string, streamId: string): Promise<EvDbStream> {
+    const factory = this.streamFactories[streamType];
+
+    if (!factory) {
+      throw new Error(
+        `No stream factory registered for stream type: ${streamType}. ` +
+        `Available types: ${Object.keys(this.streamFactories).join(', ')}`
+      );
+    }
+
+    return factory.get(
+      streamId,
+      this.storage.streamAdapter,
+      this.storage.snapshotAdapter
+    );
+  }
+
+  /**
    * Check if a stream type is registered
    */
   public hasStreamType(streamType: string): boolean {
@@ -192,6 +212,17 @@ export class EvDbEventStore<TStreamTypes extends Record<string, EvDbStreamFactor
     streamId: string
   ): EvDbStream {
     return this.store.createStream(streamType, streamId);
+  }
+
+  /**
+   * Fetch a stream from the event store with type-safe stream type parameter (fallback method)
+   */
+  public getStream<K extends keyof TStreamTypes & string>(
+    streamType: K,
+    streamId: string
+  ): Promise<EvDbStream> {
+
+    return this.store.getStream(streamType, streamId);
   }
 
   /**

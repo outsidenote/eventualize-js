@@ -1,7 +1,6 @@
+import * as assert from 'node:assert';
 import { test, describe } from 'node:test'; // Use require or import
-
 import Steps, { EVENT_STORE_TYPE } from './steps.js';
-import EvDbPrismaStorageAdapter from '@eventualize/relational-storage-adapter/EvDbPrismaStorageAdapter';
 
 
 describe('Stream Tests', () => {
@@ -19,20 +18,26 @@ describe('Stream Tests', () => {
 
   test('Postgres execution', async () => {
     // GIVEN
+    const streamId = 'pointsStream1';
     const eventStorePG = Steps.createEventStore(EVENT_STORE_TYPE.POSTGRES);
-    const pointsStream = Steps.createPointsStream('pointsStream1', eventStorePG);
+    const pointsStream = Steps.createPointsStream(streamId, eventStorePG);
 
     // WHEN
     Steps.addPointsEventsToStream(pointsStream);
     try {
-      await pointsStream.store()
+      await assert.doesNotReject(pointsStream.store());
+      const fetchedStream = await eventStorePG.getStream("PointsStream", streamId);
+      console.log(fetchedStream);
     } catch (error) {
-      console.log('Stream store error:', error)
+      assert.fail(error as Error);
+    } finally {
+      await eventStorePG.getStore().close();
     }
+
+
 
     // THEN
     // Steps.assertStreamStateIsCorrect(pointsStream);
-    await eventStorePG.getStore().close();
   });
 
   // test('Persist and reload', async () => {

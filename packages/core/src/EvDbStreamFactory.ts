@@ -3,6 +3,7 @@ import IEvDbStorageSnapshotAdapter from '@eventualize/types/IEvDbStorageSnapshot
 import IEvDbStorageStreamAdapter from '@eventualize/types/IEvDbStorageStreamAdapter';
 import IEvDbEventPayload from "@eventualize/types/IEvDbEventPayload";
 import { ViewFactory } from './ViewFactory.js';
+import { EvDbView } from './EvDbView.js';
 
 /**
  * Configuration for creating a stream factory
@@ -16,7 +17,7 @@ export interface EvDbStreamFactoryConfig<TEvents extends IEvDbEventPayload, TStr
  * Stream Factory - creates stream instances with configured views
  */
 export class EvDbStreamFactory<TEvents extends IEvDbEventPayload, TStreamType extends string> {
-  constructor(private readonly config: EvDbStreamFactoryConfig<TEvents, TStreamType>) {}
+  constructor(private readonly config: EvDbStreamFactoryConfig<TEvents, TStreamType>) { }
 
   /**
    * Creates a stream instance with all configured views
@@ -24,19 +25,73 @@ export class EvDbStreamFactory<TEvents extends IEvDbEventPayload, TStreamType ex
   public create(
     streamId: string,
     streamStorageAdapter: IEvDbStorageStreamAdapter,
-    snapshotStorageAdapter: IEvDbStorageSnapshotAdapter
+    snapshotStorageAdapter: IEvDbStorageSnapshotAdapter,
+    lastStreamOffset: number = 0
   ): EvDbStream {
     // Create all views using their factories
-    const views = this.config.viewFactories.map(factory =>
-      factory.create(streamId, snapshotStorageAdapter)
-    );
+    const views = this.createViews(streamId, snapshotStorageAdapter);
 
     return new EvDbStream(
       this.config.streamType,
       views,
       streamStorageAdapter,
       streamId,
-      0
+      lastStreamOffset
+    );
+  }
+
+  private createViews(streamId: string, snapshotStorageAdapter: IEvDbStorageSnapshotAdapter): Array<EvDbView<any>> {
+    const views = this.config.viewFactories.map(factory =>
+      factory.create(streamId, snapshotStorageAdapter)
+    );
+    return views;
+  }
+
+  private getViews(streamId: string, snapshotStorageAdapter: IEvDbStorageSnapshotAdapter): Promise<EvDbView<any>>[] {
+    const getViewPromises = this.config.viewFactories.map(factory =>
+      factory.get(streamId, snapshotStorageAdapter)
+    );
+    return getViewPromises;
+  }
+
+  /**
+   * Fetches from storage a stream instance with all configured views
+   */
+  public async get(
+    streamId: string,
+    streamStorageAdapter: IEvDbStorageStreamAdapter,
+    snapshotStorageAdapter: IEvDbStorageSnapshotAdapter
+  ): Promise<EvDbStream> {
+
+    const streamAddress = new EvDbStreamAddress(this.config.streamType, streamId);
+
+    const views = await Promise.all(this.getViews(streamId, snapshotStorageAdapter));
+
+    if (!views.length) {
+      const lastStreamOffset = await streamStorageAdapter.getLastOffsetAsync(streamAddress)
+      const stream = this.create(streamId, streamStorageAdapter, snapshotStorageAdapter, lastStreamOffset);
+      return stream;
+    }
+
+    const lowestViewOffset = views.reduce((lowestOffset: number, currentView: EvDbView<any>) =>
+      Math.min(lowestOffset, currentView.storeOffset)
+      , 0)
+
+    const streamCursor = new EvDbStreamCursor(streamAddress, lowestViewOffset + 1);
+    const events = await streamStorageAdapter.getEventsAsync(streamCursor);
+
+    let streamOffset = lowestViewOffset;
+    for await (const event of events) {
+      views.forEach(view => view.applyEvent(event));
+      streamOffset = event.streamCursor.offset;
+    }
+
+    return new EvDbStream(
+      this.config.streamType,
+      views,
+      streamStorageAdapter,
+      streamId,
+      streamOffset
     );
   }
 
@@ -97,27 +152,29 @@ export class StreamFactoryBuilder<TEvents extends IEvDbEventPayload, TStreamType
 // ============================================================================
 
 import { createViewFactory } from './ViewFactory.js';
+import EvDbStreamAddress from '@eventualize/types/EvDbStreamAddress.js';
+import EvDbStreamCursor from '@eventualize/types/EvDbStreamCursor.js';
 
 // Step 1: Define Events (same as before)
 export class PointsAdded implements IEvDbEventPayload {
   readonly payloadType = 'PointsAdded';
-  constructor(public readonly points: number) {}
+  constructor(public readonly points: number) { }
 }
 
 export class PointsSubtracted implements IEvDbEventPayload {
   readonly payloadType = 'PointsSubtracted';
-  constructor(public readonly points: number) {}
+  constructor(public readonly points: number) { }
 }
 
 export type PointsStreamEvents = PointsAdded | PointsSubtracted;
 
 // Step 2: Define View States
 export class SumViewState {
-  constructor(public sum: number = 0) {}
+  constructor(public sum: number = 0) { }
 }
 
 export class CountViewState {
-  constructor(public count: number = 0) {}
+  constructor(public count: number = 0) { }
 }
 
 // Step 3: Create View Factories

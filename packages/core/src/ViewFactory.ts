@@ -96,6 +96,29 @@ export class ViewFactory<TState, TEvents extends IEvDbEventPayload> {
             this.config
         );
     }
+
+    /**
+     * Get a view instance from event store
+     */
+    public async get(
+        streamId: string,
+        storageAdapter: IEvDbStorageSnapshotAdapter
+    ): Promise<EvDbView<TState>> {
+        const streamAddress = new EvDbStreamAddress(this.config.streamType, streamId);
+        const viewAddress = new EvDbViewAddress(streamAddress, this.config.viewName);
+
+        const snapshot = await storageAdapter.getSnapshotAsync(viewAddress)
+
+        return new GenericView<TState, TEvents>(
+            viewAddress,
+            snapshot.storedAt,
+            snapshot.offset,
+            snapshot.offset,
+            storageAdapter,
+            snapshot.state,
+            this.config
+        );
+    }
 }
 
 /**
