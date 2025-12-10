@@ -49,11 +49,13 @@ class BaseStore {
       );
     }
 
-    return factory.create(
+    const stream = factory.create(
       streamId,
       this.storage.streamAdapter,
       this.storage.snapshotAdapter
     );
+
+    return stream;
   }
 
   /**
@@ -209,7 +211,7 @@ export class EvDbEventStore<TStreamTypes extends Record<string, EvDbStreamFactor
    */
   public createStream<K extends keyof TStreamTypes & string>(
     streamType: K,
-    streamId: string
+    streamId: string,
   ): EvDbStream {
     return this.store.createStream(streamType, streamId);
   }

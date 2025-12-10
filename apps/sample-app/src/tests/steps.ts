@@ -14,6 +14,7 @@ import { EvDbView } from '@eventualize/core/EvDbView';
 import { EvDbPrismaStorageAdapter } from '@eventualize/relational-storage-adapter/EvDbPrismaStorageAdapter'
 import { PrismaClient } from '@eventualize/relational-storage-adapter/generated/prisma/client';
 import { EvDbEventStoreBuilder, StreamMap, EvDbEventStoreType, IEvDbStorageAdapter } from '@eventualize/core/EvDbEventStore';
+import IEvDbEventPayload from '@eventualize/types/IEvDbEventPayload';
 
 
 const getEnvPath = () => {
@@ -59,6 +60,7 @@ export default class Steps {
     public static createPointsStream<TStreams extends StreamMap>(streamId: string, eventStore: EvDbEventStoreType<TStreams>): EvDbStream {
         return eventStore.createPointsStream(streamId);
     }
+    
     public static addPointsEventsToStream(stream: EvDbStream) {
         stream.appendEvent(new PointsAdded(50));
         stream.appendEvent(new PointsSubtracted(20));
