@@ -17,6 +17,9 @@ import EvDbPrismaStorageAdmin from '@eventualize/relational-storage-adapter/EvDB
 import { EvDbEventStore } from '@eventualize/core/EvDbEventStore'
 import EvDbPostgresPrismaClientFactory from '@eventualize/postgres-storage-adapter/EvDbPostgresPrismaClientFactory';
 import EvDbMySqlPrismaClientFactory from '@eventualize/mysql-storage-adapter/EvDbMySqlPrismaClientFactory';
+import { PrismaClient } from '@eventualize/relational-storage-adapter/generated/prisma/client';
+import { PrismaClient as PostgresPrismaClient } from '@eventualize/postgres-storage-adapter/generated/prisma/client';
+import { PrismaClient as MySqlPrismaClient } from '@eventualize/mysql-storage-adapter/generated/prisma/client';
 
 
 const getEnvPath = () => {
@@ -35,25 +38,23 @@ export enum EVENT_STORE_TYPE {
     MYSQL
 }
 
+type StoreClientType = PostgresPrismaClient<never, any, any> | MySqlPrismaClient<never, any, any>;
+
 export default class Steps {
-    public static createEventStore(eventStoreType: EVENT_STORE_TYPE = EVENT_STORE_TYPE.STUB) {
-        let storageAdapter: IEvDbStorageAdapter;
-        switch (eventStoreType) {
-            case EVENT_STORE_TYPE.POSTGRES: {
-                const client = EvDbPostgresPrismaClientFactory.create();
-                storageAdapter = new EvDbPrismaStorageAdapter(client)
-                break;
-            }
-            case EVENT_STORE_TYPE.MYSQL: {
-                const client = EvDbMySqlPrismaClientFactory.create();
-                storageAdapter = new EvDbPrismaStorageAdapter(client)
-                break;
-            }
+    public static createStoreClient(storeType: EVENT_STORE_TYPE = EVENT_STORE_TYPE.STUB): StoreClientType | undefined {
+        switch (storeType) {
+            case EVENT_STORE_TYPE.POSTGRES:
+                return EvDbPostgresPrismaClientFactory.create();
+            case EVENT_STORE_TYPE.MYSQL:
+                return EvDbMySqlPrismaClientFactory.create();
             case EVENT_STORE_TYPE.STUB:
             default:
-                storageAdapter = new StorageAdapterStub();
-                break;
+                return undefined;
         }
+    }
+    public static createEventStore(storeClient: PrismaClient<never, any, any>) {
+        const storageAdapter = storeClient ? new EvDbPrismaStorageAdapter(storeClient) : new StorageAdapterStub();
+
         const eventstore = new EvDbEventStoreBuilder()
             .withAdapter(storageAdapter)
             .withStreamFactory(PointsStreamFactory)
@@ -92,13 +93,12 @@ export default class Steps {
         assert.strictEqual(storedSumView.storeOffset, fetchedSumView.memoryOffset);
     }
 
-    public static async clearEnvironment(eventStore: EvDbEventStore<any>, eventStoreType: EVENT_STORE_TYPE = EVENT_STORE_TYPE.POSTGRES) {
-        if ([EVENT_STORE_TYPE.POSTGRES, EVENT_STORE_TYPE.MYSQL].includes(eventStoreType)) {
-            const client = EvDbPostgresPrismaClientFactory.create();
-            const admin = new EvDbPrismaStorageAdmin(client);
-            await eventStore.getStore().close();
-            await admin.clearEnvironmentAsync();
-            await admin.close();
+    public static async clearEnvironment(storeClient: PrismaClient<never, any, any>) {
+        if (!storeClient) {
+            return;
         }
+        const admin = new EvDbPrismaStorageAdmin(storeClient);
+        await admin.clearEnvironmentAsync();
+        await admin.close();
     }
 }

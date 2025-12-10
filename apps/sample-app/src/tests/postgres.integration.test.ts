@@ -8,7 +8,8 @@ describe('Postgres Tests', () => {
     const testData: any = {};
     t.test('Given: local stream with events', () => {
       testData.streamId = 'pointsStream1';
-      testData.eventStore = Steps.createEventStore(EVENT_STORE_TYPE.POSTGRES);
+      testData.storeClient = Steps.createStoreClient(EVENT_STORE_TYPE.POSTGRES)
+      testData.eventStore = Steps.createEventStore(testData.storeClient);
       testData.pointsStream = Steps.createPointsStream(testData.streamId, testData.eventStore);
       Steps.addPointsEventsToStream(testData.pointsStream);
     })
@@ -22,7 +23,7 @@ describe('Postgres Tests', () => {
       Steps.compareFetchedAndStoredStreams(testData.pointsStream, testData.fetchedStream);
     })
     t.after(async () => {
-      await Steps.clearEnvironment(testData.eventStore, EVENT_STORE_TYPE.POSTGRES);
+      await Steps.clearEnvironment(testData.storeClient);
     })
   });
 })
