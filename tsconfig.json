@@ -31,6 +31,12 @@
       "@eventualize/relational-storage-adapter/*": [
         "packages/relational-storage-adapter/src/*"
       ],
+      "@eventualize/postgres-storage-adapter": [
+        "packages/postgres-storage-adapter/src"
+      ],
+      "@eventualize/postgres-storage-adapter/*": [
+        "packages/postgres-storage-adapter/src/*"
+      ],
     }
   },
   "references": [
@@ -42,6 +48,9 @@
     },
     {
       "path": "./packages/relational-storage-adapter"
+    },
+    {
+      "path": "./packages/postgres-storage-adapter"
     },
     {
       "path": "./apps/sample-app"

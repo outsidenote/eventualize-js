@@ -10,7 +10,7 @@
     "apps/*"
   ],
   "scripts": {
-    "test": "node --import tsx --test 'packages/**/src/**/*.test.ts' 'apps/**/src/**/*.test.ts'",
+    "test": "dotenv -- node --import tsx --test 'packages/**/src/**/*.test.ts' 'apps/**/src/**/*.test.ts'",
     "build": "tsc --build",
     "clean": "rimraf tsconfig.tsbuildinfo",
     "clear": " npm run clean && npm run clean --workspaces --if-present",
@@ -21,6 +21,7 @@
   "license": "ISC",
   "devDependencies": {
     "@types/node": "^24.10.1",
+    "dotenv-cli": "^11.0.0",
     "tsx": "^4.21.0"
   }
 }

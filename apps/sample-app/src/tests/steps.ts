@@ -16,6 +16,7 @@ import { PrismaClient } from '@eventualize/relational-storage-adapter/generated/
 import { EvDbEventStoreBuilder, StreamMap, EvDbEventStoreType, IEvDbStorageAdapter } from '@eventualize/core/EvDbEventStore';
 import EvDbPrismaStorageAdmin from '@eventualize/relational-storage-adapter/EvDBPrismaStorageAdmin';
 import { EvDbEventStore } from '@eventualize/core/EvDbEventStore'
+import EvDbPostgresPrismaClientFactory from '@eventualize/postgres-storage-adapter/EvDbPostgresPrismaClientFactory.js'
 
 
 const getEnvPath = () => {
@@ -38,9 +39,7 @@ export default class Steps {
         let storageAdapter: IEvDbStorageAdapter;
         switch (eventStoreType) {
             case EVENT_STORE_TYPE.POSTGRES: {
-                const connectionString = `${process.env.DATABASE_URL}`
-                const adapter = new PrismaPg({ connectionString })
-                const client = new PrismaClient({ adapter })
+                const client = EvDbPostgresPrismaClientFactory.create();
                 storageAdapter = new EvDbPrismaStorageAdapter(client)
                 break;
             }
@@ -89,9 +88,7 @@ export default class Steps {
 
     public static async clearEnvironment(eventStore: EvDbEventStore<any>, eventStoreType: EVENT_STORE_TYPE = EVENT_STORE_TYPE.POSTGRES) {
         if (eventStoreType === EVENT_STORE_TYPE.POSTGRES) {
-            const connectionString = `${process.env.DATABASE_URL}`
-            const adapter = new PrismaPg({ connectionString })
-            const client = new PrismaClient({ adapter })
+            const client = EvDbPostgresPrismaClientFactory.create();
             const admin = new EvDbPrismaStorageAdmin(client);
             await eventStore.getStore().close();
             await admin.clearEnvironmentAsync();

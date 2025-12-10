@@ -16,6 +16,9 @@
     {
       "path": "../../packages/relational-storage-adapter"
     },
+    {
+      "path": "../../packages/postgres-storage-adapter"
+    },
   ],
   "include": [
     "src/**/*"

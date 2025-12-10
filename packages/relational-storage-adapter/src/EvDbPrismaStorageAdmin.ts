@@ -3,7 +3,7 @@ import IEvDbStorageAdmin from "@eventualize/types/IEvDbStorageAdmin";
 
 
 export default class EvDbPrismaStorageAdmin implements IEvDbStorageAdmin {
-    constructor(private prisma: PrismaClient) { }
+    constructor(private prisma: any) { }
     async clearEnvironmentAsync(): Promise<void> {
         await this.prisma.$executeRawUnsafe(`
 delete from events;

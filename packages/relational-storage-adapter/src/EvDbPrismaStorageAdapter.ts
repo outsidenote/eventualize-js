@@ -1,9 +1,6 @@
-import { PrismaClient, Prisma } from './generated/prisma/client.js';
-import { PrismaQueryProvider } from './EvDbRelationalStorageAdapterQueries.js';
 import { IEvDbPayloadData } from '@eventualize/types/IEvDbEventPayload';
 import IEvDbEventMetadata from '@eventualize/types/IEvDbEventMetadata';
 import EvDbStreamCursor from '@eventualize/types/EvDbStreamCursor';
-import { eventsCreateManyInput } from './generated/prisma/models';
 import EvDbMessage from '@eventualize/types/EvDbMessage';
 import IEvDbStorageSnapshotAdapter from '@eventualize/types/IEvDbStorageSnapshotAdapter';
 import IEvDbStorageStreamAdapter from '@eventualize/types/IEvDbStorageStreamAdapter';
@@ -16,6 +13,10 @@ import StreamStoreAffected from '@eventualize/types/StreamStoreAffected';
 import EvDbContinuousFetchOptions from '@eventualize/types/EvDbContinuousFetchOptions';
 import EvDbMessageFilter from '@eventualize/types/EvDbMessageFilter';
 import { EvDbShardName } from '@eventualize/types/primitiveTypes';
+
+// import { Prisma } from './generated/prisma/client.js';
+import { PrismaQueryProvider } from './EvDbRelationalStorageAdapterQueries.js';
+// import { eventsCreateManyInput } from './generated/prisma/models';
 
 // Type definitions for records
 export interface EvDbEventRecord extends IEvDbEventMetadata {
@@ -30,10 +31,6 @@ export interface EvDbSnapshotRecord {
     viewName: string;
     offset: bigint;
     state: IEvDbPayloadData;
-}
-
-export interface IEvDbConnectionFactory {
-    createConnection(): Promise<PrismaClient>;
 }
 
 export interface IEvDbOutboxTransformer {
@@ -63,7 +60,7 @@ export class EvDbPrismaStorageAdapter implements IEvDbStorageSnapshotAdapter, IE
     protected readonly databaseType: string = 'prisma';
 
     constructor(
-        private readonly prisma: PrismaClient,
+        private readonly prisma: any,
     ) {
         this.queryProvider = new PrismaQueryProvider(prisma);
     }
@@ -103,10 +100,10 @@ export class EvDbPrismaStorageAdapter implements IEvDbStorageSnapshotAdapter, IE
                     captured_by: event.capturedBy,
                     captured_at: event.capturedAt,
                     payload: event.payload,
-                } as eventsCreateManyInput
+                }
             });
 
-            const queryResult = await this.queryProvider.saveEvents(eventsToInsert) 
+            const queryResult = await this.queryProvider.saveEvents(eventsToInsert)
             const numEvents = queryResult.count;
             return new StreamStoreAffected(numEvents, undefined);
         } catch (error) {
@@ -255,29 +252,13 @@ export class EvDbPrismaStorageAdapter implements IEvDbStorageSnapshotAdapter, IE
     }
 
     /**
-     * Execute operations in a transaction
-     */
-    async executeInTransactionAsync<T>(
-        operation: (tx: Omit<PrismaClient, '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'>) => Promise<T>,
-        cancellationToken?: AbortSignal
-    ): Promise<T> {
-        try {
-            return await this.prisma.$transaction(operation);
-        } catch (error) {
-            throw error;
-        }
-    }
-
-    /**
      * Check if an exception is an optimistic concurrency conflict
      */
     private isOccException(error: unknown): boolean {
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            // P2002 = Unique constraint violation
-            // P2034 = Transaction conflict
-            return error.code === 'P2002' || error.code === 'P2034';
-        }
-        return false;
+        // P2002 = Unique constraint violation
+        // P2034 = Transaction conflict
+        const anyError = error as any;
+        return !!error && anyError?.code === 'P2002' || anyError.code === 'P2034';
     }
 
     /**
