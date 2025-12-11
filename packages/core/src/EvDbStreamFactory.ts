@@ -1,11 +1,13 @@
-import EvDbStream from '@eventualize/types/EvDbStream';
 import IEvDbStorageSnapshotAdapter from '@eventualize/types/IEvDbStorageSnapshotAdapter';
 import IEvDbStorageStreamAdapter from '@eventualize/types/IEvDbStorageStreamAdapter';
 import IEvDbEventPayload from "@eventualize/types/IEvDbEventPayload";
-import { ViewFactory } from './ViewFactory.js';
-import { EvDbView } from './EvDbView.js';
 import EvDbStreamCursor from '@eventualize/types/EvDbStreamCursor';
 import EvDbStreamAddress from '@eventualize/types/EvDbStreamAddress';
+import EVDbMessagesProducer from '@eventualize/types/EvDbMessagesProducer';
+
+import EvDbStream from './EvDbStream.js';
+import { EvDbView } from './EvDbView.js';
+import { ViewFactory } from './ViewFactory.js';
 
 /**
  * Configuration for creating a stream factory
@@ -13,6 +15,7 @@ import EvDbStreamAddress from '@eventualize/types/EvDbStreamAddress';
 export interface EvDbStreamFactoryConfig<TEvents extends IEvDbEventPayload, TStreamType extends string> {
   streamType: TStreamType;
   viewFactories: ViewFactory<any, TEvents>[];
+  messagesProducer: EVDbMessagesProducer
 }
 
 /**
@@ -38,7 +41,8 @@ export class EvDbStreamFactory<TEvents extends IEvDbEventPayload, TStreamType ex
       views,
       streamStorageAdapter,
       streamId,
-      lastStreamOffset
+      lastStreamOffset,
+      this.config.messagesProducer
     );
   }
 
@@ -93,7 +97,8 @@ export class EvDbStreamFactory<TEvents extends IEvDbEventPayload, TStreamType ex
       views,
       streamStorageAdapter,
       streamId,
-      streamOffset
+      streamOffset,
+      this.config.messagesProducer
     );
   }
 
@@ -115,12 +120,10 @@ export function createEvDbStreamFactory<TEvents extends IEvDbEventPayload, TStre
  * Fluent builder for creating stream factories
  */
 export class StreamFactoryBuilder<TEvents extends IEvDbEventPayload, TStreamType extends string> {
-  private streamType: TStreamType;
+  ;
   private viewFactories: ViewFactory<any, TEvents>[] = [];
 
-  constructor(streamType: TStreamType) {
-    this.streamType = streamType;
-  }
+  constructor(private streamType: TStreamType, private messagesProducer: EVDbMessagesProducer) { }
 
   /**
    * Add a view factory to the stream
@@ -144,7 +147,8 @@ export class StreamFactoryBuilder<TEvents extends IEvDbEventPayload, TStreamType
   public build(): EvDbStreamFactory<TEvents, TStreamType> {
     return new EvDbStreamFactory({
       streamType: this.streamType,
-      viewFactories: this.viewFactories
+      viewFactories: this.viewFactories,
+      messagesProducer: this.messagesProducer
     });
   }
 }

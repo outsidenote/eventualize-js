@@ -8,7 +8,7 @@ import PointsStreamFactory from "../eventstore/PointsStream/index.js";
 import { SumViewState, CountViewState } from '../eventstore/PointsStream/views.js';
 import { PointsAdded, PointsSubtracted } from "../eventstore/PointsStream/events.js";
 
-import EvDbStream from "@eventualize/types/EvDbStream";
+import EvDbStream from "@eventualize/core/EvDbStream";
 import { EvDbView } from '@eventualize/core/EvDbView';
 import { EvDbPrismaStorageAdapter } from '@eventualize/relational-storage-adapter/EvDbPrismaStorageAdapter'
 import { EvDbEventStoreBuilder, StreamMap, EvDbEventStoreType, IEvDbStorageAdapter } from '@eventualize/core/EvDbEventStore';
@@ -30,9 +30,9 @@ const envPath = getEnvPath();
 dotenv.config({ path: envPath });
 
 export enum EVENT_STORE_TYPE {
-    STUB,
-    POSTGRES,
-    MYSQL
+    STUB = 'Stub',
+    POSTGRES = 'Postgres',
+    MYSQL = 'MySQL'
 }
 
 type StoreClientType = PostgresPrismaClient<never, any, any> | MySqlPrismaClient<never, any, any> | undefined;

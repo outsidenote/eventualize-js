@@ -1,4 +1,4 @@
-import EvDbStream from '@eventualize/types/EvDbStream';
+import EvDbStream from './EvDbStream.js';
 import IEvDbStorageSnapshotAdapter from '@eventualize/types/IEvDbStorageSnapshotAdapter';
 import IEvDbStorageStreamAdapter from '@eventualize/types/IEvDbStorageStreamAdapter';
 import IEvDbEventPayload from "@eventualize/types/IEvDbEventPayload";

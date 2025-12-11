@@ -1,25 +1,30 @@
 import EvDbEvent from "@eventualize/types/EvDbEvent";
-import EvDbMessage from "./EvDbMessage.js";
-import IEvDbStorageStreamAdapter from "./IEvDbStorageStreamAdapter.js";
-import IEvDbView from "./IEvDbView.js";
+import EvDbMessage from "@eventualize/types/EvDbMessage";
+import IEvDbStorageStreamAdapter from "@eventualize/types/IEvDbStorageStreamAdapter";
+import IEvDbView from "@eventualize/types/IEvDbView";
 import EvDbStreamAddress from "@eventualize/types/EvDbStreamAddress";
-import IEvDbViewStore, { ImmutableIEvDbViewStoreMap } from "./IEvDbViewStore.js";
-import IEvDbStreamStore from "./IEvDbStreamStore.js";
-import IEvDbStreamStoreData from "./IEvDbStreamStoreData.js";
-import IEvDbEventPayload from "./IEvDbEventPayload.js";
+import IEvDbViewStore from "@eventualize/types/IEvDbViewStore";
+import IEvDbStreamStore from "@eventualize/types/IEvDbStreamStore";
+import IEvDbStreamStoreData from "@eventualize/types/IEvDbStreamStoreData";
+import IEvDbEventPayload from "@eventualize/types/IEvDbEventPayload";
 import StreamStoreAffected from "@eventualize/types/StreamStoreAffected";
-import IEvDbEventMetadata from "./IEvDbEventMetadata.js";
-import EvDbStreamCursor from "./EvDbStreamCursor.js";
-import IEvDbOutboxProducer from "./IEvDbOutboxProducer.js";
+import IEvDbEventMetadata from "@eventualize/types/IEvDbEventMetadata";
+import EvDbStreamCursor from "@eventualize/types/EvDbStreamCursor";
 import OCCException from "@eventualize/types/OCCException";
-import { EvDbStreamType } from "./primitiveTypes.js";
+import { EvDbStreamType } from "@eventualize/types/primitiveTypes";
+import EVDbMessagesProducer from "@eventualize/types/EvDbMessagesProducer";
+import { EvDbView } from "./EvDbView.js"
+
+
+type ImmutableIEvDbView = Readonly<EvDbView<unknown>>;
+export type ImmutableIEvDbViewMap = Readonly<Record<string, ImmutableIEvDbView>>;
 
 
 
 export default class EvDbStream implements IEvDbStreamStore, IEvDbStreamStoreData {
 
     protected _pendingEvents: ReadonlyArray<EvDbEvent> = [];
-    protected _pendingOutput: ReadonlyArray<EvDbMessage> = [];
+    protected _pendingMessages: ReadonlyArray<EvDbMessage> = [];
 
     private static readonly ASSEMBLY_NAME = {
         name: 'evdb-core',
@@ -32,9 +37,9 @@ export default class EvDbStream implements IEvDbStreamStore, IEvDbStreamStoreDat
     private readonly _storageAdapter: IEvDbStorageStreamAdapter;
 
     // Views
-    protected readonly _views: ImmutableIEvDbViewStoreMap;
+    protected readonly _views: ImmutableIEvDbViewMap;
 
-    getViews(): ImmutableIEvDbViewStoreMap {
+    getViews(): ImmutableIEvDbViewMap {
         return this._views;
     }
 
@@ -59,16 +64,17 @@ export default class EvDbStream implements IEvDbStreamStore, IEvDbStreamStoreDat
     // Constructor
     public constructor(
         streamType: EvDbStreamType,
-        views: ReadonlyArray<IEvDbViewStore>,
+        views: ImmutableIEvDbView[],
         storageAdapter: IEvDbStorageStreamAdapter,
         streamId: string,
-        lastStoredOffset: number
+        lastStoredOffset: number,
+        private messagesProducer: EVDbMessagesProducer
     ) {
         this._views = views.reduce((acc, view) => {
             const viewName = view.address.viewName;
             acc[viewName] = view;
             return acc;
-        }, {} as Record<string, IEvDbViewStore>);
+        }, {} as Record<string, IEvDbViewStore>) as ImmutableIEvDbViewMap;
         this._storageAdapter = storageAdapter;
         this.streamAddress = new EvDbStreamAddress(streamType, streamId);
         this.storedOffset = lastStoredOffset;
@@ -97,7 +103,12 @@ export default class EvDbStream implements IEvDbStreamStore, IEvDbStreamStoreDat
         }
 
         // Outbox producer
-        this.outboxProducer?.onProduceOutboxMessages(e, Object.values(this._views));
+        const viewsStates = Object.fromEntries(Object.entries(this._views)
+            .map(([k, v]) => {
+                return [k, (v as EvDbView<unknown>).getState()]
+            }));
+        const producedMessages = this.messagesProducer(e, viewsStates);
+        this._pendingMessages = [...this._pendingMessages, ...producedMessages]
 
         return e;
     }
@@ -112,20 +123,12 @@ export default class EvDbStream implements IEvDbStreamStore, IEvDbStreamStoreDat
         return new EvDbStreamCursor(this.streamAddress, offset + 1);
     }
 
-    // IEvDbOutboxProducer
-    /**
-     * Produce messages into outbox based on an event and states.
-     */
-    protected get outboxProducer(): IEvDbOutboxProducer | undefined {
-        return undefined;
-    }
-
     // AppendToOutbox
     /**
      * Put a row into the publication (out-box pattern).
      */
     public appendToOutbox(e: EvDbMessage): void {
-        this._pendingOutput = [...this._pendingOutput, e];
+        this._pendingMessages = [...this._pendingMessages, e];
     }
 
     // StoreAsync
@@ -142,13 +145,13 @@ export default class EvDbStream implements IEvDbStreamStore, IEvDbStreamStoreDat
 
             const affected = await this._storageAdapter.storeStreamAsync(
                 this._pendingEvents,
-                this._pendingOutput,
+                this._pendingMessages,
             );
 
             const lastEvent = this._pendingEvents[this._pendingEvents.length - 1];
             this.storedOffset = lastEvent.streamCursor.offset;
             this._pendingEvents = [];
-            this._pendingOutput = [];
+            this._pendingMessages = [];
 
             const viewSaveTasks = Object.values(this._views).map(v => v.store());
             await Promise.all(viewSaveTasks);
@@ -176,6 +179,6 @@ export default class EvDbStream implements IEvDbStreamStore, IEvDbStreamStoreDat
      * Unspecialized messages
      */
     public getMessages(): ReadonlyArray<EvDbMessage> {
-        return this._pendingOutput;
+        return this._pendingMessages;
     }
 }

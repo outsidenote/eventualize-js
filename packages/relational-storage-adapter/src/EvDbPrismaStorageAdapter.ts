@@ -128,9 +128,10 @@ export class EvDbPrismaStorageAdapter implements IEvDbStorageSnapshotAdapter, IE
                 storeEventsQuery,
                 storeMessagesQuery
             ]);
-            
-            const numEvents = queryResult.count;
-            return new StreamStoreAffected(numEvents, undefined);
+
+            const numEvents = queryResult[0].count;
+            const numMessages = queryResult[1].count;
+            return new StreamStoreAffected(numEvents, numMessages);
         } catch (error) {
             if (this.isOccException(error)) {
                 throw new Error('OPTIMISTIC_CONCURRENCY_VIOLATION');
