@@ -47,7 +47,6 @@ export type OutboxMinAggregateOutputType = {
   captured_by: string | null
   captured_at: Date | null
   stored_at: Date | null
-  payload: runtime.Bytes | null
 }
 
 export type OutboxMaxAggregateOutputType = {
@@ -63,7 +62,6 @@ export type OutboxMaxAggregateOutputType = {
   captured_by: string | null
   captured_at: Date | null
   stored_at: Date | null
-  payload: runtime.Bytes | null
 }
 
 export type OutboxCountAggregateOutputType = {
@@ -105,7 +103,6 @@ export type OutboxMinAggregateInputType = {
   captured_by?: true
   captured_at?: true
   stored_at?: true
-  payload?: true
 }
 
 export type OutboxMaxAggregateInputType = {
@@ -121,7 +118,6 @@ export type OutboxMaxAggregateInputType = {
   captured_by?: true
   captured_at?: true
   stored_at?: true
-  payload?: true
 }
 
 export type OutboxCountAggregateInputType = {
@@ -240,7 +236,7 @@ export type OutboxGroupByOutputType = {
   captured_by: string
   captured_at: Date
   stored_at: Date
-  payload: runtime.Bytes
+  payload: runtime.JsonValue
   _count: OutboxCountAggregateOutputType | null
   _avg: OutboxAvgAggregateOutputType | null
   _sum: OutboxSumAggregateOutputType | null
@@ -279,7 +275,7 @@ export type outboxWhereInput = {
   captured_by?: Prisma.StringFilter<"outbox"> | string
   captured_at?: Prisma.DateTimeFilter<"outbox"> | Date | string
   stored_at?: Prisma.DateTimeFilter<"outbox"> | Date | string
-  payload?: Prisma.BytesFilter<"outbox"> | runtime.Bytes
+  payload?: Prisma.JsonFilter<"outbox">
 }
 
 export type outboxOrderByWithRelationInput = {
@@ -316,7 +312,7 @@ export type outboxWhereUniqueInput = Prisma.AtLeast<{
   captured_by?: Prisma.StringFilter<"outbox"> | string
   captured_at?: Prisma.DateTimeFilter<"outbox"> | Date | string
   stored_at?: Prisma.DateTimeFilter<"outbox"> | Date | string
-  payload?: Prisma.BytesFilter<"outbox"> | runtime.Bytes
+  payload?: Prisma.JsonFilter<"outbox">
 }, "captured_at_stream_type_stream_id_offset_channel_message_type">
 
 export type outboxOrderByWithAggregationInput = {
@@ -356,7 +352,7 @@ export type outboxScalarWhereWithAggregatesInput = {
   captured_by?: Prisma.StringWithAggregatesFilter<"outbox"> | string
   captured_at?: Prisma.DateTimeWithAggregatesFilter<"outbox"> | Date | string
   stored_at?: Prisma.DateTimeWithAggregatesFilter<"outbox"> | Date | string
-  payload?: Prisma.BytesWithAggregatesFilter<"outbox"> | runtime.Bytes
+  payload?: Prisma.JsonWithAggregatesFilter<"outbox">
 }
 
 export type outboxCreateInput = {
@@ -372,7 +368,7 @@ export type outboxCreateInput = {
   captured_by: string
   captured_at: Date | string
   stored_at?: Date | string
-  payload: runtime.Bytes
+  payload: Prisma.JsonNullValueInput | runtime.InputJsonValue
 }
 
 export type outboxUncheckedCreateInput = {
@@ -388,7 +384,7 @@ export type outboxUncheckedCreateInput = {
   captured_by: string
   captured_at: Date | string
   stored_at?: Date | string
-  payload: runtime.Bytes
+  payload: Prisma.JsonNullValueInput | runtime.InputJsonValue
 }
 
 export type outboxUpdateInput = {
@@ -404,7 +400,7 @@ export type outboxUpdateInput = {
   captured_by?: Prisma.StringFieldUpdateOperationsInput | string
   captured_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   stored_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  payload?: Prisma.BytesFieldUpdateOperationsInput | runtime.Bytes
+  payload?: Prisma.JsonNullValueInput | runtime.InputJsonValue
 }
 
 export type outboxUncheckedUpdateInput = {
@@ -420,7 +416,7 @@ export type outboxUncheckedUpdateInput = {
   captured_by?: Prisma.StringFieldUpdateOperationsInput | string
   captured_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   stored_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  payload?: Prisma.BytesFieldUpdateOperationsInput | runtime.Bytes
+  payload?: Prisma.JsonNullValueInput | runtime.InputJsonValue
 }
 
 export type outboxCreateManyInput = {
@@ -436,7 +432,7 @@ export type outboxCreateManyInput = {
   captured_by: string
   captured_at: Date | string
   stored_at?: Date | string
-  payload: runtime.Bytes
+  payload: Prisma.JsonNullValueInput | runtime.InputJsonValue
 }
 
 export type outboxUpdateManyMutationInput = {
@@ -452,7 +448,7 @@ export type outboxUpdateManyMutationInput = {
   captured_by?: Prisma.StringFieldUpdateOperationsInput | string
   captured_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   stored_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  payload?: Prisma.BytesFieldUpdateOperationsInput | runtime.Bytes
+  payload?: Prisma.JsonNullValueInput | runtime.InputJsonValue
 }
 
 export type outboxUncheckedUpdateManyInput = {
@@ -468,7 +464,7 @@ export type outboxUncheckedUpdateManyInput = {
   captured_by?: Prisma.StringFieldUpdateOperationsInput | string
   captured_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   stored_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  payload?: Prisma.BytesFieldUpdateOperationsInput | runtime.Bytes
+  payload?: Prisma.JsonNullValueInput | runtime.InputJsonValue
 }
 
 export type outboxOrderByRelevanceInput = {
@@ -519,7 +515,6 @@ export type outboxMaxOrderByAggregateInput = {
   captured_by?: Prisma.SortOrder
   captured_at?: Prisma.SortOrder
   stored_at?: Prisma.SortOrder
-  payload?: Prisma.SortOrder
 }
 
 export type outboxMinOrderByAggregateInput = {
@@ -535,7 +530,6 @@ export type outboxMinOrderByAggregateInput = {
   captured_by?: Prisma.SortOrder
   captured_at?: Prisma.SortOrder
   stored_at?: Prisma.SortOrder
-  payload?: Prisma.SortOrder
 }
 
 export type outboxSumOrderByAggregateInput = {
@@ -544,10 +538,6 @@ export type outboxSumOrderByAggregateInput = {
 
 export type NullableBytesFieldUpdateOperationsInput = {
   set?: runtime.Bytes | null
-}
-
-export type BytesFieldUpdateOperationsInput = {
-  set?: runtime.Bytes
 }
 
 
@@ -604,7 +594,7 @@ export type $outboxPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
     captured_by: string
     captured_at: Date
     stored_at: Date
-    payload: runtime.Bytes
+    payload: runtime.JsonValue
   }, ExtArgs["result"]["outbox"]>
   composites: {}
 }
@@ -986,7 +976,7 @@ export interface outboxFieldRefs {
   readonly captured_by: Prisma.FieldRef<"outbox", 'String'>
   readonly captured_at: Prisma.FieldRef<"outbox", 'DateTime'>
   readonly stored_at: Prisma.FieldRef<"outbox", 'DateTime'>
-  readonly payload: Prisma.FieldRef<"outbox", 'Bytes'>
+  readonly payload: Prisma.FieldRef<"outbox", 'Json'>
 }
     
 

@@ -14,7 +14,7 @@ import EvDbContinuousFetchOptions from '@eventualize/types/EvDbContinuousFetchOp
 import EvDbMessageFilter from '@eventualize/types/EvDbMessageFilter';
 import { EvDbShardName } from '@eventualize/types/primitiveTypes';
 
-// import { Prisma } from './generated/prisma/client.js';
+import { Prisma } from './generated/prisma/client.js';
 import { PrismaQueryProvider } from './EvDbRelationalStorageAdapterQueries.js';
 // import { eventsCreateManyInput } from './generated/prisma/models';
 
@@ -89,7 +89,7 @@ export class EvDbPrismaStorageAdapter implements IEvDbStorageSnapshotAdapter, IE
         messages: ReadonlyArray<EvDbMessage>,
     ): Promise<StreamStoreAffected> {
         try {
-            const eventsToInsert = events.map((event) => {
+            const eventsToInsert: Prisma.eventsCreateInput[] = events.map((event) => {
                 const streamCursor = event.streamCursor as EvDbStreamCursor;
                 return {
                     id: crypto.randomUUID(),
@@ -103,7 +103,32 @@ export class EvDbPrismaStorageAdapter implements IEvDbStorageSnapshotAdapter, IE
                 }
             });
 
-            const queryResult = await this.queryProvider.saveEvents(eventsToInsert)
+            const messagesToInsert: Prisma.outboxCreateInput[] = messages.map(message => {
+                const streamCursor = message.streamCursor as EvDbStreamCursor;
+                return {
+                    id: message.id,
+                    stream_type: streamCursor.streamType,
+                    stream_id: streamCursor.streamId,
+                    offset: streamCursor.offset,
+                    event_type: message.eventType,
+                    channel: message.channel,
+                    message_type: message.messageType,
+                    captured_by: message.capturedBy,
+                    captured_at: message.capturedAt,
+                    stored_at: message.storedAt,
+                    payload: message.payload,
+                    serialize_type: 'json',
+                }
+            })
+
+            const storeEventsQuery = this.queryProvider.saveEvents(eventsToInsert);
+            const storeMessagesQuery = this.queryProvider.saveMessages(messagesToInsert);
+
+            const queryResult = await this.prisma.$transaction([
+                storeEventsQuery,
+                storeMessagesQuery
+            ]);
+            
             const numEvents = queryResult.count;
             return new StreamStoreAffected(numEvents, undefined);
         } catch (error) {

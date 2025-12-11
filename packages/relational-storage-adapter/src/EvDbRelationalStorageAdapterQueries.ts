@@ -75,8 +75,15 @@ export class PrismaQueryProvider {
     /**
      * Save events in batch using Prisma
      */
-    async saveEvents(events: Array<Prisma.eventsCreateInput>) {
+    saveEvents(events: Array<Prisma.eventsCreateInput>) {
         return this.prisma.events.createMany({ data: events });
+    }
+
+    /**
+     * Save messages in batch using Prisma
+     */
+    saveMessages(messages: Array<Prisma.outboxCreateInput>) {
+        return this.prisma.outbox.createMany({ data: messages });
     }
 
     /**

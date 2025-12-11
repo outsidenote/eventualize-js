@@ -10,6 +10,6 @@ export default class EvDbEvent implements IEvDbEventMetadata {
         public readonly payload: IEvDbEventPayload,
         public readonly capturedAt: Date = new Date(Date.now()),
         public readonly capturedBy: string = 'N/A',
-        public readonly storedAt?: Date | null,
+        public readonly storedAt?: Date,
     ) { }
 }

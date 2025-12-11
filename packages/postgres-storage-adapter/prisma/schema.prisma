@@ -39,7 +39,7 @@ model outbox {
   captured_by       String   @db.VarChar(150)
   captured_at       DateTime @db.Timestamptz(6)
   stored_at         DateTime @default(now()) @db.Timestamptz(6)
-  payload           Bytes
+  payload           Json     @db.Json
 
   @@id([captured_at, stream_type, stream_id, offset, channel, message_type])
   @@index([stream_type, stream_id, offset, channel, message_type], map: "ix_outbox_7ae7ea3b165349e09b3fe6d66a69fd72")

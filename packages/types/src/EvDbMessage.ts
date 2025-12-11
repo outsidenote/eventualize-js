@@ -28,7 +28,7 @@ export default class EvDbMessage {
         public readonly capturedBy: string,
         public readonly streamCursor: EvDbStreamCursor,
         public readonly payload: IEvDbPayloadData,
-        public readonly storedAt?: Date | null
+        public readonly storedAt?: Date
     ) { }
 
     public static createWithId(
