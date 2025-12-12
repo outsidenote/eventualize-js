@@ -1,6 +1,7 @@
 import IEvDbEventPayload, { IEvDbPayloadData } from "@eventualize/types/IEvDbEventPayload"
-import { AttributeValue, TransactWriteItem } from "@aws-sdk/client-dynamodb";
+import { AttributeValue, GetItemCommandInput, QueryCommand, QueryCommandInput, TransactWriteItem } from "@aws-sdk/client-dynamodb";
 import EvDbStreamCursor from "@eventualize/types/EvDbStreamCursor";
+import EvDbStreamAddress from "@eventualize/types/EvDbStreamAddress";
 
 export type EventRecord = {
     id: string
@@ -24,7 +25,7 @@ export type MessageRecord = {
     stored_at?: Date
 }
 
-const serializeStreamAddress = (streamAddress: EvDbStreamCursor) => {
+const serializeStreamAddress = (streamAddress: EvDbStreamAddress) => {
     return `${streamAddress.streamType}::${streamAddress.streamId}`;
 }
 
@@ -82,5 +83,19 @@ export default class EvDbDynamoDbStorageAdapterQueries {
         }));
 
         return TransactItems;
+    }
+
+    public static getLastOffset(streamAddress: EvDbStreamAddress): QueryCommand {
+        const queryParams = {
+            TableName: "events",
+            KeyConditionExpression: "stream_address = :pk",
+            ExpressionAttributeValues: {
+                ":pk": { S: serializeStreamAddress(streamAddress) }
+            },
+            ScanIndexForward: false,
+            Limit: 1
+        }
+
+        return new QueryCommand(queryParams);
     }
 }

@@ -148,13 +148,12 @@ export class EvDbDynamoDbStorageAdapter implements IEvDbStorageSnapshotAdapter, 
     async getLastOffsetAsync(
         streamAddress: EvDbStreamAddress
     ): Promise<number> {
-        try {
-            const { streamType, streamId } = streamAddress;
-            const result = await this.queryProvider.getLastOffset(streamType, streamId);
-            return Number(result?.offset ?? -1);
-        } catch (error) {
-            throw error;
+        const query = QueryProvider.getLastOffset(streamAddress);
+        const response = await dynamoClient.send(query);
+        if (!response.Items) {
+            return -1;
         }
+        return parseInt(response.Items[0]?.offset.N ?? '-1', 10);
     }
 
     /**
@@ -168,7 +167,7 @@ export class EvDbDynamoDbStorageAdapter implements IEvDbStorageSnapshotAdapter, 
         let currentOffset = streamCursor.offset;
         while (true) {
             try {
-                const events = await this.queryProvider.getEvents(
+                const events = await QueryProvider.getEvents(
                     streamType,
                     streamId,
                     currentOffset
@@ -210,7 +209,7 @@ export class EvDbDynamoDbStorageAdapter implements IEvDbStorageSnapshotAdapter, 
     ): Promise<EvDbMessage[]> {
         try {
             const tableName = this.getTableNameForShard(shardName);
-            const messages = await this.queryProvider.getMessages(
+            const messages = await QueryProvider.getMessages(
                 tableName,
                 sinceDate,
                 channels,
@@ -231,7 +230,7 @@ export class EvDbDynamoDbStorageAdapter implements IEvDbStorageSnapshotAdapter, 
     ): Promise<EvDbStoredSnapshotResultRaw> {
         const { streamType, streamId, viewName } = viewAddress;
         try {
-            const snapshot = await this.queryProvider.getSnapshot(
+            const snapshot = await QueryProvider.getSnapshot(
                 streamType,
                 streamId,
                 viewName
@@ -254,7 +253,7 @@ export class EvDbDynamoDbStorageAdapter implements IEvDbStorageSnapshotAdapter, 
      */
     async storeSnapshotAsync(record: EvDbStoredSnapshotData): Promise<void> {
         try {
-            await this.queryProvider.saveSnapshot({
+            await QueryProvider.saveSnapshot({
                 id: record.id,
                 stream_type: record.streamType,
                 stream_id: record.streamId,
