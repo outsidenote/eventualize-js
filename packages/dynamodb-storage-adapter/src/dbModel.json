@@ -1,0 +1,215 @@
+{
+  "ModelName": "Eventualize Events Table",
+  "ModelMetadata": {
+    "Author": "",
+    "DateCreated": "Dec 12, 2025, 02:20 AM",
+    "DateLastModified": "Dec 12, 2025, 02:33 AM",
+    "Description": "",
+    "AWSService": "Amazon DynamoDB",
+    "Version": "3.0"
+  },
+  "DataModel": [
+    {
+      "TableName": "events",
+      "KeyAttributes": {
+        "PartitionKey": {
+          "AttributeName": "stream_address",
+          "AttributeType": "S"
+        },
+        "SortKey": {
+          "AttributeName": "offset",
+          "AttributeType": "N"
+        }
+      },
+      "NonKeyAttributes": [
+        {
+          "AttributeName": "id",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "event_type",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "captured_at",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "captured_by",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "stored_at",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "payload",
+          "AttributeType": "M"
+        }
+      ],
+      "TableFacets": [],
+      "GlobalSecondaryIndexes": [
+        {
+          "IndexName": "event_type__captured_at",
+          "KeyAttributes": {
+            "PartitionKey": {
+              "AttributeName": "event_type",
+              "AttributeType": "S"
+            },
+            "SortKey": {
+              "AttributeName": "captured_at",
+              "AttributeType": "S"
+            }
+          },
+          "Projection": {
+            "ProjectionType": "ALL"
+          }
+        }
+      ],
+      "TableData": [],
+      "DataAccess": {
+        "MySql": {}
+      },
+      "SampleDataFormats": {
+        "offset": [
+          "Int"
+        ],
+        "id": [
+          "identifiers",
+          "UUID"
+        ],
+        "event_type": [
+          "dataTypes",
+          "String"
+        ],
+        "captured_at": [
+          "date",
+          "Epoc/Unix date format"
+        ],
+        "captured_by": [
+          "identifiers",
+          "Domain"
+        ],
+        "stored_at": [
+          "date",
+          "Epoc/Unix date format"
+        ]
+      },
+      "BillingMode": "PAY_PER_REQUEST"
+    },
+    {
+      "TableName": "snapshots",
+      "KeyAttributes": {
+        "PartitionKey": {
+          "AttributeName": "view_address",
+          "AttributeType": "S"
+        },
+        "SortKey": {
+          "AttributeName": "offset",
+          "AttributeType": "N"
+        }
+      },
+      "NonKeyAttributes": [
+        {
+          "AttributeName": "stored_at",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "state",
+          "AttributeType": "M"
+        }
+      ],
+      "TableFacets": [],
+      "GlobalSecondaryIndexes": [],
+      "TableData": [],
+      "DataAccess": {
+        "MySql": {}
+      },
+      "SampleDataFormats": {
+        "offset": [
+          "Int"
+        ],
+        "view_address": [
+          "dataTypes",
+          "String"
+        ],
+        "stored_at": [
+          "date",
+          "Epoc/Unix date format"
+        ]
+      },
+      "BillingMode": "PAY_PER_REQUEST"
+    },
+    {
+      "TableName": "messages",
+      "KeyAttributes": {
+        "PartitionKey": {
+          "AttributeName": "message_addres",
+          "AttributeType": "S"
+        },
+        "SortKey": {
+          "AttributeName": "captured_at",
+          "AttributeType": "S"
+        }
+      },
+      "NonKeyAttributes": [
+        {
+          "AttributeName": "event_type",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "offset",
+          "AttributeType": "N"
+        },
+        {
+          "AttributeName": "stored_at",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "captured_by",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "payload",
+          "AttributeType": "M"
+        }
+      ],
+      "TableFacets": [],
+      "GlobalSecondaryIndexes": [],
+      "TableData": [],
+      "DataAccess": {
+        "MySql": {}
+      },
+      "SampleDataFormats": {
+        "message_addres": [
+          "dataTypes",
+          "String"
+        ],
+        "captured_at": [
+          "date",
+          "Epoc/Unix date format"
+        ],
+        "event_type": [
+          "dataTypes",
+          "String"
+        ],
+        "offset": [
+          "Int"
+        ],
+        "channel": [
+          "dataTypes",
+          "String"
+        ],
+        "stored_at": [
+          "date",
+          "Epoc/Unix date format"
+        ],
+        "captured_by": [
+          "identifiers",
+          "Domain"
+        ]
+      },
+      "BillingMode": "PAY_PER_REQUEST"
+    }
+  ]
+}
