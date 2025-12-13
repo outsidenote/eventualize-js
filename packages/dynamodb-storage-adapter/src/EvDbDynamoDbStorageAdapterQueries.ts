@@ -1,8 +1,10 @@
 import IEvDbEventPayload, { IEvDbPayloadData } from "@eventualize/types/IEvDbEventPayload"
-import { AttributeValue, GetItemCommandInput, QueryCommand, QueryCommandInput, TransactWriteItem } from "@aws-sdk/client-dynamodb";
+import { AttributeValue, GetItemCommandInput, PutItemCommand, PutItemCommandInput, QueryCommand, QueryCommandInput, TransactWriteItem } from "@aws-sdk/client-dynamodb";
 import EvDbStreamCursor from "@eventualize/types/EvDbStreamCursor";
 import EvDbStreamAddress from "@eventualize/types/EvDbStreamAddress";
 import EvDbEvent from "@eventualize/types/EvDbEvent";
+import EvDbViewAddress from "@eventualize/types/EvDbViewAddress";
+import { EvDbStoredSnapshotData } from "@eventualize/types/EvDbStoredSnapshotData";
 
 export class EventRecord {
     constructor(
@@ -56,6 +58,10 @@ const serializeStreamAddress = (streamAddress: EvDbStreamAddress) => {
 
 const serializeMessageAddress = (m: MessageRecord) => {
     return `${m.channel}::${m.message_type}`;
+}
+
+const serializeViewAddress = (viewAddress: EvDbViewAddress) => {
+    return `${serializeStreamAddress(viewAddress)}::${viewAddress.viewName}`;
 }
 
 export default class EvDbDynamoDbStorageAdapterQueries {
@@ -142,5 +148,41 @@ export default class EvDbDynamoDbStorageAdapterQueries {
         }
 
         return new QueryCommand(queryParams);
+    }
+
+    public static getSnapshot(viewAddress: EvDbViewAddress) {
+        const queryParams = {
+            TableName: "snapshots",
+            KeyConditionExpression: "view_address = :sa",
+
+            ExpressionAttributeValues: {
+                ":sa": { S: serializeViewAddress(viewAddress) },
+            },
+            ProjectionExpression: 'offset, state, stored_at',
+            ScanIndexForward: false,  // false = descending order
+            Limit: 1
+        }
+
+        return new QueryCommand(queryParams);
+    }
+
+    public static saveSnapshot(snapshot: EvDbStoredSnapshotData): PutItemCommand {
+        const viewAddress = new EvDbViewAddress(snapshot.streamType, snapshot.streamId, snapshot.viewName);
+        const queryParams: PutItemCommandInput = {
+            TableName: "snapshot",
+            Item: {
+                view_address: { S: serializeStreamAddress(viewAddress) },
+                offset: { N: snapshot.offset.toString() },
+                state: { M: snapshot.state },
+                stored_at: { S: Date.now().toString() }
+            },
+            ConditionExpression: "(attribute_not_exists(#va)) Or (attribute_exists(#va) And attribute_not_exists(#offset))",
+            ExpressionAttributeNames: {
+                "#va": "view_address",
+                "#offset": "offset"
+            }
+        };
+
+        return new PutItemCommand(queryParams);
     }
 }

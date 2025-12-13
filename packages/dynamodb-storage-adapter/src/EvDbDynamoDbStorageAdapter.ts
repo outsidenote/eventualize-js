@@ -19,7 +19,7 @@ import { EvDbShardName } from '@eventualize/types/primitiveTypes';
 
 import dynamoClient from './DynamoDbClient.js';
 import QueryProvider, { EventRecord, MessageRecord } from './EvDbDynamoDbStorageAdapterQueries.js'
-import { DynamoDBClient, TransactGetItemsCommandInput, TransactWriteItemsCommand } from '@aws-sdk/client-dynamodb';
+import { ConditionalCheckFailedException, DynamoDBClient, TransactGetItemsCommandInput, TransactWriteItemsCommand } from '@aws-sdk/client-dynamodb';
 // import { eventsCreateManyInput } from './generated/prisma/models';
 
 // Type definitions for records
@@ -59,7 +59,7 @@ const deserializePayload = (payload: any): IEvDbPayloadData => {
  * Prisma-based storage adapter for EvDb
  * Replaces SQL Server-specific adapter with database-agnostic Prisma implementation
  */
-export class EvDbDynamoDbStorageAdapter implements IEvDbStorageSnapshotAdapter, IEvDbStorageStreamAdapter {
+export default class EvDbDynamoDbStorageAdapter implements IEvDbStorageSnapshotAdapter, IEvDbStorageStreamAdapter {
 
 
     constructor(private readonly ddbClient: DynamoDBClient) {
@@ -176,30 +176,6 @@ export class EvDbDynamoDbStorageAdapter implements IEvDbStorageSnapshotAdapter, 
     }
 
     /**
-     * Get messages from outbox with optional filtering
-     */
-    async getMessagesAsync(
-        shardName: EvDbShardName,
-        sinceDate: Date,
-        channels?: string[],
-        messageTypes?: string[],
-    ): Promise<EvDbMessage[]> {
-        try {
-            const tableName = this.getTableNameForShard(shardName);
-            const messages = await QueryProvider.getMessages(
-                tableName,
-                sinceDate,
-                channels,
-                messageTypes
-            );
-
-            return messages as EvDbMessage[];
-        } catch (error) {
-            throw error;
-        }
-    }
-
-    /**
      * Get snapshot for a stream view
      */
     async getSnapshotAsync(
@@ -207,18 +183,19 @@ export class EvDbDynamoDbStorageAdapter implements IEvDbStorageSnapshotAdapter, 
     ): Promise<EvDbStoredSnapshotResultRaw> {
         const { streamType, streamId, viewName } = viewAddress;
         try {
-            const snapshot = await QueryProvider.getSnapshot(
-                streamType,
-                streamId,
-                viewName
-            );
+            const query = QueryProvider.getSnapshot(viewAddress);
+            const response = await dynamoClient.send(query);
 
-            if (!snapshot) return EvDbStoredSnapshotResultRaw.Empty;
+            if (!response.Items) {
+                return EvDbStoredSnapshotResultRaw.Empty;
+            }
+
+            const snapshot = response.Items[0];
 
             return new EvDbStoredSnapshotResultRaw(
                 Number(snapshot.offset),
-                snapshot.stored_at,
-                deserializePayload(snapshot.state),
+                new Date(Number(snapshot.stored_at)),
+                unmarshall(snapshot.state),
             );
         } catch (error) {
             throw error;
@@ -230,15 +207,8 @@ export class EvDbDynamoDbStorageAdapter implements IEvDbStorageSnapshotAdapter, 
      */
     async storeSnapshotAsync(record: EvDbStoredSnapshotData): Promise<void> {
         try {
-            await QueryProvider.saveSnapshot({
-                id: record.id,
-                stream_type: record.streamType,
-                stream_id: record.streamId,
-                view_name: record.viewName,
-                offset: record.offset,
-                state: record.state,
-                stored_at: new Date(),
-            });
+            const command = QueryProvider.saveSnapshot(record);
+            await dynamoClient.send(command);
 
         } catch (error) {
             throw error;
@@ -249,10 +219,7 @@ export class EvDbDynamoDbStorageAdapter implements IEvDbStorageSnapshotAdapter, 
      * Check if an exception is an optimistic concurrency conflict
      */
     private isOccException(error: unknown): boolean {
-        // P2002 = Unique constraint violation
-        // P2034 = Transaction conflict
-        const anyError = error as any;
-        return !!error && anyError?.code === 'P2002' || anyError.code === 'P2034';
+        return error instanceof ConditionalCheckFailedException;
     }
 
     /**
@@ -266,8 +233,6 @@ export class EvDbDynamoDbStorageAdapter implements IEvDbStorageSnapshotAdapter, 
      * Close the database connection
      */
     async close(): Promise<void> {
-        await this.prisma.$disconnect();
+        return;
     }
 }
-
-export default EvDbPrismaStorageAdapter;
