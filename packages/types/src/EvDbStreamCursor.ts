@@ -1,8 +1,6 @@
 import EvDbStreamAddress from "./EvDbStreamAddress.js";
 
-export default class EvDbStreamCursor {
-    public readonly streamType: string;
-    public readonly streamId: string;
+export default class EvDbStreamCursor extends EvDbStreamAddress {
     public readonly offset: number;
 
     constructor(streamType: string, streamId: string, offset: number);
@@ -10,12 +8,14 @@ export default class EvDbStreamCursor {
 
     constructor(streamTypeOrAddress: string | EvDbStreamAddress, streamIdOrOffset: string | number, offset?: number) {
         if (typeof streamTypeOrAddress === 'string' && typeof streamIdOrOffset === 'string' && (!offset || typeof offset === 'number')) {
-            this.streamType = streamTypeOrAddress;
-            this.streamId = streamIdOrOffset;
+            const streamType = streamTypeOrAddress;
+            const streamId = streamIdOrOffset;
+            super(streamType, streamId);
             this.offset = offset ?? 0;
         } else if (streamTypeOrAddress instanceof EvDbStreamAddress && (!streamIdOrOffset || typeof streamIdOrOffset === 'number')) {
-            this.streamType = streamTypeOrAddress.streamType;
-            this.streamId = streamTypeOrAddress.streamId;
+            const streamType = streamTypeOrAddress.streamType;
+            const streamId = streamTypeOrAddress.streamId;
+            super(streamType, streamId);
             this.offset = streamIdOrOffset as number ?? 0;
         } else {
             throw new Error('Invalid constructor arguments for EvDbStreamCursor');

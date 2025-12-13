@@ -1,3 +1,5 @@
+import { unmarshall } from "@aws-sdk/util-dynamodb";
+
 import { IEvDbPayloadData } from '@eventualize/types/IEvDbEventPayload';
 import IEvDbEventMetadata from '@eventualize/types/IEvDbEventMetadata';
 import EvDbStreamCursor from '@eventualize/types/EvDbStreamCursor';
@@ -87,16 +89,8 @@ export class EvDbDynamoDbStorageAdapter implements IEvDbStorageSnapshotAdapter, 
         messages: ReadonlyArray<EvDbMessage>,
     ): Promise<StreamStoreAffected> {
         try {
-            const eventsToInsert: EventRecord[] = events.map((event) => {
-                return {
-                    id: crypto.randomUUID(),
-                    stream_cursor: event.streamCursor,
-                    event_type: event.eventType,
-                    captured_by: event.capturedBy,
-                    captured_at: event.capturedAt,
-                    payload: event.payload,
-                }
-            });
+            const eventsToInsert: EventRecord[] = events.map((event) =>
+                EventRecord.createFromEvent(event));
 
             const messagesToInsert: MessageRecord[] = messages.map(message => {
                 return {
@@ -163,38 +157,22 @@ export class EvDbDynamoDbStorageAdapter implements IEvDbStorageSnapshotAdapter, 
         streamCursor: EvDbStreamCursor,
         pageSize: number = 100
     ): AsyncGenerator<EvDbEvent, void, undefined> {
-        const { streamType, streamId } = streamCursor;
-        let currentOffset = streamCursor.offset;
-        while (true) {
-            try {
-                const events = await QueryProvider.getEvents(
-                    streamType,
-                    streamId,
-                    currentOffset
-                );
+        let queryCursor: Record<string, any> | undefined = undefined;
 
-                if (events.length === 0) {
-                    break;
-                }
+        do {
+            const getEventsCommand = QueryProvider.getEvents(streamCursor);
+            const response = await dynamoClient.send(getEventsCommand);
 
-                for (const event of events) {
-                    yield new EvDbEvent(
-                        event.event_type,
-                        new EvDbStreamCursor(event.stream_type, event.stream_id, Number(event.offset)),
-                        { payloadType: event.event_type, payload: deserializePayload(event.payload) },
-                        event.captured_at,
-                        event.captured_by, event.stored_at
-                    );
-                    currentOffset = Math.max(currentOffset, Number(event.offset))
+            if (response.Items && response.Items.length > 0) {
+                for (const item of response.Items) {
+                    const r: EventRecord = unmarshall(item) as EventRecord;
+                    yield r.toEvDbEvent();
                 }
-
-                if (events.length < pageSize) {
-                    break; // Reached the end of the stream in the last page
-                }
-            } catch (error) {
-                throw error;
             }
-        }
+
+            queryCursor = response.LastEvaluatedKey;
+
+        } while (queryCursor)
     }
 
     /**
@@ -205,7 +183,6 @@ export class EvDbDynamoDbStorageAdapter implements IEvDbStorageSnapshotAdapter, 
         sinceDate: Date,
         channels?: string[],
         messageTypes?: string[],
-        cancellationToken?: AbortSignal
     ): Promise<EvDbMessage[]> {
         try {
             const tableName = this.getTableNameForShard(shardName);
