@@ -2,7 +2,7 @@ import * as assert from 'node:assert';
 import { test, describe } from 'node:test'; // Use require or import
 import Steps, { EVENT_STORE_TYPE } from './steps.js';
 
-const supportedRelationalDatabases = [EVENT_STORE_TYPE.MYSQL, EVENT_STORE_TYPE.POSTGRES];
+const supportedRelationalDatabases = [EVENT_STORE_TYPE.MYSQL, EVENT_STORE_TYPE.POSTGRES, EVENT_STORE_TYPE.DYNAMODB];
 
 describe('Relational Databases Integration Tests', () => {
   for (const storeType of supportedRelationalDatabases) {
@@ -11,7 +11,7 @@ describe('Relational Databases Integration Tests', () => {
       t.test('Given: local stream with events', () => {
         testData.streamId = 'pointsStream1';
         testData.storeClient = Steps.createStoreClient(storeType)
-        testData.eventStore = Steps.createEventStore(testData.storeClient);
+        testData.eventStore = Steps.createEventStore(testData.storeClient, storeType);
         testData.pointsStream = Steps.createPointsStream(testData.streamId, testData.eventStore);
         Steps.addPointsEventsToStream(testData.pointsStream);
       })

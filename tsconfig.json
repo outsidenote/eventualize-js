@@ -62,6 +62,9 @@
       "path": "./packages/mysql-storage-adapter"
     },
     {
+      "path": "./packages/dynamodb-storage-adapter"
+    },
+    {
       "path": "./apps/sample-app"
     },
   ]

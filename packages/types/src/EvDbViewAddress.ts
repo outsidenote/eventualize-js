@@ -1,4 +1,4 @@
-import EvDbStreamAddress from "../../types/src/EvDbStreamAddress.js";
+import EvDbStreamAddress from "@eventualize/types/EvDbStreamAddress";
 
 export default class EvDbViewAddress extends EvDbStreamAddress {
     public readonly viewName: string;

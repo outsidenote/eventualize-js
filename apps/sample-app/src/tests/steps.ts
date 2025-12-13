@@ -17,6 +17,7 @@ import EvDbPostgresPrismaClientFactory from '@eventualize/postgres-storage-adapt
 import EvDbMySqlPrismaClientFactory from '@eventualize/mysql-storage-adapter/EvDbMySqlPrismaClientFactory';
 import { PrismaClient as PostgresPrismaClient } from '@eventualize/postgres-storage-adapter/generated/prisma/client';
 import { PrismaClient as MySqlPrismaClient } from '@eventualize/mysql-storage-adapter/generated/prisma/client';
+import EvDbDynamoDbStorageAdapter from '@eventualize/dynamodb-storage-adapter/EvDbDynamoDbStorageAdapter';
 
 
 const getEnvPath = () => {
@@ -32,10 +33,12 @@ dotenv.config({ path: envPath });
 export enum EVENT_STORE_TYPE {
     STUB = 'Stub',
     POSTGRES = 'Postgres',
-    MYSQL = 'MySQL'
+    MYSQL = 'MySQL',
+    DYNAMODB = 'DynamoDB'
 }
 
-type StoreClientType = PostgresPrismaClient<never, any, any> | MySqlPrismaClient<never, any, any> | undefined;
+type RelationalClientType = PostgresPrismaClient<never, any, any> | MySqlPrismaClient<never, any, any>
+type StoreClientType = RelationalClientType | undefined;
 
 export default class Steps {
     public static createStoreClient(storeType: EVENT_STORE_TYPE = EVENT_STORE_TYPE.STUB): StoreClientType {
@@ -44,13 +47,16 @@ export default class Steps {
                 return EvDbPostgresPrismaClientFactory.create();
             case EVENT_STORE_TYPE.MYSQL:
                 return EvDbMySqlPrismaClientFactory.create();
+            case EVENT_STORE_TYPE.DYNAMODB:
             case EVENT_STORE_TYPE.STUB:
             default:
                 return undefined;
         }
     }
-    public static createEventStore(storeClient: StoreClientType) {
-        const storageAdapter = storeClient ? new EvDbPrismaStorageAdapter(storeClient) : new StorageAdapterStub();
+    public static createEventStore(storeClient: StoreClientType, storeType: EVENT_STORE_TYPE) {
+        const storageAdapter = [EVENT_STORE_TYPE.POSTGRES, EVENT_STORE_TYPE.MYSQL].includes(storeType) ? new EvDbPrismaStorageAdapter(storeClient) :
+            storeType === EVENT_STORE_TYPE.DYNAMODB ? new EvDbDynamoDbStorageAdapter() :
+                new StorageAdapterStub();
 
         const eventstore = new EvDbEventStoreBuilder()
             .withAdapter(storageAdapter)

@@ -17,10 +17,9 @@ import EvDbMessageFilter from '@eventualize/types/EvDbMessageFilter';
 import { EvDbShardName } from '@eventualize/types/primitiveTypes';
 
 
-import dynamoClient from './DynamoDbClient.js';
+import { createDynamoDBClient } from './DynamoDbClient.js';
 import QueryProvider, { EventRecord, MessageRecord } from './EvDbDynamoDbStorageAdapterQueries.js'
 import { ConditionalCheckFailedException, DynamoDBClient, TransactGetItemsCommandInput, TransactWriteItemsCommand } from '@aws-sdk/client-dynamodb';
-// import { eventsCreateManyInput } from './generated/prisma/models';
 
 // Type definitions for records
 export interface EvDbEventRecord extends IEvDbEventMetadata {
@@ -60,9 +59,7 @@ const deserializePayload = (payload: any): IEvDbPayloadData => {
  * Replaces SQL Server-specific adapter with database-agnostic Prisma implementation
  */
 export default class EvDbDynamoDbStorageAdapter implements IEvDbStorageSnapshotAdapter, IEvDbStorageStreamAdapter {
-
-
-    constructor(private readonly ddbClient: DynamoDBClient) {
+    constructor(private dynamoDbClient: DynamoDBClient = createDynamoDBClient()) {
     }
     getFromOutbox(filter: EvDbMessageFilter, options?: EvDbContinuousFetchOptions | null): Promise<AsyncIterable<EvDbMessage>> {
         throw new Error('Method not implemented.');
@@ -111,7 +108,7 @@ export default class EvDbDynamoDbStorageAdapter implements IEvDbStorageSnapshotA
             const transactItems = { TransactItems: [...storeEventsQuery, ...storeMessagesQuery] };
 
             const command = new TransactWriteItemsCommand(transactItems)
-            await dynamoClient.send(command);
+            await this.dynamoDbClient.send(command);
 
             const numEvents = eventsToInsert.length;
             const numMessages = messagesToInsert
@@ -143,7 +140,7 @@ export default class EvDbDynamoDbStorageAdapter implements IEvDbStorageSnapshotA
         streamAddress: EvDbStreamAddress
     ): Promise<number> {
         const query = QueryProvider.getLastOffset(streamAddress);
-        const response = await dynamoClient.send(query);
+        const response = await this.dynamoDbClient.send(query);
         if (!response.Items) {
             return -1;
         }
@@ -161,7 +158,7 @@ export default class EvDbDynamoDbStorageAdapter implements IEvDbStorageSnapshotA
 
         do {
             const getEventsCommand = QueryProvider.getEvents(streamCursor);
-            const response = await dynamoClient.send(getEventsCommand);
+            const response = await this.dynamoDbClient.send(getEventsCommand);
 
             if (response.Items && response.Items.length > 0) {
                 for (const item of response.Items) {
@@ -184,7 +181,7 @@ export default class EvDbDynamoDbStorageAdapter implements IEvDbStorageSnapshotA
         const { streamType, streamId, viewName } = viewAddress;
         try {
             const query = QueryProvider.getSnapshot(viewAddress);
-            const response = await dynamoClient.send(query);
+            const response = await this.dynamoDbClient.send(query);
 
             if (!response.Items) {
                 return EvDbStoredSnapshotResultRaw.Empty;
@@ -208,7 +205,7 @@ export default class EvDbDynamoDbStorageAdapter implements IEvDbStorageSnapshotA
     async storeSnapshotAsync(record: EvDbStoredSnapshotData): Promise<void> {
         try {
             const command = QueryProvider.saveSnapshot(record);
-            await dynamoClient.send(command);
+            await this.dynamoDbClient.send(command);
 
         } catch (error) {
             throw error;
