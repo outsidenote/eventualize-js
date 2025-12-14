@@ -113,7 +113,7 @@ export default class EvDbDynamoDbStorageAdapterQueries {
                     offset: { N: m.stream_cursor.offset.toString() },
                     event_type: { S: m.event_type },
                     captured_by: { S: m.captured_by },
-                    captured_at: { S: m.captured_at.getTime().toString() },
+                    captured_at: { S: `${m.captured_at.getTime().toString()}::${crypto.randomUUID()}` },
                     payload: {
                         M: marshall(m.payload, {
                             convertClassInstanceToMap: true,
@@ -121,11 +121,6 @@ export default class EvDbDynamoDbStorageAdapterQueries {
                         })
                     },
                     stored_at: { S: Date.now().toString() }
-                },
-                ConditionExpression: "(attribute_not_exists(#ma)) Or (attribute_exists(#ma) And attribute_not_exists(#ca))",
-                "ExpressionAttributeNames": {
-                    "#ma": "message_address",
-                    "#ca": "captured_at"
                 }
             }
         }));

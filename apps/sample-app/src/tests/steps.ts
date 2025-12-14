@@ -78,6 +78,14 @@ export default class Steps {
     public static addPointsEventsToStream(stream: EvDbStream) {
         stream.appendEvent(new PointsAdded(50));
         stream.appendEvent(new PointsSubtracted(20));
+        stream.appendEvent(new PointsAdded(50));
+        stream.appendEvent(new PointsSubtracted(20));
+        stream.appendEvent(new PointsAdded(50));
+        stream.appendEvent(new PointsSubtracted(20));
+        stream.appendEvent(new PointsAdded(50));
+        stream.appendEvent(new PointsSubtracted(20));
+        stream.appendEvent(new PointsAdded(50));
+        stream.appendEvent(new PointsSubtracted(20));
     }
     public static assertStreamStateIsCorrect(stream: EvDbStream) {
         const sumView = stream.getView('SumView');
@@ -86,9 +94,9 @@ export default class Steps {
         const countView = stream.getView('CountView');
         if (!countView)
             assert.fail('CountView not found in stream');
-        assert.strictEqual((stream.getView('SumView') as EvDbView<SumViewState>).getState().sum, 30);
-        assert.strictEqual((stream.getView('CountView') as EvDbView<CountViewState>).getState().count, 2);
-        assert.strictEqual(stream.getEvents().length, 2);
+        assert.strictEqual((stream.getView('SumView') as EvDbView<SumViewState>).getState().sum, 150);
+        assert.strictEqual((stream.getView('CountView') as EvDbView<CountViewState>).getState().count, 10);
+        assert.strictEqual(stream.getEvents().length, 10);
     }
 
     public static compareFetchedAndStoredStreams(storedStream: EvDbStream, fetchedStream: EvDbStream) {
