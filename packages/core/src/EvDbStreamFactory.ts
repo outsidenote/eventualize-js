@@ -81,7 +81,7 @@ export class EvDbStreamFactory<TEvents extends IEvDbEventPayload, TStreamType ex
 
     const lowestViewOffset = views.reduce((lowestOffset: number, currentView: EvDbView<any>) =>
       Math.min(lowestOffset, currentView.storeOffset)
-      , 0)
+      , Number.MAX_VALUE)
 
     const streamCursor = new EvDbStreamCursor(streamAddress, lowestViewOffset + 1);
     const events = await streamStorageAdapter.getEventsAsync(streamCursor);
