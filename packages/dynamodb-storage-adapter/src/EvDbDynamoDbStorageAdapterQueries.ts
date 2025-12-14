@@ -161,7 +161,6 @@ export default class EvDbDynamoDbStorageAdapterQueries {
                 ":offsetValue": { N: streamCursor.offset.toString() }
             },
             ProjectionExpression: '#sa, #o, id, event_type, captured_at, #cb, stored_at, payload',
-            ScanIndexForward: false,  // false = descending order
             Limit: pageSize,
             ExclusiveStartKey: queryCursor
         }
