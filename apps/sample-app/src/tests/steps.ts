@@ -2,6 +2,7 @@ import * as path from 'path';
 import * as dotenv from 'dotenv';
 import * as assert from 'node:assert';
 import { fileURLToPath } from 'node:url';
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 
 import StorageAdapterStub from "./StorageAdapterStub.js";
 import PointsStreamFactory from "../eventstore/PointsStream/index.js";
@@ -18,6 +19,8 @@ import EvDbMySqlPrismaClientFactory from '@eventualize/mysql-storage-adapter/EvD
 import { PrismaClient as PostgresPrismaClient } from '@eventualize/postgres-storage-adapter/generated/prisma/client';
 import { PrismaClient as MySqlPrismaClient } from '@eventualize/mysql-storage-adapter/generated/prisma/client';
 import EvDbDynamoDbStorageAdapter from '@eventualize/dynamodb-storage-adapter/EvDbDynamoDbStorageAdapter';
+import EvDbDynamoDbAdmin from '@eventualize/dynamodb-storage-adapter/EvDbDynamoDbAdmin';
+import IEvDbStorageAdmin from '@eventualize/types/IEvDbStorageAdmin';
 
 
 const getEnvPath = () => {
@@ -37,7 +40,7 @@ export enum EVENT_STORE_TYPE {
     DYNAMODB = 'DynamoDB'
 }
 
-type RelationalClientType = PostgresPrismaClient<never, any, any> | MySqlPrismaClient<never, any, any>
+type RelationalClientType = PostgresPrismaClient<never, any, any> | MySqlPrismaClient<never, any, any>;
 type StoreClientType = RelationalClientType | undefined;
 
 export default class Steps {
@@ -48,6 +51,7 @@ export default class Steps {
             case EVENT_STORE_TYPE.MYSQL:
                 return EvDbMySqlPrismaClientFactory.create();
             case EVENT_STORE_TYPE.DYNAMODB:
+                return
             case EVENT_STORE_TYPE.STUB:
             default:
                 return undefined;
@@ -96,11 +100,20 @@ export default class Steps {
         assert.strictEqual(storedSumView.storeOffset, fetchedSumView.memoryOffset);
     }
 
-    public static async clearEnvironment(storeClient: StoreClientType) {
-        if (!storeClient) {
-            return;
+    public static async clearEnvironment(storeClient: StoreClientType, storeType: EVENT_STORE_TYPE = EVENT_STORE_TYPE.STUB) {
+        let admin: IEvDbStorageAdmin;
+        switch (storeType) {
+            case EVENT_STORE_TYPE.POSTGRES:
+            case EVENT_STORE_TYPE.MYSQL:
+                admin = new EvDbPrismaStorageAdmin(storeClient);
+                break;
+            case EVENT_STORE_TYPE.DYNAMODB:
+                admin = new EvDbDynamoDbAdmin();
+                break;
+            case EVENT_STORE_TYPE.STUB:
+            default:
+                return;
         }
-        const admin = new EvDbPrismaStorageAdmin(storeClient);
         await admin.clearEnvironmentAsync();
         await admin.close();
     }

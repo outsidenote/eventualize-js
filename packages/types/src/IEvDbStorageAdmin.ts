@@ -27,4 +27,9 @@ export default interface IEvDbStorageAdmin {
      * Dispose of resources asynchronously
      */
     disposeAsync(): Promise<void>;
+
+    /**
+     * Close the connection to the store
+     */
+    close(): Promise<void>;
 }
