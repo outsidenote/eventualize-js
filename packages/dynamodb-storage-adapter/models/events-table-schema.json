@@ -1,0 +1,50 @@
+{
+    "TableName": "events",
+    "AttributeDefinitions": [
+        {
+            "AttributeName": "stream_address",
+            "AttributeType": "S"
+        },
+        {
+            "AttributeName": "offset",
+            "AttributeType": "N"
+        },
+        {
+            "AttributeName": "event_type",
+            "AttributeType": "S"
+        },
+        {
+            "AttributeName": "captured_at",
+            "AttributeType": "S"
+        }
+    ],
+    "KeySchema": [
+        {
+            "AttributeName": "stream_address",
+            "KeyType": "HASH"
+        },
+        {
+            "AttributeName": "offset",
+            "KeyType": "RANGE"
+        }
+    ],
+    "BillingMode": "PAY_PER_REQUEST",
+    "GlobalSecondaryIndexes": [
+        {
+            "IndexName": "event_type__captured_at",
+            "KeySchema": [
+                {
+                    "AttributeName": "event_type",
+                    "KeyType": "HASH"
+                },
+                {
+                    "AttributeName": "captured_at",
+                    "KeyType": "RANGE"
+                }
+            ],
+            "Projection": {
+                "ProjectionType": "ALL"
+            }
+        }
+    ]
+}

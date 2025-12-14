@@ -17,7 +17,7 @@ import EvDbMessageFilter from '@eventualize/types/EvDbMessageFilter';
 import { EvDbShardName } from '@eventualize/types/primitiveTypes';
 
 
-import { createDynamoDBClient } from './DynamoDbClient.js';
+import { createDynamoDBClient, listTables } from './DynamoDbClient.js';
 import QueryProvider, { EventRecord, MessageRecord } from './EvDbDynamoDbStorageAdapterQueries.js'
 import { ConditionalCheckFailedException, DynamoDBClient, TransactGetItemsCommandInput, TransactWriteItemsCommand } from '@aws-sdk/client-dynamodb';
 
@@ -86,6 +86,7 @@ export default class EvDbDynamoDbStorageAdapter implements IEvDbStorageSnapshotA
         messages: ReadonlyArray<EvDbMessage>,
     ): Promise<StreamStoreAffected> {
         try {
+            await listTables(this.dynamoDbClient);
             const eventsToInsert: EventRecord[] = events.map((event) =>
                 EventRecord.createFromEvent(event));
 

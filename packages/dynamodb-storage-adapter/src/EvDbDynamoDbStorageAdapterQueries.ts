@@ -5,6 +5,8 @@ import EvDbStreamAddress from "@eventualize/types/EvDbStreamAddress";
 import EvDbEvent from "@eventualize/types/EvDbEvent";
 import EvDbViewAddress from "@eventualize/types/EvDbViewAddress";
 import { EvDbStoredSnapshotData } from "@eventualize/types/EvDbStoredSnapshotData";
+import { marshall } from "@aws-sdk/util-dynamodb";
+
 
 export class EventRecord {
     constructor(
@@ -76,7 +78,12 @@ export default class EvDbDynamoDbStorageAdapterQueries {
                     event_type: { S: e.event_type },
                     captured_by: { S: e.captured_by },
                     captured_at: { S: e.captured_at.getTime().toString() },
-                    payload: { M: e.payload },
+                    payload: {
+                        M: marshall(e.payload, {
+                            convertClassInstanceToMap: true,
+                            removeUndefinedValues: true
+                        })
+                    },
                     stored_at: { S: Date.now().toString() }
                 },
                 ConditionExpression: "(attribute_not_exists(#sa)) Or (attribute_exists(#sa) And attribute_not_exists(#offset))",
@@ -94,7 +101,7 @@ export default class EvDbDynamoDbStorageAdapterQueries {
     public static saveMessages(messages: MessageRecord[]): TransactWriteItem[] {
         const TransactItems = messages.map(m => ({
             Put: {
-                TableName: "events",
+                TableName: "messages",
                 Item: {
                     message_address: { S: serializeMessageAddress(m) },
                     stream_address: { S: serializeStreamAddress(m.stream_cursor) },
@@ -102,7 +109,12 @@ export default class EvDbDynamoDbStorageAdapterQueries {
                     event_type: { S: m.event_type },
                     captured_by: { S: m.captured_by },
                     captured_at: { S: m.captured_at.getTime().toString() },
-                    payload: { M: m.payload },
+                    payload: {
+                        M: marshall(m.payload, {
+                            convertClassInstanceToMap: true,
+                            removeUndefinedValues: true
+                        })
+                    },
                     stored_at: { S: Date.now().toString() }
                 },
                 ConditionExpression: "(attribute_not_exists(#ma)) Or (attribute_exists(#ma) And attribute_not_exists(#ca))",
@@ -169,11 +181,16 @@ export default class EvDbDynamoDbStorageAdapterQueries {
     public static saveSnapshot(snapshot: EvDbStoredSnapshotData): PutItemCommand {
         const viewAddress = new EvDbViewAddress(snapshot.streamType, snapshot.streamId, snapshot.viewName);
         const queryParams: PutItemCommandInput = {
-            TableName: "snapshot",
+            TableName: "snapshots",
             Item: {
-                view_address: { S: serializeStreamAddress(viewAddress) },
+                view_address: { S: serializeViewAddress(viewAddress) },
                 offset: { N: snapshot.offset.toString() },
-                state: { M: snapshot.state },
+                state: {
+                    M: marshall(snapshot.state, {
+                        convertClassInstanceToMap: true,
+                        removeUndefinedValues: true
+                    })
+                },
                 stored_at: { S: Date.now().toString() }
             },
             ConditionExpression: "(attribute_not_exists(#va)) Or (attribute_exists(#va) And attribute_not_exists(#offset))",
