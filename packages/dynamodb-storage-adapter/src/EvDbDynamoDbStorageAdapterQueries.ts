@@ -16,7 +16,7 @@ export class EventRecord {
         public readonly captured_by: string,
         public readonly captured_at: Date,
         public readonly payload: IEvDbEventPayload,
-        public readonly stored_at?: string,
+        public readonly stored_at?: Date,
     ) { }
 
     public static createFromEvent(e: EvDbEvent): EventRecord {
@@ -27,7 +27,7 @@ export class EventRecord {
             e.capturedBy,
             e.capturedAt,
             e.payload,
-            e.storedAt?.getTime().toString())
+            e.storedAt)
     }
 
     public toEvDbEvent(): EvDbEvent {
@@ -56,6 +56,11 @@ export type MessageRecord = {
 
 const serializeStreamAddress = (streamAddress: EvDbStreamAddress) => {
     return `${streamAddress.streamType}::${streamAddress.streamId}`;
+}
+
+export const deserializeStreamAddress = (streamAddressStr: string): EvDbStreamAddress => {
+    const [streamType, streamId] = streamAddressStr.split('::');
+    return new EvDbStreamAddress(streamType, streamId);
 }
 
 const serializeMessageAddress = (m: MessageRecord) => {
@@ -145,15 +150,17 @@ export default class EvDbDynamoDbStorageAdapterQueries {
     public static getEvents(streamCursor: EvDbStreamCursor, queryCursor: Record<string, any> | undefined = undefined, pageSize: number = 100) {
         const queryParams = {
             TableName: "events",
-            KeyConditionExpression: "stream_address = :sa AND #offset >= :offsetValue",
+            KeyConditionExpression: "#sa = :sa AND #o >= :offsetValue",
             ExpressionAttributeNames: {
-                "#offset": "offset"
+                "#o": "offset",
+                "#sa": "stream_address",
+                "#cb": "captured_by"
             },
             ExpressionAttributeValues: {
                 ":sa": { S: serializeStreamAddress(streamCursor) },
                 ":offsetValue": { N: streamCursor.offset.toString() }
             },
-            ProjectionExpression: 'stream_address, #offset, id, event_type, captured_at, captrued_by, stored_at, payload',
+            ProjectionExpression: '#sa, #o, id, event_type, captured_at, #cb, stored_at, payload',
             ScanIndexForward: false,  // false = descending order
             Limit: pageSize,
             ExclusiveStartKey: queryCursor
@@ -170,7 +177,11 @@ export default class EvDbDynamoDbStorageAdapterQueries {
             ExpressionAttributeValues: {
                 ":sa": { S: serializeViewAddress(viewAddress) },
             },
-            ProjectionExpression: 'offset, state, stored_at',
+            ProjectionExpression: '#o, #s, stored_at',
+            ExpressionAttributeNames: {
+                "#o": "offset",
+                "#s": "state"
+            },
             ScanIndexForward: false,  // false = descending order
             Limit: 1
         }

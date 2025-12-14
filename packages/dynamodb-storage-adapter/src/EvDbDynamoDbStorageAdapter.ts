@@ -18,7 +18,7 @@ import { EvDbShardName } from '@eventualize/types/primitiveTypes';
 
 
 import { createDynamoDBClient, listTables } from './DynamoDbClient.js';
-import QueryProvider, { EventRecord, MessageRecord } from './EvDbDynamoDbStorageAdapterQueries.js'
+import QueryProvider, { deserializeStreamAddress, EventRecord, MessageRecord } from './EvDbDynamoDbStorageAdapterQueries.js'
 import { ConditionalCheckFailedException, DynamoDBClient, TransactGetItemsCommandInput, TransactWriteItemsCommand } from '@aws-sdk/client-dynamodb';
 
 // Type definitions for records
@@ -163,7 +163,17 @@ export default class EvDbDynamoDbStorageAdapter implements IEvDbStorageSnapshotA
 
             if (response.Items && response.Items.length > 0) {
                 for (const item of response.Items) {
-                    const r: EventRecord = unmarshall(item) as EventRecord;
+                    const res = unmarshall(item);
+                    const streamAddress = deserializeStreamAddress(res.stream_address)
+                    const r: EventRecord = new EventRecord(
+                        crypto.randomUUID(),
+                        new EvDbStreamCursor(streamAddress.streamType, streamAddress.streamId, res.offset),
+                        res.event_type,
+                        res.captured_by,
+                        new Date(res.captured_at),
+                        res.payload,
+                        new Date(res.stored_at)
+                    );
                     yield r.toEvDbEvent();
                 }
             }
@@ -188,12 +198,12 @@ export default class EvDbDynamoDbStorageAdapter implements IEvDbStorageSnapshotA
                 return EvDbStoredSnapshotResultRaw.Empty;
             }
 
-            const snapshot = response.Items[0];
+            const snapshot = unmarshall(response.Items[0]);
 
             return new EvDbStoredSnapshotResultRaw(
-                Number(snapshot.offset),
+                snapshot.offset,
                 new Date(Number(snapshot.stored_at)),
-                unmarshall(snapshot.state),
+                snapshot.state,
             );
         } catch (error) {
             throw error;
