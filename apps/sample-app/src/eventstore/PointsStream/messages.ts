@@ -1,26 +1,26 @@
-import EvDbEvent from "@eventualize/types/EvDbEvent";
+import EvDbStreamEvent from "@eventualize/types/EvDbEvent";
 import EvDbMessage from "@eventualize/types/EvDbMessage";
 import EVDbMessagesProducer from "@eventualize/types/EvDbMessagesProducer";
 import { PointsAdded } from "./events.js";
 import { SumViewState, CountViewState } from "./views.js";
 
-const producer: EVDbMessagesProducer = (event: EvDbEvent, viewStates: Readonly<Record<string, unknown>>): EvDbMessage[] => {
-    if (event.eventType === new PointsAdded(0).payloadType) {
+const producer: EVDbMessagesProducer = (event: EvDbStreamEvent, viewStates: Readonly<Record<string, unknown>>): EvDbMessage[] => {
+    if (event.eventType === new PointsAdded({ points: 0 }).eventType) {
         return [
-            EvDbMessage.createFromEvent(
+            EvDbMessage.fromEvent(
+                'Points Added With Sum Notification',
                 event,
                 {
-                    payloadType: 'Points Added With Sum Notification',
-                    pointsAdded: (event.payload as PointsAdded).points,
+                    pointsAdded: (event.payload as PointsAdded).payload.points,
                     PointsSum: (viewStates['SumView'] as SumViewState).sum
                 }
 
             ),
-            EvDbMessage.createFromEvent(
+            EvDbMessage.fromEvent(
+                'Points Added With Count Notification',
                 event,
                 {
-                    payloadType: 'Points Added With Count Notification',
-                    pointsAdded: (event.payload as PointsAdded).points,
+                    pointsAdded: (event.payload as PointsAdded).payload.points,
                     PointsCount: (viewStates['CountView'] as CountViewState).count
                 }
 

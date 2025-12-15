@@ -1,5 +1,5 @@
 import IEvDbView from "./IEvDbView.js";
-import EvDbEvent from "./EvDbEvent.js";
+import EvDbStreamEvent, { EvDbStreamEventRaw } from "./EvDbEvent.js";
 import { EvDbStoredSnapshotData } from "./EvDbStoredSnapshotData.js";
 
 
@@ -17,7 +17,7 @@ export default interface IEvDbViewStore extends IEvDbView {
     /**
      * Apply event to the aggregate/view.
      */
-    applyEvent(e: EvDbEvent): void;
+    applyEvent(e: EvDbStreamEventRaw): void;
 
     /**
      * Get the snapshot data.

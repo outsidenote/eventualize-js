@@ -1,8 +1,9 @@
 import EvDbStream from './EvDbStream.js';
 import IEvDbStorageSnapshotAdapter from '@eventualize/types/IEvDbStorageSnapshotAdapter';
 import IEvDbStorageStreamAdapter from '@eventualize/types/IEvDbStorageStreamAdapter';
-import IEvDbEventPayload from "@eventualize/types/IEvDbEventPayload";
+import IEvDbPayload from "@eventualize/types/IEvDbPayload";
 import { EvDbStreamFactory } from './EvDbStreamFactory.js';
+import EvDbStreamEvent, { EvDbEvent, EvDbStreamEventRaw } from '@eventualize/types/EvDbEvent';
 
 /**
  * Combined storage adapter interface
@@ -137,7 +138,7 @@ class BaseStoreBuilder {
   /**
    * Register a stream factory
    */
-  public withStreamFactory<TEvents extends IEvDbEventPayload, TStreamType extends string>(
+  public withStreamFactory<TEvents extends EvDbStreamEventRaw, TStreamType extends string>(
     factory: EvDbStreamFactory<TEvents, TStreamType>
   ): this {
     const streamType = factory.getStreamType();

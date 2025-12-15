@@ -1,6 +1,5 @@
 import IEvDbStorageSnapshotAdapter from '@eventualize/types/IEvDbStorageSnapshotAdapter';
 import IEvDbStorageStreamAdapter from '@eventualize/types/IEvDbStorageStreamAdapter';
-import IEvDbEventPayload from "@eventualize/types/IEvDbEventPayload";
 import EvDbStreamCursor from '@eventualize/types/EvDbStreamCursor';
 import EvDbStreamAddress from '@eventualize/types/EvDbStreamAddress';
 import EVDbMessagesProducer from '@eventualize/types/EvDbMessagesProducer';
@@ -8,20 +7,33 @@ import EVDbMessagesProducer from '@eventualize/types/EvDbMessagesProducer';
 import EvDbStream from './EvDbStream.js';
 import { EvDbView } from './EvDbView.js';
 import { ViewFactory } from './ViewFactory.js';
+import EvDbStreamEvent, { EvDbEvent, EvDbStreamEventRaw } from '@eventualize/types/EvDbEvent';
+import IEvDbPayload from '@eventualize/types/IEvDbPayload.js';
 
 /**
  * Configuration for creating a stream factory
  */
-export interface EvDbStreamFactoryConfig<TEvents extends IEvDbEventPayload, TStreamType extends string> {
+export interface EvDbStreamFactoryConfig<TEvents extends EvDbStreamEventRaw, TStreamType extends string> {
   streamType: TStreamType;
   viewFactories: ViewFactory<any, TEvents>[];
   messagesProducer: EVDbMessagesProducer
 }
 
 /**
+ * Helper type to create method signatures for each event append
+ */
+type DynamicAppendEventMethod<T extends IEvDbPayload> = {
+  [K in `appendEvent${T['name']}`]: (event: T) => void
+}
+
+export type DynamicEventAppendMethods<U extends IEvDbPayload> =
+  U extends any ? DynamicAppendEventMethod<U> : never;
+
+
+/**
  * Stream Factory - creates stream instances with configured views
  */
-export class EvDbStreamFactory<TEvents extends IEvDbEventPayload, TStreamType extends string> {
+export class EvDbStreamFactory<TEvents extends EvDbStreamEventRaw, TStreamType extends string> {
   constructor(private readonly config: EvDbStreamFactoryConfig<TEvents, TStreamType>) { }
 
   /**
@@ -110,7 +122,7 @@ export class EvDbStreamFactory<TEvents extends IEvDbEventPayload, TStreamType ex
 /**
  * Factory function to create a StreamFactory
  */
-export function createEvDbStreamFactory<TEvents extends IEvDbEventPayload, TStreamType extends string>(
+export function createEvDbStreamFactory<TEvents extends EvDbStreamEventRaw, TStreamType extends string>(
   config: EvDbStreamFactoryConfig<TEvents, TStreamType>
 ): EvDbStreamFactory<TEvents, TStreamType> {
   return new EvDbStreamFactory(config);
@@ -119,7 +131,7 @@ export function createEvDbStreamFactory<TEvents extends IEvDbEventPayload, TStre
 /**
  * Fluent builder for creating stream factories
  */
-export class StreamFactoryBuilder<TEvents extends IEvDbEventPayload, TStreamType extends string> {
+export class StreamFactoryBuilder<TEvents extends EvDbStreamEventRaw, TStreamType extends string> {
   ;
   private viewFactories: ViewFactory<any, TEvents>[] = [];
 

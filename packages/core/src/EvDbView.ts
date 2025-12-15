@@ -1,11 +1,11 @@
 import IEvDbViewStore, { IEvDbViewStoreGeneric } from "@eventualize/types/IEvDbViewStore";
 import EvDbViewAddress from "@eventualize/types/EvDbViewAddress";
 import IEvDbStorageSnapshotAdapter from "@eventualize/types/IEvDbStorageSnapshotAdapter";
-import EvDbEvent from "@eventualize/types/src/EvDbEvent";
+import EvDbStreamEvent, { EvDbEvent, EvDbStreamEventRaw } from "@eventualize/types/src/EvDbEvent";
 import { EvDbStoredSnapshotData } from "@eventualize/types/EvDbStoredSnapshotData";
 import { EvDbStoredSnapshotResult } from "@eventualize/types/EvDbStoredSnapshotResult";
-import IEvDbEventMetadata from "@eventualize/types/IEvDbEventMetadata";
-import IEvDbEventPayload from "@eventualize/types/IEvDbEventPayload";
+import IEvDbStreamEventMetadata from "@eventualize/types/IEvDbEventMetadata";
+import IEvDbPayload from "@eventualize/types/IEvDbPayload";
 
 
 export abstract class EvDbViewRaw implements IEvDbViewStore {
@@ -34,7 +34,7 @@ export abstract class EvDbViewRaw implements IEvDbViewStore {
     shouldStoreSnapshot(offsetGapFromLastSave: number, durationSinceLastSaveMs: number): boolean {
         return true;
     }
-    applyEvent(e: EvDbEvent): void {
+    applyEvent(e: EvDbStreamEventRaw): void {
         const offset = e.streamCursor.offset;
         if (this.memoryOffset >= offset) {
             return;
@@ -54,7 +54,7 @@ export abstract class EvDbViewRaw implements IEvDbViewStore {
         this._storeOffset = this._memoryOffset;
     }
 
-    protected abstract onApplyEvent(e: EvDbEvent): void;
+    protected abstract onApplyEvent(e: EvDbStreamEventRaw): void;
 }
 
 export abstract class EvDbView<TState> extends EvDbViewRaw implements IEvDbViewStoreGeneric<TState> {
@@ -90,10 +90,10 @@ export abstract class EvDbView<TState> extends EvDbViewRaw implements IEvDbViewS
         );
     }
 
-    public abstract handleOnApply(oldState: TState, event: IEvDbEventPayload, metadata: IEvDbEventMetadata): TState
+    public abstract handleOnApply(oldState: TState, event: EvDbStreamEventRaw): TState
 
-    protected onApplyEvent(e: EvDbEvent): void {
-        this.state = this.handleOnApply(this.state, e.payload, e);
+    protected onApplyEvent(e: EvDbStreamEventRaw): void {
+        this.state = this.handleOnApply(this.state, e);
     }
 
 }

@@ -1,6 +1,6 @@
-import EvDbEvent from "./EvDbEvent.js";
+import { EvDbStreamEventRaw } from "./EvDbEvent.js";
 import EvDbStreamCursor from "./EvDbStreamCursor.js";
-import IEvDbEventPayload, { IEvDbPayloadData } from "./IEvDbEventPayload.js";
+import IEvDbPayload from "./IEvDbPayload.js";
 
 export default class EvDbMessage {
 
@@ -28,7 +28,7 @@ export default class EvDbMessage {
         public readonly capturedAt: Date,
         public readonly capturedBy: string,
         public readonly streamCursor: EvDbStreamCursor,
-        public readonly payload: IEvDbPayloadData,
+        public readonly payload: IEvDbPayload,
         public readonly storedAt?: Date
     ) { }
 
@@ -83,9 +83,10 @@ export default class EvDbMessage {
         );
     }
 
-    public static createFromEvent(
-        event: EvDbEvent,
-        payload: IEvDbEventPayload,
+    public static fromEvent(
+        messageType: string,
+        event: EvDbStreamEventRaw,
+        payload: IEvDbPayload,
         channel: string = 'default',
         serializeType: string = 'json'
     ): EvDbMessage {
@@ -94,7 +95,7 @@ export default class EvDbMessage {
             event.eventType,
             channel,
             'default',
-            payload.payloadType,
+            messageType,
             serializeType,
             event.capturedAt,
             event.capturedBy,

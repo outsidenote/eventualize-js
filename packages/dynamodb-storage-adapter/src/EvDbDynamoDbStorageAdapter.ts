@@ -1,7 +1,7 @@
 import { unmarshall } from "@aws-sdk/util-dynamodb";
 
-import { IEvDbPayloadData } from '@eventualize/types/IEvDbEventPayload';
-import IEvDbEventMetadata from '@eventualize/types/IEvDbEventMetadata';
+import IEvDbPayload from '@eventualize/types/IEvDbPayload';
+import IEvDbStreamEventMetadata from '@eventualize/types/IEvDbEventMetadata';
 import EvDbStreamCursor from '@eventualize/types/EvDbStreamCursor';
 import EvDbMessage from '@eventualize/types/EvDbMessage';
 import IEvDbStorageSnapshotAdapter from '@eventualize/types/IEvDbStorageSnapshotAdapter';
@@ -10,7 +10,7 @@ import EvDbStreamAddress from '@eventualize/types/EvDbStreamAddress';
 import EvDbViewAddress from '@eventualize/types/EvDbViewAddress';
 import { EvDbStoredSnapshotResultRaw } from '@eventualize/types/EvDbStoredSnapshotResult';
 import { EvDbStoredSnapshotData } from '@eventualize/types/EvDbStoredSnapshotData';
-import EvDbEvent from '@eventualize/types/EvDbEvent';
+import EvDbStreamEvent, { EvDbStreamEventRaw } from '@eventualize/types/EvDbEvent';
 import StreamStoreAffected from '@eventualize/types/StreamStoreAffected';
 import EvDbContinuousFetchOptions from '@eventualize/types/EvDbContinuousFetchOptions';
 import EvDbMessageFilter from '@eventualize/types/EvDbMessageFilter';
@@ -22,9 +22,9 @@ import QueryProvider, { deserializeStreamAddress, EventRecord, MessageRecord } f
 import { DynamoDBClient, TransactionCanceledException, TransactWriteItemsCommand } from '@aws-sdk/client-dynamodb';
 
 // Type definitions for records
-export interface EvDbEventRecord extends IEvDbEventMetadata {
+export interface EvDbEventRecord extends IEvDbStreamEventMetadata {
     id: string;
-    payload: IEvDbPayloadData;
+    payload: IEvDbPayload;
 }
 
 export interface EvDbSnapshotRecord {
@@ -33,7 +33,7 @@ export interface EvDbSnapshotRecord {
     streamId: string;
     viewName: string;
     offset: bigint;
-    state: IEvDbPayloadData;
+    state: IEvDbPayload;
 }
 
 export interface IEvDbOutboxTransformer {
@@ -46,8 +46,8 @@ export interface EvDbStorageContext {
     id: string;
 }
 
-const serializePayload = (payload: IEvDbPayloadData) => Buffer.from(JSON.stringify(payload), 'utf-8');
-const deserializePayload = (payload: any): IEvDbPayloadData => {
+const serializePayload = (payload: IEvDbPayload) => Buffer.from(JSON.stringify(payload), 'utf-8');
+const deserializePayload = (payload: any): IEvDbPayload => {
     if (!!payload && typeof payload == 'object') {
         return payload;
     }
@@ -82,7 +82,7 @@ export default class EvDbDynamoDbStorageAdapter implements IEvDbStorageSnapshotA
      * Store stream events in a transaction
      */
     async storeStreamAsync(
-        events: ReadonlyArray<EvDbEvent>,
+        events: ReadonlyArray<EvDbStreamEventRaw>,
         messages: ReadonlyArray<EvDbMessage>,
     ): Promise<StreamStoreAffected> {
         try {
@@ -154,7 +154,7 @@ export default class EvDbDynamoDbStorageAdapter implements IEvDbStorageSnapshotA
     async *getEventsAsync(
         streamCursor: EvDbStreamCursor,
         pageSize: number = 100
-    ): AsyncGenerator<EvDbEvent, void, undefined> {
+    ): AsyncGenerator<EvDbStreamEventRaw, void, undefined> {
         let queryCursor: Record<string, any> | undefined = undefined;
 
         do {

@@ -1,26 +1,26 @@
 import { EvDbView } from './EvDbView.js';
-import IEvDbEventPayload from "@eventualize/types/IEvDbEventPayload";
-import IEvDbEventMetadata from '@eventualize/types/IEvDbEventMetadata';
+import IEvDbPayload from "@eventualize/types/IEvDbPayload";
+import IEvDbStreamEventMetadata from '@eventualize/types/IEvDbEventMetadata';
 import IEvDbStorageSnapshotAdapter from '@eventualize/types/IEvDbStorageSnapshotAdapter';
 import EvDbViewAddress from '@eventualize/types/EvDbViewAddress';
 import EvDbStreamAddress from '@eventualize/types/EvDbStreamAddress';
 import { EvDbStoredSnapshotResult } from '@eventualize/types/EvDbStoredSnapshotResult';
+import EvDbStreamEvent, { EvDbEvent, EvDbStreamEventRaw } from '@eventualize/types/EvDbEvent';
 
 /**
  * Handler function type for applying an event to state
  */
-export type EvDbViewEventHandler<TState, TEvent extends IEvDbEventPayload> = (
+export type EvDbViewEventHandler<TState, TEvent extends EvDbStreamEventRaw> = (
     oldState: TState,
     event: TEvent,
-    metadata: IEvDbEventMetadata
 ) => TState;
 
 /**
  * Map of event handlers - one handler per event type in the union
  * Key is the payloadType string, value is the handler function
  */
-export type EvDbStreamEventHandlersMap<TState, TEvents extends IEvDbEventPayload> = {
-    [K in TEvents['payloadType']]: EvDbViewEventHandler<
+export type EvDbStreamEventHandlersMap<TState, TEvents extends EvDbStreamEventRaw> = {
+    [K in TEvents['eventType']]: EvDbViewEventHandler<
         TState,
         Extract<TEvents, { payloadType: K }>
     >;
@@ -28,7 +28,7 @@ export type EvDbStreamEventHandlersMap<TState, TEvents extends IEvDbEventPayload
 /**
  * Configuration for creating a view
  */
-export interface ViewConfig<TState, TEvents extends IEvDbEventPayload> {
+export interface ViewConfig<TState, TEvents extends EvDbStreamEventRaw> {
     viewName: string;
     streamType: string;
     defaultState: TState;
@@ -38,7 +38,7 @@ export interface ViewConfig<TState, TEvents extends IEvDbEventPayload> {
 /**
  * Generic View class that uses the handlers map
  */
-class GenericView<TState, TEvents extends IEvDbEventPayload> extends EvDbView<TState> {
+class GenericView<TState, TEvents extends EvDbStreamEventRaw> extends EvDbView<TState> {
 
     constructor(
         viewAddress: EvDbViewAddress,
@@ -54,23 +54,23 @@ class GenericView<TState, TEvents extends IEvDbEventPayload> extends EvDbView<TS
     /**
      * Dynamically applies events based on the handlers map
      */
-    public handleOnApply(oldState: TState, event: TEvents, metadata: IEvDbEventMetadata): TState {
-        const payloadType = event.payloadType as keyof typeof this.config.handlers;
-        const handler = this.config.handlers[payloadType];
+    public handleOnApply(oldState: TState, event: TEvents): TState {
+        const eventTyps = event.eventType as keyof typeof this.config.handlers;
+        const handler = this.config.handlers[eventTyps];
 
         if (!handler) {
             // console.warn(`No handler found for event type: ${event.payloadType}`);
             return oldState;
         }
 
-        return handler(oldState, event as any, metadata);
+        return handler(oldState, event as any);
     }
 }
 
 /**
  * View Factory - creates view instances with the handlers map
  */
-export class ViewFactory<TState, TEvents extends IEvDbEventPayload> {
+export class ViewFactory<TState, TEvents extends EvDbStreamEventRaw> {
     constructor(private readonly config: ViewConfig<TState, TEvents>) { }
 
     /**
@@ -115,7 +115,7 @@ export class ViewFactory<TState, TEvents extends IEvDbEventPayload> {
 /**
  * Factory function to create a ViewFactory
  */
-export function createViewFactory<TState, TEvents extends IEvDbEventPayload>(
+export function createViewFactory<TState, TEvents extends EvDbStreamEventRaw>(
     config: ViewConfig<TState, TEvents>
 ): ViewFactory<TState, TEvents> {
     return new ViewFactory(config);

@@ -76,17 +76,17 @@ export default class Steps {
     }
 
     public static addPointsEventsToStream(stream: EvDbStream) {
-        stream.appendEvent(new PointsAdded(50));
-        stream.appendEvent(new PointsSubtracted(20));
-        stream.appendEvent(new PointsAdded(50));
-        stream.appendEvent(new PointsSubtracted(20));
-        stream.appendEvent(new PointsMultiplied(2));
-        stream.appendEvent(new PointsAdded(50));
-        stream.appendEvent(new PointsSubtracted(20));
-        stream.appendEvent(new PointsAdded(50));
-        stream.appendEvent(new PointsSubtracted(20));
-        stream.appendEvent(new PointsAdded(50));
-        stream.appendEvent(new PointsSubtracted(20));
+        stream.appendEvent(new PointsAdded({ points: 50 }));
+        stream.appendEvent(new PointsSubtracted({ points: 20 }));
+        stream.appendEvent(new PointsAdded({ points: 50 }));
+        stream.appendEvent(new PointsSubtracted({ points: 20 }));
+        stream.appendEvent(new PointsMultiplied({ multiplier: 2 }));
+        stream.appendEvent(new PointsAdded({ points: 50 }));
+        stream.appendEvent(new PointsSubtracted({ points: 20 }));
+        stream.appendEvent(new PointsAdded({ points: 50 }));
+        stream.appendEvent(new PointsSubtracted({ points: 20 }));
+        stream.appendEvent(new PointsAdded({ points: 50 }));
+        stream.appendEvent(new PointsSubtracted({ points: 20 }));
     }
     public static assertStreamStateIsCorrect(stream: EvDbStream) {
         const sumView = stream.getView('SumView');

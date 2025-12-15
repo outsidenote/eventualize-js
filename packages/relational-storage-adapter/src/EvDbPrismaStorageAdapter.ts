@@ -1,5 +1,5 @@
-import { IEvDbPayloadData } from '@eventualize/types/IEvDbEventPayload';
-import IEvDbEventMetadata from '@eventualize/types/IEvDbEventMetadata';
+import IEvDbPayload from '@eventualize/types/IEvDbPayload';
+import IEvDbStreamEventMetadata from '@eventualize/types/IEvDbEventMetadata';
 import EvDbStreamCursor from '@eventualize/types/EvDbStreamCursor';
 import EvDbMessage from '@eventualize/types/EvDbMessage';
 import IEvDbStorageSnapshotAdapter from '@eventualize/types/IEvDbStorageSnapshotAdapter';
@@ -8,7 +8,7 @@ import EvDbStreamAddress from '@eventualize/types/EvDbStreamAddress';
 import EvDbViewAddress from '@eventualize/types/EvDbViewAddress';
 import { EvDbStoredSnapshotResultRaw } from '@eventualize/types/EvDbStoredSnapshotResult';
 import { EvDbStoredSnapshotData } from '@eventualize/types/EvDbStoredSnapshotData';
-import EvDbEvent from '@eventualize/types/EvDbEvent';
+import EvDbStreamEvent, { EvDbStreamEventRaw } from '@eventualize/types/EvDbEvent';
 import StreamStoreAffected from '@eventualize/types/StreamStoreAffected';
 import EvDbContinuousFetchOptions from '@eventualize/types/EvDbContinuousFetchOptions';
 import EvDbMessageFilter from '@eventualize/types/EvDbMessageFilter';
@@ -19,9 +19,9 @@ import { PrismaQueryProvider } from './EvDbRelationalStorageAdapterQueries.js';
 // import { eventsCreateManyInput } from './generated/prisma/models';
 
 // Type definitions for records
-export interface EvDbEventRecord extends IEvDbEventMetadata {
+export interface EvDbEventRecord extends IEvDbStreamEventMetadata {
     id: string;
-    payload: IEvDbPayloadData;
+    payload: IEvDbPayload;
 }
 
 export interface EvDbSnapshotRecord {
@@ -30,7 +30,7 @@ export interface EvDbSnapshotRecord {
     streamId: string;
     viewName: string;
     offset: bigint;
-    state: IEvDbPayloadData;
+    state: IEvDbPayload;
 }
 
 export interface IEvDbOutboxTransformer {
@@ -43,8 +43,8 @@ export interface EvDbStorageContext {
     id: string;
 }
 
-const serializePayload = (payload: IEvDbPayloadData) => Buffer.from(JSON.stringify(payload), 'utf-8');
-const deserializePayload = (payload: any): IEvDbPayloadData => {
+const serializePayload = (payload: IEvDbPayload) => Buffer.from(JSON.stringify(payload), 'utf-8');
+const deserializePayload = (payload: any): IEvDbPayload => {
     if (!!payload && typeof payload == 'object') {
         return payload;
     }
@@ -85,7 +85,7 @@ export class EvDbPrismaStorageAdapter implements IEvDbStorageSnapshotAdapter, IE
      * Store stream events in a transaction
      */
     async storeStreamAsync(
-        events: ReadonlyArray<EvDbEvent>,
+        events: ReadonlyArray<EvDbStreamEventRaw>,
         messages: ReadonlyArray<EvDbMessage>,
     ): Promise<StreamStoreAffected> {
         try {
@@ -171,7 +171,7 @@ export class EvDbPrismaStorageAdapter implements IEvDbStorageSnapshotAdapter, IE
     async *getEventsAsync(
         streamCursor: EvDbStreamCursor,
         pageSize: number = 100
-    ): AsyncGenerator<EvDbEvent, void, undefined> {
+    ): AsyncGenerator<EvDbStreamEventRaw, void, undefined> {
         const { streamType, streamId } = streamCursor;
         let currentOffset = streamCursor.offset;
         while (true) {
@@ -187,7 +187,7 @@ export class EvDbPrismaStorageAdapter implements IEvDbStorageSnapshotAdapter, IE
                 }
 
                 for (const event of events) {
-                    yield new EvDbEvent(
+                    yield new EvDbStreamEvent(
                         event.event_type,
                         new EvDbStreamCursor(event.stream_type, event.stream_id, Number(event.offset)),
                         { payloadType: event.event_type, payload: deserializePayload(event.payload) },

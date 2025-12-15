@@ -1,4 +1,4 @@
-import EvDbEvent from "@eventualize/types/EvDbEvent";
+import EvDbStreamEvent, { EvDbEvent, EvDbEventRaw } from "@eventualize/types/EvDbEvent";
 import EvDbMessage from "@eventualize/types/EvDbMessage";
 import IEvDbStorageStreamAdapter from "@eventualize/types/IEvDbStorageStreamAdapter";
 import IEvDbView from "@eventualize/types/IEvDbView";
@@ -6,24 +6,23 @@ import EvDbStreamAddress from "@eventualize/types/EvDbStreamAddress";
 import IEvDbViewStore from "@eventualize/types/IEvDbViewStore";
 import IEvDbStreamStore from "@eventualize/types/IEvDbStreamStore";
 import IEvDbStreamStoreData from "@eventualize/types/IEvDbStreamStoreData";
-import IEvDbEventPayload from "@eventualize/types/IEvDbEventPayload";
 import StreamStoreAffected from "@eventualize/types/StreamStoreAffected";
-import IEvDbEventMetadata from "@eventualize/types/IEvDbEventMetadata";
+import IEvDbStreamEventMetadata from "@eventualize/types/IEvDbEventMetadata";
 import EvDbStreamCursor from "@eventualize/types/EvDbStreamCursor";
 import OCCException from "@eventualize/types/OCCException";
 import { EvDbStreamType } from "@eventualize/types/primitiveTypes";
 import EVDbMessagesProducer from "@eventualize/types/EvDbMessagesProducer";
 import { EvDbView } from "./EvDbView.js"
+import { EvDbStreamEventRaw } from "@eventualize/types/EvDbEvent.js";
+import IEvDbPayload from "@eventualize/types/IEvDbPayload.js";
 
 
 type ImmutableIEvDbView = Readonly<EvDbView<unknown>>;
 export type ImmutableIEvDbViewMap = Readonly<Record<string, ImmutableIEvDbView>>;
 
-
-
 export default class EvDbStream implements IEvDbStreamStore, IEvDbStreamStoreData {
 
-    protected _pendingEvents: ReadonlyArray<EvDbEvent> = [];
+    protected _pendingEvents: ReadonlyArray<EvDbStreamEventRaw> = [];
     protected _pendingMessages: ReadonlyArray<EvDbMessage> = [];
 
     private static readonly ASSEMBLY_NAME = {
@@ -51,7 +50,7 @@ export default class EvDbStream implements IEvDbStreamStore, IEvDbStreamStoreDat
     /**
      * Unspecialized events
      */
-    getEvents(): ReadonlyArray<EvDbEvent> {
+    getEvents(): ReadonlyArray<EvDbStreamEventRaw> {
         return this._pendingEvents;
     }
 
@@ -80,21 +79,11 @@ export default class EvDbStream implements IEvDbStreamStore, IEvDbStreamStoreDat
         this.storedOffset = lastStoredOffset;
     }
 
-    public appendEvent(
-        payload: IEvDbEventPayload,
-        capturedBy?: string | null
-    ): IEvDbEventMetadata {
-        capturedBy = capturedBy ?? EvDbStream.DEFAULT_CAPTURE_BY;
+    public appendEvent(event: EvDbEventRaw): IEvDbStreamEventMetadata {
         // const json = JSON.stringify(payload); // Or use custom serializer
 
         const cursor = this.getNextCursor(this._pendingEvents);
-        const e = new EvDbEvent(
-            payload.payloadType,
-            cursor,
-            payload,
-            new Date(),
-            capturedBy,
-        );
+        const e = EvDbStreamEvent.fromEvent(event, cursor);
         this._pendingEvents = [...this._pendingEvents, e];
 
         // Apply to views
@@ -113,7 +102,7 @@ export default class EvDbStream implements IEvDbStreamStore, IEvDbStreamStoreDat
         return e;
     }
 
-    private getNextCursor(events: ReadonlyArray<EvDbEvent>): EvDbStreamCursor {
+    private getNextCursor(events: ReadonlyArray<EvDbStreamEventRaw>): EvDbStreamCursor {
         if (events.length === 0) {
             return new EvDbStreamCursor(this.streamAddress, this.storedOffset + 1);
         }
@@ -182,3 +171,4 @@ export default class EvDbStream implements IEvDbStreamStore, IEvDbStreamStoreDat
         return this._pendingMessages;
     }
 }
+

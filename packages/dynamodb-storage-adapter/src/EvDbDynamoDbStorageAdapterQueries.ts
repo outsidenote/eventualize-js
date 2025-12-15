@@ -1,8 +1,8 @@
-import IEvDbEventPayload, { IEvDbPayloadData } from "@eventualize/types/IEvDbEventPayload"
+import IEvDbPayload from "@eventualize/types/IEvDbPayload"
 import { AttributeValue, GetItemCommandInput, PutItemCommand, PutItemCommandInput, QueryCommand, QueryCommandInput, TransactWriteItem } from "@aws-sdk/client-dynamodb";
 import EvDbStreamCursor from "@eventualize/types/EvDbStreamCursor";
 import EvDbStreamAddress from "@eventualize/types/EvDbStreamAddress";
-import EvDbEvent from "@eventualize/types/EvDbEvent";
+import EvDbStreamEvent, { EvDbStreamEventRaw } from "@eventualize/types/EvDbEvent";
 import EvDbViewAddress from "@eventualize/types/EvDbViewAddress";
 import { EvDbStoredSnapshotData } from "@eventualize/types/EvDbStoredSnapshotData";
 import { marshall } from "@aws-sdk/util-dynamodb";
@@ -15,11 +15,11 @@ export class EventRecord {
         public readonly event_type: string,
         public readonly captured_by: string,
         public readonly captured_at: Date,
-        public readonly payload: IEvDbEventPayload,
+        public readonly payload: IEvDbPayload,
         public readonly stored_at?: Date,
     ) { }
 
-    public static createFromEvent(e: EvDbEvent): EventRecord {
+    public static createFromEvent(e: EvDbStreamEventRaw): EventRecord {
         return new EventRecord(
             crypto.randomUUID(),
             e.streamCursor,
@@ -30,8 +30,8 @@ export class EventRecord {
             e.storedAt)
     }
 
-    public toEvDbEvent(): EvDbEvent {
-        return new EvDbEvent(
+    public toEvDbEvent(): EvDbStreamEventRaw {
+        return new EvDbStreamEvent(
             this.event_type,
             this.stream_cursor,
             this.payload,
@@ -50,7 +50,7 @@ export type MessageRecord = {
     event_type: string
     captured_by: string
     captured_at: Date
-    payload: IEvDbPayloadData
+    payload: IEvDbPayload
     stored_at?: Date
 }
 
