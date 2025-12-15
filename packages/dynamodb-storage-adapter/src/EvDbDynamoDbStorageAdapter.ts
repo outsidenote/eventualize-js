@@ -19,7 +19,7 @@ import { EvDbShardName } from '@eventualize/types/primitiveTypes';
 
 import { createDynamoDBClient, listTables } from './DynamoDbClient.js';
 import QueryProvider, { deserializeStreamAddress, EventRecord, MessageRecord } from './EvDbDynamoDbStorageAdapterQueries.js'
-import { ConditionalCheckFailedException, DynamoDBClient, TransactGetItemsCommandInput, TransactWriteItemsCommand } from '@aws-sdk/client-dynamodb';
+import { DynamoDBClient, TransactionCanceledException, TransactWriteItemsCommand } from '@aws-sdk/client-dynamodb';
 
 // Type definitions for records
 export interface EvDbEventRecord extends IEvDbEventMetadata {
@@ -227,7 +227,11 @@ export default class EvDbDynamoDbStorageAdapter implements IEvDbStorageSnapshotA
      * Check if an exception is an optimistic concurrency conflict
      */
     private isOccException(error: unknown): boolean {
-        return error instanceof ConditionalCheckFailedException;
+        if (!(error instanceof TransactionCanceledException)) {
+            return false;
+        }
+        return !!(error as TransactionCanceledException)
+            .CancellationReasons?.some(({ Code }) => Code === 'ConditionalCheckFailed')
     }
 
     /**
