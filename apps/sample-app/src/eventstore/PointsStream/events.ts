@@ -10,4 +10,9 @@ export class PointsSubtracted implements IEvDbEventPayload {
     constructor(public readonly points: number) { }
 }
 
-export type PointsStreamEvents = PointsAdded | PointsSubtracted;
+export class PointsMultiplied implements IEvDbEventPayload {
+    readonly payloadType = 'PointsMultiplied';
+    constructor(public readonly multiplier: number) { }
+}
+
+export type PointsStreamEvents = PointsAdded | PointsSubtracted | PointsMultiplied;

@@ -7,7 +7,7 @@ import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import StorageAdapterStub from "./StorageAdapterStub.js";
 import PointsStreamFactory from "../eventstore/PointsStream/index.js";
 import { SumViewState, CountViewState } from '../eventstore/PointsStream/views.js';
-import { PointsAdded, PointsSubtracted } from "../eventstore/PointsStream/events.js";
+import { PointsAdded, PointsMultiplied, PointsSubtracted } from "../eventstore/PointsStream/events.js";
 
 import EvDbStream from "@eventualize/core/EvDbStream";
 import { EvDbView } from '@eventualize/core/EvDbView';
@@ -80,6 +80,7 @@ export default class Steps {
         stream.appendEvent(new PointsSubtracted(20));
         stream.appendEvent(new PointsAdded(50));
         stream.appendEvent(new PointsSubtracted(20));
+        stream.appendEvent(new PointsMultiplied(2));
         stream.appendEvent(new PointsAdded(50));
         stream.appendEvent(new PointsSubtracted(20));
         stream.appendEvent(new PointsAdded(50));
@@ -94,9 +95,9 @@ export default class Steps {
         const countView = stream.getView('CountView');
         if (!countView)
             assert.fail('CountView not found in stream');
-        assert.strictEqual((stream.getView('SumView') as EvDbView<SumViewState>).getState().sum, 150);
-        assert.strictEqual((stream.getView('CountView') as EvDbView<CountViewState>).getState().count, 10);
-        assert.strictEqual(stream.getEvents().length, 10);
+        assert.strictEqual((stream.getView('SumView') as EvDbView<SumViewState>).getState().sum, 210);
+        assert.strictEqual((stream.getView('CountView') as EvDbView<CountViewState>).getState().count, 11);
+        assert.strictEqual(stream.getEvents().length, 11);
     }
 
     public static compareFetchedAndStoredStreams(storedStream: EvDbStream, fetchedStream: EvDbStream) {

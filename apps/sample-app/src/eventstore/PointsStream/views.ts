@@ -1,4 +1,5 @@
-import { PointsAdded, PointsSubtracted, PointsStreamEvents } from "./events.js";
+import IEvDbEventMetadata from "@eventualize/types/IEvDbEventMetadata";
+import { PointsAdded, PointsSubtracted, PointsStreamEvents, PointsMultiplied } from "./events.js";
 import { createViewFactory } from "@eventualize/core/ViewFactory";
 
 export class CountViewState {
@@ -15,6 +16,9 @@ export const CountViewFactory = createViewFactory<CountViewState, PointsStreamEv
             return new CountViewState(oldState.count + 1);
         },
         PointsSubtracted: (oldState: CountViewState, event: PointsSubtracted) => {
+            return new CountViewState(oldState.count + 1);
+        },
+        PointsMultiplied: function (oldState: CountViewState): CountViewState {
             return new CountViewState(oldState.count + 1);
         }
     }
@@ -35,6 +39,9 @@ export const SumViewFactory = createViewFactory<SumViewState, PointsStreamEvents
         },
         PointsSubtracted: (oldState: SumViewState, event: PointsSubtracted) => {
             return new SumViewState(oldState.sum - event.points);
+        },
+        PointsMultiplied: function (oldState: SumViewState, event: PointsMultiplied): SumViewState {
+            return new SumViewState(oldState.sum * event.multiplier);
         }
     }
 });
