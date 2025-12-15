@@ -1,6 +1,6 @@
 import IEvDbEventMetadata from "@eventualize/types/IEvDbEventMetadata";
 import { PointsAdded, PointsSubtracted, PointsStreamEvents, PointsMultiplied } from "./events.js";
-import { createViewFactory } from "@eventualize/core/ViewFactory";
+import { createViewFactory } from "@eventualize/core/EvDbViewFactory";
 
 export class CountViewState {
     constructor(public count: number = 0) { };

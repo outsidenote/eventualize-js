@@ -7,7 +7,7 @@ import EVDbMessagesProducer from '@eventualize/types/EvDbMessagesProducer';
 
 import EvDbStream from './EvDbStream.js';
 import { EvDbView } from './EvDbView.js';
-import { ViewFactory } from './ViewFactory.js';
+import { ViewFactory } from './EvDbViewFactory.js';
 
 /**
  * Configuration for creating a stream factory
