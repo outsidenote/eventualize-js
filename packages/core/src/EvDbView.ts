@@ -61,10 +61,11 @@ export abstract class EvDbView<TState> extends EvDbViewRaw implements IEvDbViewS
     protected getDefaultState(): TState {
         return this.defaultState;
     };
-    protected state: TState = this.getDefaultState();
-    public getState(): TState {
-        return this.state;
-    }
+    protected _state: TState = this.getDefaultState();
+    get state(): TState { return this._state }
+    // public getState(): TState {
+    //     return this._state;
+    // }
 
     public constructor(
         address: EvDbViewAddress,
@@ -74,9 +75,9 @@ export abstract class EvDbView<TState> extends EvDbViewRaw implements IEvDbViewS
     ) {
         super(storageAdapter, address, snapshot);
         if (snapshot.offset === 0)
-            this.state = this.getDefaultState();
+            this._state = this.getDefaultState();
         else
-            this.state = snapshot.state;
+            this._state = snapshot.state;
 
 
     }
@@ -86,14 +87,14 @@ export abstract class EvDbView<TState> extends EvDbViewRaw implements IEvDbViewS
             this.address,
             this.memoryOffset,
             this.storeOffset,
-            this.state
+            this._state
         );
     }
 
     public abstract handleOnApply(oldState: TState, event: IEvDbEventPayload, metadata: IEvDbEventMetadata): TState
 
     protected onApplyEvent(e: EvDbEvent): void {
-        this.state = this.handleOnApply(this.state, e.payload, e);
+        this._state = this.handleOnApply(this._state, e.payload, e);
     }
 
 }

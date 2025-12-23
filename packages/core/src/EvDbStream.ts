@@ -105,7 +105,7 @@ export default class EvDbStream implements IEvDbStreamStore, IEvDbStreamStoreDat
         // Outbox producer
         const viewsStates = Object.fromEntries(Object.entries(this._views)
             .map(([k, v]) => {
-                return [k, (v as EvDbView<unknown>).getState()]
+                return [k, (v as EvDbView<unknown>).state]
             }));
         const producedMessages = this.messagesProducer(e, viewsStates);
         this._pendingMessages = [...this._pendingMessages, ...producedMessages]

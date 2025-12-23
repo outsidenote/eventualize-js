@@ -94,8 +94,8 @@ export default class Steps {
         const countView = stream.views.Count;
         if (!countView)
             assert.fail('CountView not found in stream');
-        assert.strictEqual((stream.views.Sum as EvDbView<SumViewState>).getState().sum, 210);
-        assert.strictEqual((stream.views.Count as EvDbView<CountViewState>).getState().count, 11);
+        assert.strictEqual((stream.views.Sum as EvDbView<SumViewState>).state.sum, 210);
+        assert.strictEqual((stream.views.Count as EvDbView<CountViewState>).state.count, 11);
         assert.strictEqual(stream.getEvents().length, 11);
     }
 
@@ -104,7 +104,7 @@ export default class Steps {
         assert.strictEqual(fetchedStream.storedOffset, storedStream.storedOffset);
         const fetchedSumView = fetchedStream.views.Sum as EvDbView<SumViewState>;
         const storedSumView = storedStream.views.Sum as EvDbView<SumViewState>;
-        assert.strictEqual(storedSumView.getState().sum, fetchedSumView.getState().sum);
+        assert.strictEqual(storedSumView.state.sum, fetchedSumView.state.sum);
         assert.strictEqual(storedSumView.storeOffset, fetchedSumView.memoryOffset);
     }
 

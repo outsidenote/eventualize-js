@@ -34,5 +34,5 @@ export interface IEvDbViewStoreGeneric<TState> extends IEvDbViewStore {
     /**
      * Get the current state of the view.
      */
-    getState: () => TState;
+    state: TState;
 }
