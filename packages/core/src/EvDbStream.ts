@@ -80,7 +80,7 @@ export default class EvDbStream implements IEvDbStreamStore, IEvDbStreamStoreDat
         this.storedOffset = lastStoredOffset;
     }
 
-    public appendEvent(
+    protected appendEvent(
         payload: IEvDbEventPayload,
         capturedBy?: string | null
     ): IEvDbEventMetadata {

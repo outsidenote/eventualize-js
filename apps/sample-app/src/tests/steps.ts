@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 
 import StorageAdapterStub from "./StorageAdapterStub.js";
-import PointsStreamFactory from "../eventstore/PointsStream/index.js";
+import PointsStreamFactory, { PointsStreamType } from "../eventstore/PointsStream/index.js";
 import { SumViewState, CountViewState } from '../eventstore/PointsStream/views.js';
 import { PointsAdded, PointsMultiplied, PointsSubtracted } from "../eventstore/PointsStream/events.js";
 
@@ -71,22 +71,22 @@ export default class Steps {
 
     }
 
-    public static createPointsStream<TStreams extends StreamMap>(streamId: string, eventStore: EvDbEventStoreType<TStreams>): EvDbStream {
-        return eventStore.createPointsStream(streamId);
+    public static createPointsStream<TStreams extends StreamMap>(streamId: string, eventStore: EvDbEventStoreType<TStreams>): PointsStreamType {
+        return eventStore.createPointsStream(streamId) as PointsStreamType;
     }
 
-    public static addPointsEventsToStream(stream: EvDbStream) {
-        stream.appendEvent(new PointsAdded(50));
-        stream.appendEvent(new PointsSubtracted(20));
-        stream.appendEvent(new PointsAdded(50));
-        stream.appendEvent(new PointsSubtracted(20));
-        stream.appendEvent(new PointsMultiplied(2));
-        stream.appendEvent(new PointsAdded(50));
-        stream.appendEvent(new PointsSubtracted(20));
-        stream.appendEvent(new PointsAdded(50));
-        stream.appendEvent(new PointsSubtracted(20));
-        stream.appendEvent(new PointsAdded(50));
-        stream.appendEvent(new PointsSubtracted(20));
+    public static addPointsEventsToStream(stream: PointsStreamType) {
+        stream.appendEventPointsAdded(new PointsAdded(50));
+        stream.appendEventPointsSubtracted(new PointsSubtracted(20));
+        stream.appendEventPointsAdded(new PointsAdded(50));
+        stream.appendEventPointsSubtracted(new PointsSubtracted(20));
+        stream.appendEventPointsMultiplied(new PointsMultiplied(2));
+        stream.appendEventPointsAdded(new PointsAdded(50));
+        stream.appendEventPointsSubtracted(new PointsSubtracted(20));
+        stream.appendEventPointsAdded(new PointsAdded(50));
+        stream.appendEventPointsSubtracted(new PointsSubtracted(20));
+        stream.appendEventPointsAdded(new PointsAdded(50));
+        stream.appendEventPointsSubtracted(new PointsSubtracted(20));
     }
     public static assertStreamStateIsCorrect(stream: EvDbStream) {
         const sumView = stream.getView('SumView');
