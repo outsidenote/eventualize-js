@@ -29,6 +29,13 @@ describe('Relational Databases Integration Tests', () => {
       t.test('Then: fetched stream is correct', async () => {
         Steps.compareFetchedAndStoredStreams(testData.pointsStream, testData.fetchedStream);
       })
+
+      t.test('Duplicate stream cannot be stored', async () => {
+        testData.dupPointsStream = Steps.createPointsStream(testData.streamId, testData.eventStore);
+        Steps.addPointsEventsToStream(testData.dupPointsStream);
+        await assert.rejects(testData.dupPointsStream.store(), { message: 'OPTIMISTIC_CONCURRENCY_VIOLATION' });
+      })
+
       t.after(async () => {
         await Steps.clearEnvironment(testData.storeClient, storeType);
       })
