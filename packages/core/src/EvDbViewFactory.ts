@@ -32,7 +32,7 @@ export interface ViewConfig<TState, TEvents extends IEvDbEventPayload> {
     viewName: string;
     streamType: string;
     defaultState: TState;
-    handlers: EvDbStreamEventHandlersMap<TState, TEvents>;
+    handlers: Partial<EvDbStreamEventHandlersMap<TState, TEvents>>;
 }
 
 /**

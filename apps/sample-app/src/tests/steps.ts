@@ -2,7 +2,6 @@ import * as path from 'path';
 import * as dotenv from 'dotenv';
 import * as assert from 'node:assert';
 import { fileURLToPath } from 'node:url';
-import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 
 import StorageAdapterStub from "./StorageAdapterStub.js";
 import PointsStreamFactory, { PointsStreamType } from "../eventstore/PointsStream/index.js";
@@ -88,23 +87,23 @@ export default class Steps {
         stream.appendEventPointsAdded(new PointsAdded(50));
         stream.appendEventPointsSubtracted(new PointsSubtracted(20));
     }
-    public static assertStreamStateIsCorrect(stream: EvDbStream) {
-        const sumView = stream.getView('SumView');
+    public static assertStreamStateIsCorrect(stream: PointsStreamType) {
+        const sumView = stream.getView('Sum');
         if (!sumView)
             assert.fail('SumView not found in stream');
-        const countView = stream.getView('CountView');
+        const countView = stream.getView('Count');
         if (!countView)
             assert.fail('CountView not found in stream');
-        assert.strictEqual((stream.getView('SumView') as EvDbView<SumViewState>).getState().sum, 210);
-        assert.strictEqual((stream.getView('CountView') as EvDbView<CountViewState>).getState().count, 11);
+        assert.strictEqual((stream.getView('Sum') as EvDbView<SumViewState>).getState().sum, 210);
+        assert.strictEqual((stream.getView('Count') as EvDbView<CountViewState>).getState().count, 11);
         assert.strictEqual(stream.getEvents().length, 11);
     }
 
     public static compareFetchedAndStoredStreams(storedStream: EvDbStream, fetchedStream: EvDbStream) {
         assert.strictEqual(fetchedStream.getEvents().length, 0);
         assert.strictEqual(fetchedStream.storedOffset, storedStream.storedOffset);
-        const fetchedSumView = fetchedStream.getView('SumView') as EvDbView<SumViewState>;
-        const storedSumView = storedStream.getView('SumView') as EvDbView<SumViewState>;
+        const fetchedSumView = fetchedStream.getView('Sum') as EvDbView<SumViewState>;
+        const storedSumView = storedStream.getView('Sum') as EvDbView<SumViewState>;
         assert.strictEqual(storedSumView.getState().sum, fetchedSumView.getState().sum);
         assert.strictEqual(storedSumView.storeOffset, fetchedSumView.memoryOffset);
     }

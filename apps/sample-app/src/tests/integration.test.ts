@@ -1,7 +1,6 @@
 import * as assert from 'node:assert';
 import { test, describe } from 'node:test'; // Use require or import
 import Steps, { EVENT_STORE_TYPE } from './steps.js';
-import { PointsStreamType } from '../eventstore/PointsStream/index.js';
 
 const supportedRelationalDatabases = [EVENT_STORE_TYPE.MYSQL, EVENT_STORE_TYPE.POSTGRES, EVENT_STORE_TYPE.DYNAMODB];
 
@@ -19,6 +18,7 @@ describe('Relational Databases Integration Tests', () => {
         testData.streamId = 'pointsStream1';
         testData.pointsStream = Steps.createPointsStream(testData.streamId, testData.eventStore);
         Steps.addPointsEventsToStream(testData.pointsStream);
+        Steps.assertStreamStateIsCorrect(testData.pointsStream)
       })
 
       t.test('When: stream stored and fetched', async () => {

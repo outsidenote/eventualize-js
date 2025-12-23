@@ -1,13 +1,14 @@
 import IEvDbStorageSnapshotAdapter from '@eventualize/types/IEvDbStorageSnapshotAdapter';
 import IEvDbStorageStreamAdapter from '@eventualize/types/IEvDbStorageStreamAdapter';
 import IEvDbEventPayload from "@eventualize/types/IEvDbEventPayload";
+import IEvDbEventMetadata from '@eventualize/types/IEvDbEventMetadata';
 import EvDbStreamCursor from '@eventualize/types/EvDbStreamCursor';
 import EvDbStreamAddress from '@eventualize/types/EvDbStreamAddress';
 import EVDbMessagesProducer from '@eventualize/types/EvDbMessagesProducer';
 
 import EvDbStream from './EvDbStream.js';
 import { EvDbView } from './EvDbView.js';
-import { ViewFactory } from './EvDbViewFactory.js';
+import { ViewFactory, createViewFactory, EvDbStreamEventHandlersMap } from './EvDbViewFactory.js';
 
 /**
  * Configuration for creating a stream factory
@@ -78,7 +79,7 @@ export class EvDbStreamFactory<TEvents extends IEvDbEventPayload, TStreamType ex
     // Add dynamic methods for each event type
     eventTypes.forEach(({ eventName }) => {
       const methodName = `appendEvent${eventName}`;
-      (DynamicStream.prototype as any)[methodName] = async function (event: IEvDbEventPayload) {
+      (DynamicStream.prototype as any)[methodName] = function (event: IEvDbEventPayload) {
         return this.appendEvent(event);
       };
     });
@@ -181,26 +182,10 @@ export function createEvDbStreamFactory<TEvents extends IEvDbEventPayload, TStre
  * Fluent builder for creating stream factories with inferred event types
  */
 export class StreamFactoryBuilder<TStreamType extends string, TEvents extends IEvDbEventPayload = never> {
-  private viewFactories: ViewFactory<any, any>[] = [];
+  private viewFactories: ViewFactory<any, TEvents>[] = [];
   private eventTypes: EventTypeConfig<any>[] = [];
 
   constructor(private streamType: TStreamType, private messagesProducer: EVDbMessagesProducer) { }
-
-  /**
-   * Add a view factory to the stream
-   */
-  public withView<TState>(viewFactory: ViewFactory<TState, any>): this {
-    this.viewFactories.push(viewFactory);
-    return this;
-  }
-
-  /**
-   * Add multiple view factories at once
-   */
-  public withViews(...viewFactories: ViewFactory<any, any>[]): this {
-    this.viewFactories.push(...viewFactories);
-    return this;
-  }
 
   /**
    * Register event type for dynamic method generation - infers the event name from class name
@@ -210,21 +195,56 @@ export class StreamFactoryBuilder<TStreamType extends string, TEvents extends IE
   ): StreamFactoryBuilder<TStreamType, TEvents | TEvent> {
     // Use the class name as the event name
     const eventName = eventClass.name;
-    
+
     this.eventTypes.push({ eventClass, eventName } as EventTypeConfig<TEvent>);
     return this as any;
   }
 
   /**
+   * Add a view with inline handler definition
+   * This can only be called AFTER withEventType calls to ensure type safety
+   */
+  public withView<TState>(
+    viewName: string,
+    stateClass: new (...args: any[]) => TState,
+    handlers: Partial<EvDbStreamEventHandlersMap<TState, TEvents>>
+  ): this {
+    // Create default state instance
+    const defaultState = new stateClass();
+
+    // Create the view factory
+    const viewFactory = createViewFactory<TState, TEvents>({
+      viewName,
+      streamType: this.streamType,
+      defaultState,
+      handlers
+    });
+
+    this.viewFactories.push(viewFactory);
+    return this;
+  }
+
+  /**
+   * Add a pre-created view factory (legacy support)
+   */
+  public withViewFactory<TState>(viewFactory: ViewFactory<TState, TEvents>): this {
+    this.viewFactories.push(viewFactory);
+    return this;
+  }
+
+  /**
    * Build the stream factory
    */
-  public build(): EvDbStreamFactory<TEvents, TStreamType> {
-    return new EvDbStreamFactory({
+  public build(): EvDbStreamFactory<TEvents, TStreamType> & { StreamType: StreamWithEventMethods<TEvents> } {
+    const factory = new EvDbStreamFactory({
       streamType: this.streamType,
       viewFactories: this.viewFactories,
       messagesProducer: this.messagesProducer,
       eventTypes: this.eventTypes
     });
+    return factory as EvDbStreamFactory<TEvents, TStreamType> & {
+      StreamType: StreamWithEventMethods<TEvents>;
+    };
   }
 }
 

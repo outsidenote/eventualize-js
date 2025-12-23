@@ -12,7 +12,7 @@ const producer: EVDbMessagesProducer = (event: EvDbEvent, viewStates: Readonly<R
                 {
                     payloadType: 'Points Added With Sum Notification',
                     pointsAdded: (event.payload as PointsAdded).points,
-                    PointsSum: (viewStates['SumView'] as SumViewState).sum
+                    PointsSum: (viewStates['Sum'] as SumViewState).sum
                 }
 
             ),
@@ -21,7 +21,7 @@ const producer: EVDbMessagesProducer = (event: EvDbEvent, viewStates: Readonly<R
                 {
                     payloadType: 'Points Added With Count Notification',
                     pointsAdded: (event.payload as PointsAdded).points,
-                    PointsCount: (viewStates['CountView'] as CountViewState).count
+                    PointsCount: (viewStates['Count'] as CountViewState).count
                 }
 
             )

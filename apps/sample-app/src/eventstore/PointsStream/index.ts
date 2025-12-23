@@ -1,14 +1,17 @@
-import { SumViewFactory, CountViewFactory } from './views.js';
 import { PointsAdded, PointsMultiplied, PointsSubtracted } from './events.js';
 import { StreamFactoryBuilder, StreamWithEventMethods } from '@eventualize/core/EvDbStreamFactory';
+import { CountViewState, SumViewState, sumViewHandlers, countViewHandlers } from './views.js';
 import messages from './messages.js'
 
-export default new StreamFactoryBuilder('PointsStream', messages)
+const PointsStreamFactory = new StreamFactoryBuilder('PointsStream', messages)
     .withEventType(PointsAdded)
     .withEventType(PointsSubtracted)
     .withEventType(PointsMultiplied)
-    .withView(SumViewFactory)
-    .withView(CountViewFactory)
+    .withView('Sum', SumViewState, sumViewHandlers)
+    .withView('Count', CountViewState, countViewHandlers)
     .build();
 
-export type PointsStreamType = StreamWithEventMethods<PointsAdded | PointsMultiplied | PointsSubtracted>;    
+export default PointsStreamFactory;
+
+export type PointsStreamType = typeof PointsStreamFactory.StreamType;
+
