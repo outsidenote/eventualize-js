@@ -68,7 +68,7 @@ export default class EvDbStream implements IEvDbStreamStore, IEvDbStreamStoreDat
         storageAdapter: IEvDbStorageStreamAdapter,
         streamId: string,
         lastStoredOffset: number,
-        private messagesProducer: EVDbMessagesProducer
+        protected messagesProducer: EVDbMessagesProducer
     ) {
         this._views = views.reduce((acc, view) => {
             const viewName = view.address.viewName;
