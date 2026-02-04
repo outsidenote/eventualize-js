@@ -1,0 +1,6 @@
+{
+    "npm.scriptExplorerAction": "run",
+    "testExplorer.onStart": "expand",
+    "testExplorer.showInlineError": true,
+    "debug.console.closeOnEnd": false
+}

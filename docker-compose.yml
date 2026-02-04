@@ -1,0 +1,67 @@
+version: "3.8"
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: evdb_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: evdb_test
+      MYSQL_USER: evdb
+      MYSQL_PASSWORD: evdbpassword
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  postgres:
+    image: postgres:15
+    container_name: evdb_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: evdb
+      POSTGRES_PASSWORD: evdbpassword
+      POSTGRES_DB: evdb_test
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  dynamodb:
+    image: amazon/dynamodb-local
+    container_name: evdb_dynamodb
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    command: ["-jar", "DynamoDBLocal.jar", "-inMemory", "-sharedDb"]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sS http://localhost:8000/ >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - dynamodb_data:/home/dynamodblocal/data
+
+volumes:
+  mysql_data:
+  postgres_data:
+  dynamodb_data:
+
+# Notes:
+# - Adjust passwords and DB names as needed, or replace with .env variables.
+# - Start with: `docker compose up -d` (or `docker-compose up -d` on older Docker installs).
+# - Connection strings:
+#   MySQL:  mysql://evdb:evdbpassword@localhost:3306/evdb_test
+#   Postgres: postgres://evdb:evdbpassword@localhost:5432/evdb_test
+#   DynamoDB endpoint: http://localhost:8000
