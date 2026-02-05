@@ -15,13 +15,18 @@
     "clean": "rimraf tsconfig.tsbuildinfo",
     "clear": " npm run clean && npm run clean --workspaces --if-present",
     "cleanbuild": "tsc --build --clean && tsc --build",
-    "rebuild": "npm run clear && npm run cleanbuild"
+    "rebuild": "npm run clear && npm run cleanbuild",
+    "changeset": "changeset",
+    "version": "changeset version",
+    "release": "npm run build && changeset publish"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@changesets/cli": "^2.29.8",
     "@types/node": "^24.10.1",
     "dotenv-cli": "^11.0.0",
-    "tsx": "^4.21.0"
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
   }
 }
