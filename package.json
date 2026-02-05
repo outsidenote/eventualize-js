@@ -11,6 +11,7 @@
   ],
   "scripts": {
     "test": "dotenv -- node --import tsx --test 'packages/**/src/**/*.test.ts' 'apps/**/src/**/*.test.ts'",
+    "test:unit": "node --import tsx --test --test-name-pattern='.*' $(find packages -name '*.test.ts' -type f)",
     "build": "tsc --build",
     "clean": "rimraf tsconfig.tsbuildinfo",
     "clear": " npm run clean && npm run clean --workspaces --if-present",
