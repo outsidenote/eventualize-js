@@ -50,7 +50,7 @@ export default class Steps {
             case EVENT_STORE_TYPE.MYSQL:
                 return EvDbMySqlPrismaClientFactory.create();
             case EVENT_STORE_TYPE.DYNAMODB:
-                return
+                return undefined;
             case EVENT_STORE_TYPE.STUB:
             default:
                 return undefined;

@@ -8,7 +8,8 @@ describe('Relational Databases Integration Tests', () => {
   for (const storeType of supportedRelationalDatabases) {
     test(`${storeType} execution`, async t => {
       const testData: any = {};
-      t.before(async () => {
+
+      await t.before(async () => {
         testData.storeClient = Steps.createStoreClient(storeType)
         testData.eventStore = Steps.createEventStore(testData.storeClient, storeType);
         await Steps.clearEnvironment(testData.storeClient, storeType);
