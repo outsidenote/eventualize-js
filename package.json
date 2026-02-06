@@ -10,7 +10,12 @@
     "apps/*"
   ],
   "scripts": {
-    "test": "dotenv -- node --import tsx --test packages/**/src/**/*.test.ts apps/**/src/**/*.test.ts",
+    "test": "DOTENV_CONFIG_PATH=.env.test dotenv -e .env.test -- node --import tsx --test packages/**/src/**/*.test.ts apps/**/src/**/*.test.ts",
+    "test:unit": "DOTENV_CONFIG_PATH=.env.test dotenv -e .env.test -- node --import tsx --test apps/**/src/tests/unit.test.ts",
+    "test:integration": "DOTENV_CONFIG_PATH=.env.test dotenv -e .env.test -- node --import tsx --test apps/**/src/tests/integration.test.ts",
+    "start-local-dbs": "docker compose up -d && bash ./scripts/wait-for-dbs.sh",
+    "stop-local-dbs": "docker compose down --volumes",
+    "test:integration:local": "npm run start-local-dbs && npm run test:integration && npm run stop-local-dbs",
     "build": "tsc --build",
     "clean": "rimraf tsconfig.tsbuildinfo",
     "clear": " npm run clean && npm run clean --workspaces --if-present",

@@ -14,13 +14,33 @@
         {
             "label": "node: run tests (direct)",
             "type": "shell",
-            "command": "node --import tsx --test packages/**/src/**/*.test.ts apps/**/src/**/*.test.ts",
+            "command": "DOTENV_CONFIG_PATH=.env.test node --import tsx --test packages/**/src/**/*.test.ts apps/**/src/**/*.test.ts",
             "presentation": {
                 "reveal": "always",
                 "panel": "shared"
             },
             "problemMatcher": [],
             "group": "test"
+        },
+        {
+            "label": "docker: compose up",
+            "type": "shell",
+            "command": "docker compose up -d",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "docker: compose down",
+            "type": "shell",
+            "command": "docker compose down --volumes",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": []
         }
     ]
 }

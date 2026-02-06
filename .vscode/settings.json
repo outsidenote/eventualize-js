@@ -2,5 +2,16 @@
     "npm.scriptExplorerAction": "run",
     "testExplorer.onStart": "expand",
     "testExplorer.showInlineError": true,
-    "debug.console.closeOnEnd": false
+    "debug.console.closeOnEnd": false,
+    // Node.js Test Runner - ensure ts files are run via tsx
+    "nodeTestRunner.nodeArgs": [
+        "--import",
+        "tsx"
+    ],
+    "nodeTestRunner.testFilePatterns": [
+        "apps/**/src/**/*.test.ts",
+        "packages/**/src/**/*.test.ts"
+    ],
+    // Load the test env file when the test runner supports it
+    "nodeTestRunner.envFile": ".env.test"
 }
