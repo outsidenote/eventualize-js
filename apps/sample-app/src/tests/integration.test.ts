@@ -2,7 +2,27 @@ import * as assert from 'node:assert';
 import { test, describe } from 'node:test'; // Use require or import
 import Steps, { EVENT_STORE_TYPE } from './steps.js';
 
-const supportedRelationalDatabases = [EVENT_STORE_TYPE.MYSQL, EVENT_STORE_TYPE.POSTGRES, EVENT_STORE_TYPE.DYNAMODB];
+// Parse TEST_DATABASES environment variable (comma-separated list of database names)
+// Defaults to all databases if not specified
+const getTestedDatabases = (): EVENT_STORE_TYPE[] => {
+  const testDatabases = process.env.TEST_DATABASES;
+  if (!testDatabases) {
+    return [EVENT_STORE_TYPE.MYSQL, EVENT_STORE_TYPE.POSTGRES, EVENT_STORE_TYPE.DYNAMODB];
+  }
+
+  const databases = testDatabases.split(',').map(db => db.trim());
+  const mapping: Record<string, EVENT_STORE_TYPE> = {
+    'MySQL': EVENT_STORE_TYPE.MYSQL,
+    'Postgres': EVENT_STORE_TYPE.POSTGRES,
+    'DynamoDB': EVENT_STORE_TYPE.DYNAMODB,
+  };
+
+  return databases
+    .map(db => mapping[db])
+    .filter((db): db is EVENT_STORE_TYPE => db !== undefined);
+};
+
+const supportedRelationalDatabases = getTestedDatabases();
 
 describe('Relational Databases Integration Tests', () => {
   for (const storeType of supportedRelationalDatabases) {
