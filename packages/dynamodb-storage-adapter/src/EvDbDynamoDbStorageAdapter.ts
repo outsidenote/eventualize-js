@@ -17,7 +17,7 @@ import EvDbMessageFilter from '@eventualize/types/EvDbMessageFilter';
 import { EvDbShardName } from '@eventualize/types/primitiveTypes';
 
 
-import { createDynamoDBClient, listTables } from './DynamoDbClient.js';
+import { createDynamoDBClient, listTables, DynamoDBClientOptions } from './DynamoDbClient.js';
 import QueryProvider, { deserializeStreamAddress, EventRecord, MessageRecord } from './EvDbDynamoDbStorageAdapterQueries.js'
 import { DynamoDBClient, TransactionCanceledException, TransactWriteItemsCommand } from '@aws-sdk/client-dynamodb';
 
@@ -59,7 +59,20 @@ const deserializePayload = (payload: any): IEvDbPayloadData => {
  * Replaces SQL Server-specific adapter with database-agnostic Prisma implementation
  */
 export default class EvDbDynamoDbStorageAdapter implements IEvDbStorageSnapshotAdapter, IEvDbStorageStreamAdapter {
+    /**
+     * Creates a DynamoDB storage adapter.
+     * @param dynamoDbClientOrOptions - Either a DynamoDBClient instance or configuration options.
+     *        If options are provided, a new client will be created. Falls back to env vars if not provided.
+     */
     constructor(private dynamoDbClient: DynamoDBClient = createDynamoDBClient()) {
+    }
+
+    /**
+     * Factory method to create adapter with configuration options.
+     * @param options - DynamoDB client configuration options.
+     */
+    static withOptions(options: DynamoDBClientOptions): EvDbDynamoDbStorageAdapter {
+        return new EvDbDynamoDbStorageAdapter(createDynamoDBClient(options));
     }
     getFromOutbox(filter: EvDbMessageFilter, options?: EvDbContinuousFetchOptions | null): Promise<AsyncIterable<EvDbMessage>> {
         throw new Error('Method not implemented.');
