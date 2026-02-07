@@ -11,9 +11,11 @@
   ],
   "scripts": {
     "test": "DOTENV_CONFIG_PATH=.env.test dotenv -e .env.test -- node --import tsx --test packages/**/src/**/*.test.ts apps/**/src/**/*.test.ts",
+    "test:mysql": "TEST_DATABASES=MySQL dotenv -e .env.test -- node --import tsx --test packages/**/src/**/*.test.ts apps/**/src/tests/integration.test.ts",
+    "test:postgres": "TEST_DATABASES=Postgres dotenv -e .env.test -- node --import tsx --test packages/**/src/**/*.test.ts apps/**/src/tests/integration.test.ts",
+    "test:dynamodb": "TEST_DATABASES=DynamoDB dotenv -e .env.test -- node --import tsx --test packages/**/src/**/*.test.ts apps/**/src/tests/integration.test.ts",
     "test:unit": "DOTENV_CONFIG_PATH=.env.test dotenv -e .env.test -- node --import tsx --test apps/**/src/tests/unit.test.ts",
     "test:integration": "DOTENV_CONFIG_PATH=.env.test dotenv -e .env.test -- node --import tsx --test apps/**/src/tests/integration.test.ts",
-    "start-local-dbs": "docker compose up -d && bash ./scripts/wait-for-dbs.sh",
     "stop-local-dbs": "docker compose down --volumes",
     "test:integration:local": "npm run start-local-dbs && npm run test:integration && npm run stop-local-dbs",
     "build": "tsc --build",

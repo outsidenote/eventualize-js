@@ -3,7 +3,14 @@
     "testExplorer.onStart": "expand",
     "testExplorer.showInlineError": true,
     "debug.console.closeOnEnd": false,
-    // Node.js Test Runner - ensure ts files are run via tsx
+    // Node.js Test Runner (connor4312.nodejs-testing) configuration
+    "nodeTesting.rootDir": ".",
+    "nodeTesting.nodeArgs": [
+        "--import",
+        "tsx"
+    ],
+    "nodeTesting.testFilePattern": "**/*.test.ts",
+    // Legacy configurations for compatibility
     "nodeTestRunner.nodeArgs": [
         "--import",
         "tsx"
@@ -12,6 +19,5 @@
         "apps/**/src/**/*.test.ts",
         "packages/**/src/**/*.test.ts"
     ],
-    // Load the test env file when the test runner supports it
     "nodeTestRunner.envFile": ".env.test"
 }
