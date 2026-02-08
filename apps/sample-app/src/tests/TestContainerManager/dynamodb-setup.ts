@@ -1,5 +1,5 @@
 import { DynamoDBClient, CreateTableCommand, CreateTableCommandInput } from "@aws-sdk/client-dynamodb";
-import { DynamoDBConfig } from "./test-containers.js";
+import { DynamoDBConfig } from "./index.js";
 
 // Table schemas embedded to avoid file system dependencies in tests
 const EVENTS_TABLE_SCHEMA: CreateTableCommandInput = {

@@ -142,7 +142,7 @@ export default class Steps {
                 admin = new EvDbPrismaStorageAdmin(storeClient);
                 break;
             case EVENT_STORE_TYPE.DYNAMODB:
-                admin = new EvDbDynamoDbAdmin(dynamoDbOptions);
+                admin = new EvDbDynamoDbAdmin();
                 break;
             case EVENT_STORE_TYPE.STUB:
             default:
