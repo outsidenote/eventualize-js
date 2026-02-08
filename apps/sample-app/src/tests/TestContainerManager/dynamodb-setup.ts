@@ -1,5 +1,11 @@
 import { DynamoDBClient, CreateTableCommand, CreateTableCommandInput } from "@aws-sdk/client-dynamodb";
-import { DynamoDBConfig } from "./index.js";
+
+export interface DynamoDBConfig {
+    endpoint: string;
+    accessKeyId: string;
+    secretAccessKey: string;
+    region: string;
+}
 
 // Table schemas embedded to avoid file system dependencies in tests
 const EVENTS_TABLE_SCHEMA: CreateTableCommandInput = {

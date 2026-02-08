@@ -2,7 +2,7 @@ import * as assert from 'node:assert';
 import { test, describe, before, after } from 'node:test';
 import Steps, { EVENT_STORE_TYPE } from './steps.js';
 import { TestContainerManager } from './TestContainerManager/index.js';
-import { getDynamoDbOptions, startSupportedDatabases } from './testInit.js';
+import { startSupportedDatabases } from './testInit.js';
 
 // Start containers before all tests
 
@@ -28,7 +28,7 @@ describe('Database Integration Tests', () => {
           if (storeType !== EVENT_STORE_TYPE.DYNAMODB) {
             testData.storeClient = Steps.createStoreClient(storeType, connectionConfig as string | undefined);
           }
-          const dynamoDbOptions = getDynamoDbOptions();
+          const dynamoDbOptions = containerManager.getDynamoDbOptions();
           testData.eventStore = Steps.createEventStore(testData.storeClient, storeType, dynamoDbOptions);
           await Steps.clearEnvironment(testData.storeClient, storeType, dynamoDbOptions);
         });
@@ -66,7 +66,7 @@ describe('Database Integration Tests', () => {
         });
 
         t.after(async () => {
-          await Steps.clearEnvironment(testData.storeClient, storeType, getDynamoDbOptions());
+          await Steps.clearEnvironment(testData.storeClient, storeType, containerManager.getDynamoDbOptions());
         });
       });
     }

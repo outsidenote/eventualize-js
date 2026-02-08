@@ -6,13 +6,8 @@ import { createPostgresSchema } from './postgresql-setup.js';
 import { createMysqlSchema } from './mysql-setup.js';
 import { setupDynamoDBTables } from './dynamodb-setup.js';
 import { EVENT_STORE_TYPE } from '../steps.js';
-
-export interface DynamoDBConfig {
-    endpoint: string;
-    accessKeyId: string;
-    secretAccessKey: string;
-    region: string;
-}
+import { DynamoDBConfig } from './dynamodb-setup.js';
+import { DynamoDBClientOptions } from '@eventualize/dynamodb-storage-adapter/DynamoDbClient';
 
 /**
  * Manages test container lifecycle for integration tests.
@@ -150,4 +145,18 @@ export class TestContainerManager {
         console.log('All containers stopped.');
         return response
     }
+
+    /**
+ * Gets the DynamoDB options for testcontainers.
+ */
+    public getDynamoDbOptions(): DynamoDBClientOptions | undefined {
+        const dynamoDbConfig = this.connections[EVENT_STORE_TYPE.DYNAMODB] as DynamoDBConfig | undefined;
+        if (!dynamoDbConfig) return undefined;
+        return {
+            endpoint: dynamoDbConfig.endpoint,
+            accessKeyId: dynamoDbConfig.accessKeyId,
+            secretAccessKey: dynamoDbConfig.secretAccessKey,
+            region: dynamoDbConfig.region,
+        };
+    };
 }

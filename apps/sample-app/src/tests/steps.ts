@@ -8,7 +8,6 @@ import PointsStreamFactory, { PointsStreamType } from "../eventstore/PointsStrea
 import { SumViewState, CountViewState } from '../eventstore/PointsStream/views.js';
 import { PointsAdded, PointsMultiplied, PointsSubtracted } from "../eventstore/PointsStream/events.js";
 
-import EvDbStream from "@eventualize/core/EvDbStream";
 import { EvDbView } from '@eventualize/core/EvDbView';
 import { EvDbPrismaStorageAdapter } from '@eventualize/relational-storage-adapter/EvDbPrismaStorageAdapter'
 import { EvDbEventStoreBuilder, StreamMap, EvDbEventStoreType, IEvDbStorageAdapter } from '@eventualize/core/EvDbEventStore';
@@ -142,7 +141,7 @@ export default class Steps {
                 admin = new EvDbPrismaStorageAdmin(storeClient);
                 break;
             case EVENT_STORE_TYPE.DYNAMODB:
-                admin = new EvDbDynamoDbAdmin();
+                admin = new EvDbDynamoDbAdmin(dynamoDbOptions);
                 break;
             case EVENT_STORE_TYPE.STUB:
             default:
