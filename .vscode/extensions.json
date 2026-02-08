@@ -1,0 +1,7 @@
+{
+    "recommendations": [
+        "eg2.vscode-npm-script",
+        "hbenl.vscode-test-explorer",
+        "ms-vscode.node-test-runner"
+    ]
+}

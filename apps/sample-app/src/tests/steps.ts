@@ -8,7 +8,6 @@ import PointsStreamFactory, { PointsStreamType } from "../eventstore/PointsStrea
 import { SumViewState, CountViewState } from '../eventstore/PointsStream/views.js';
 import { PointsAdded, PointsMultiplied, PointsSubtracted } from "../eventstore/PointsStream/events.js";
 
-import EvDbStream from "@eventualize/core/EvDbStream";
 import { EvDbView } from '@eventualize/core/EvDbView';
 import { EvDbPrismaStorageAdapter } from '@eventualize/relational-storage-adapter/EvDbPrismaStorageAdapter'
 import { EvDbEventStoreBuilder, StreamMap, EvDbEventStoreType, IEvDbStorageAdapter } from '@eventualize/core/EvDbEventStore';
@@ -20,6 +19,14 @@ import { PrismaClient as MySqlPrismaClient } from '@eventualize/mysql-storage-ad
 import EvDbDynamoDbStorageAdapter from '@eventualize/dynamodb-storage-adapter/EvDbDynamoDbStorageAdapter';
 import EvDbDynamoDbAdmin from '@eventualize/dynamodb-storage-adapter/EvDbDynamoDbAdmin';
 import IEvDbStorageAdmin from '@eventualize/types/IEvDbStorageAdmin';
+
+/** DynamoDB client configuration options for test injection */
+export interface DynamoDBClientOptions {
+    endpoint?: string;
+    accessKeyId?: string;
+    secretAccessKey?: string;
+    region?: string;
+}
 
 
 const getEnvPath = () => {
@@ -43,22 +50,34 @@ type RelationalClientType = PostgresPrismaClient<never, any, any> | MySqlPrismaC
 type StoreClientType = RelationalClientType | undefined;
 
 export default class Steps {
-    public static createStoreClient(storeType: EVENT_STORE_TYPE = EVENT_STORE_TYPE.STUB): StoreClientType {
+    /**
+     * Creates a store client for the specified database type.
+     * @param storeType - The type of database to use.
+     * @param connectionString - Optional connection string. Falls back to env vars if not provided.
+     */
+    public static createStoreClient(storeType: EVENT_STORE_TYPE = EVENT_STORE_TYPE.STUB, connectionString?: string): StoreClientType {
         switch (storeType) {
             case EVENT_STORE_TYPE.POSTGRES:
-                return EvDbPostgresPrismaClientFactory.create();
+                return EvDbPostgresPrismaClientFactory.create(connectionString);
             case EVENT_STORE_TYPE.MYSQL:
-                return EvDbMySqlPrismaClientFactory.create();
+                return EvDbMySqlPrismaClientFactory.create(connectionString);
             case EVENT_STORE_TYPE.DYNAMODB:
-                return
+                return undefined;
             case EVENT_STORE_TYPE.STUB:
             default:
                 return undefined;
         }
     }
-    public static createEventStore(storeClient: StoreClientType, storeType: EVENT_STORE_TYPE) {
+
+    /**
+     * Creates an event store with the specified storage adapter.
+     * @param storeClient - The Prisma client for relational databases (or undefined for DynamoDB/Stub).
+     * @param storeType - The type of database to use.
+     * @param dynamoDbOptions - Optional DynamoDB configuration for testcontainers.
+     */
+    public static createEventStore(storeClient: StoreClientType, storeType: EVENT_STORE_TYPE, dynamoDbOptions?: DynamoDBClientOptions) {
         const storageAdapter = [EVENT_STORE_TYPE.POSTGRES, EVENT_STORE_TYPE.MYSQL].includes(storeType) ? new EvDbPrismaStorageAdapter(storeClient) :
-            storeType === EVENT_STORE_TYPE.DYNAMODB ? new EvDbDynamoDbStorageAdapter() :
+            storeType === EVENT_STORE_TYPE.DYNAMODB ? EvDbDynamoDbStorageAdapter.withOptions(dynamoDbOptions ?? {}) :
                 new StorageAdapterStub();
 
         const eventstore = new EvDbEventStoreBuilder()
@@ -108,7 +127,13 @@ export default class Steps {
         assert.strictEqual(storedSumView.storeOffset, fetchedSumView.memoryOffset);
     }
 
-    public static async clearEnvironment(storeClient: StoreClientType, storeType: EVENT_STORE_TYPE = EVENT_STORE_TYPE.STUB) {
+    /**
+     * Clears the test environment (deletes all data from tables).
+     * @param storeClient - The Prisma client for relational databases.
+     * @param storeType - The type of database.
+     * @param dynamoDbOptions - Optional DynamoDB configuration for testcontainers.
+     */
+    public static async clearEnvironment(storeClient: StoreClientType, storeType: EVENT_STORE_TYPE = EVENT_STORE_TYPE.STUB, dynamoDbOptions?: DynamoDBClientOptions) {
         let admin: IEvDbStorageAdmin;
         switch (storeType) {
             case EVENT_STORE_TYPE.POSTGRES:
@@ -116,7 +141,7 @@ export default class Steps {
                 admin = new EvDbPrismaStorageAdmin(storeClient);
                 break;
             case EVENT_STORE_TYPE.DYNAMODB:
-                admin = new EvDbDynamoDbAdmin();
+                admin = new EvDbDynamoDbAdmin(dynamoDbOptions);
                 break;
             case EVENT_STORE_TYPE.STUB:
             default:

@@ -1,0 +1,6 @@
+{
+    "testPatterns": [
+        "apps/**/src/**/*.test.ts",
+        "packages/**/src/**/*.test.ts"
+    ]
+}

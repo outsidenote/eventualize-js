@@ -1,12 +1,16 @@
 import { AttributeValue, BatchWriteItemCommand, DynamoDBClient, ScanCommand, WriteRequest } from "@aws-sdk/client-dynamodb";
 import IEvDbStorageAdmin from "@eventualize/types/IEvDbStorageAdmin";
-import { createDynamoDBClient } from "./DynamoDbClient.js";
+import { createDynamoDBClient, DynamoDBClientOptions } from "./DynamoDbClient.js";
 
 export default class EvDbDynamoDbAdmin implements IEvDbStorageAdmin {
     private dynamoDbClient: DynamoDBClient
-    constructor() {
-        this.dynamoDbClient = createDynamoDBClient();
-    };
+    /**
+     * Creates a DynamoDB admin instance.
+     * @param options - Optional DynamoDB client configuration. Falls back to env vars if not provided.
+     */
+    constructor(options?: DynamoDBClientOptions) {
+        this.dynamoDbClient = createDynamoDBClient(options);
+    }
 
     // Helper function to extract keys in raw DynamoDB format
     private extractKeys(tableName: string, items: Record<string, AttributeValue>[]): WriteRequest[] {
