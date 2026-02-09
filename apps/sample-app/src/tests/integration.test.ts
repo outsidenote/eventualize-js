@@ -1,39 +1,35 @@
 import * as assert from 'node:assert';
 import { test, describe, before, after } from 'node:test';
 import Steps, { EVENT_STORE_TYPE } from './steps.js';
-import { TestContainerManager } from './TestContainerManager/index.js';
-import { getTestedDatabases, startSupportedDatabases } from './testInit.js';
+import { TestManager } from './TestContainerManager/TestManager.js';
 
 // Start containers before all tests
-
 describe('Database Integration Tests', () => {
-  let containerManager: TestContainerManager;
-  const useContainerLifecycle = process.env.CONTAINER_LIFECYCLE !== 'skip';
+  const testManager: TestManager = new TestManager();
 
   before(async () => {
-    if (useContainerLifecycle)
-      containerManager = await startSupportedDatabases();
+    await testManager.start();
   });
 
   // Stop containers after all tests
   after(async () => {
-    await containerManager?.stopAll();
+    await testManager.stop();
   });
 
   test('start integration tests', () => {
-    const databasesToTest = getTestedDatabases();
+    const databasesToTest = testManager.supportedDatabases;
     for (const storeType of databasesToTest) {
       test(`${storeType} execution`, async t => {
         const testData: any = {};
 
         await t.before(async () => {
-          const connectionConfig = containerManager.getConnection(storeType);
+          const connectionConfig = testManager.getConnection(storeType);
           if (storeType !== EVENT_STORE_TYPE.DYNAMODB) {
             testData.storeClient = Steps.createStoreClient(storeType, connectionConfig as string | undefined);
           }
-          const dynamoDbOptions = containerManager.getDynamoDbOptions();
+          const dynamoDbOptions = testManager.getDynamoDbOptions();
           testData.eventStore = Steps.createEventStore(testData.storeClient, storeType, dynamoDbOptions);
-          await Steps.clearEnvironment(testData.storeClient, storeType, dynamoDbOptions);
+        await Steps.clearEnvironment(testData.storeClient, storeType, dynamoDbOptions);
         });
 
         t.test('Given: local stream with events', () => {
@@ -69,7 +65,7 @@ describe('Database Integration Tests', () => {
         });
 
         t.after(async () => {
-          await Steps.clearEnvironment(testData.storeClient, storeType, containerManager.getDynamoDbOptions());
+          await Steps.clearEnvironment(testData.storeClient, storeType, testManager.getDynamoDbOptions());
         });
       });
     }

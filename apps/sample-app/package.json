@@ -9,10 +9,11 @@
     "clean": "rimraf dist",
     "rebuild": "npm run clean && npm run build",
     "test": "node --import tsx --test 'src/tests/**/*.test.ts'",
-    "test:integration": "TEST_DATABASES=MySQL,Postgres,DynamoDB node --import tsx --test 'src/tests/integration.test.ts'",
-    "test:mysql": "TEST_DATABASES=MySQL node --import tsx --test 'src/tests/integration.test.ts'",
-    "test:postgres": "TEST_DATABASES=Postgres node --import tsx --test 'src/tests/integration.test.ts'",
-    "test:dynamodb": "TEST_DATABASES=DynamoDB node --import tsx --test 'src/tests/integration.test.ts'"
+    "test:integration": "TEST_CONTAINER=true TEST_DATABASES=MySQL,Postgres,DynamoDB node --import tsx --test 'src/tests/integration.test.ts'",
+    "test:integration:bare": "TEST_DATABASES=MySQL,Postgres,DynamoDB node --import tsx --test 'src/tests/integration.test.ts'",
+    "test:mysql": "TEST_CONTAINER=true TEST_DATABASES=MySQL node --import tsx --test 'src/tests/integration.test.ts'",
+    "test:postgres": "TEST_CONTAINER=true TEST_DATABASES=Postgres node --import tsx --test 'src/tests/integration.test.ts'",
+    "test:dynamodb": "TEST_CONTAINER=true TEST_DATABASES=DynamoDB node --import tsx --test 'src/tests/integration.test.ts'"
   },
   "keywords": [],
   "author": "",

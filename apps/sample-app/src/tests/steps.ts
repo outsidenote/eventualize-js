@@ -19,15 +19,7 @@ import { PrismaClient as MySqlPrismaClient } from '@eventualize/mysql-storage-ad
 import EvDbDynamoDbStorageAdapter from '@eventualize/dynamodb-storage-adapter/EvDbDynamoDbStorageAdapter';
 import EvDbDynamoDbAdmin from '@eventualize/dynamodb-storage-adapter/EvDbDynamoDbAdmin';
 import IEvDbStorageAdmin from '@eventualize/types/IEvDbStorageAdmin';
-
-/** DynamoDB client configuration options for test injection */
-export interface DynamoDBClientOptions {
-    endpoint?: string;
-    accessKeyId?: string;
-    secretAccessKey?: string;
-    region?: string;
-}
-
+import { DynamoDBClientOptions } from './DynamoDBClientOptions.js';
 
 const getEnvPath = () => {
     const __filename = fileURLToPath(import.meta.url);
@@ -86,7 +78,6 @@ export default class Steps {
             .build();
 
         return eventstore;
-
     }
 
     public static createPointsStream<TStreams extends StreamMap>(streamId: string, eventStore: EvDbEventStoreType<TStreams>): PointsStreamType {

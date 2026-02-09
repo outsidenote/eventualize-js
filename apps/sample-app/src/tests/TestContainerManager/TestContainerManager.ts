@@ -1,46 +1,31 @@
-import { PostgreSqlContainer, StartedPostgreSqlContainer } from '@testcontainers/postgresql';
+import { StartedLocalStackContainer, LocalstackContainer } from '@testcontainers/localstack';
+import { StartedMySqlContainer, MySqlContainer } from '@testcontainers/mysql';
+import { StartedPostgreSqlContainer, PostgreSqlContainer } from '@testcontainers/postgresql';
+import { DynamoDBClientOptions } from 'packages/dynamodb-storage-adapter/dist/DynamoDbClient.js';
 import { StoppedTestContainer } from 'testcontainers';
-import { MySqlContainer, StartedMySqlContainer } from '@testcontainers/mysql';
-import { LocalstackContainer, StartedLocalStackContainer } from '@testcontainers/localstack';
-import { createPostgresSchema } from './postgresql-setup.js';
-import { createMysqlSchema } from './mysql-setup.js';
-import { setupDynamoDBTables } from './dynamodb-setup.js';
 import { EVENT_STORE_TYPE } from '../steps.js';
-import { DynamoDBConfig } from './dynamodb-setup.js';
-import { DynamoDBClientOptions } from '@eventualize/dynamodb-storage-adapter/DynamoDbClient';
+import { DynamoDBConfig, setupDynamoDBTables } from './dynamodb-setup.js';
+import { createMysqlSchema } from './mysql-setup.js';
+import { createPostgresSchema } from './postgresql-setup.js';
 
 /**
  * Manages test container lifecycle for integration tests.
  * Provides methods to start/stop database containers dynamically.
  */
+
 export class TestContainerManager {
     private postgresContainer?: StartedPostgreSqlContainer;
     private mysqlContainer?: StartedMySqlContainer;
     private localstackContainer?: StartedLocalStackContainer;
-    private databases: EVENT_STORE_TYPE[] = [];
     private connections: Partial<Record<EVENT_STORE_TYPE, string | DynamoDBConfig>> = {};
 
-    public get supportedDatabases(): EVENT_STORE_TYPE[] {
-        return this.databases
+    public getConnection(type: EVENT_STORE_TYPE): string | DynamoDBConfig | undefined {
+        return this.connections[type];
     }
 
-    public getConnection(storeType: EVENT_STORE_TYPE): string | DynamoDBConfig | undefined {
-        const connection = this.connections[storeType];
-        if (connection)
-            return connection;
-        if (storeType === EVENT_STORE_TYPE.DYNAMODB) {
-            return {
-                endpoint: process.env.DYNAMODB_CONNECTION,
-                accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-                secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-                region: process.env.AWS_REGION,
-            } as DynamoDBConfig;
-        }
-        return this.connections[storeType]
-            ?? process.env[`${storeType.toUpperCase()}_CONNECTION`];
-    }
+    public async startDatabases(databases: EVENT_STORE_TYPE[]): Promise<void> {
+        console.log('\n=== Starting test containers ===\n');
 
-    async startDatabases(databases: EVENT_STORE_TYPE[]): Promise<void> {
         const startPromises: Promise<void>[] = [];
         if (databases.includes(EVENT_STORE_TYPE.POSTGRES)) {
             startPromises.push(this.startPostgres().then(uri => {
@@ -60,10 +45,10 @@ export class TestContainerManager {
             }));
         }
         await Promise.all(startPromises);
-        this.databases = Object.keys(this.connections) as EVENT_STORE_TYPE[];
+        console.log('\n=== All containers started ===\n');
     }
 
-    /**
+    /** 
      * Starts a PostgreSQL container, runs schema migration, and returns the connection URI.
      * Uses the same database name, user, and password as docker-compose setup.
      */
@@ -157,7 +142,7 @@ export class TestContainerManager {
 
         const response = await Promise.all(stopPromises);
         console.log('All containers stopped.');
-        return response
+        return response;
     }
 
     /**

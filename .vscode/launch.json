@@ -29,6 +29,27 @@
             "skipFiles": [
                 "<node_internals>/**"
             ]
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Debug Integration Tests (bare)",
+            "runtimeExecutable": "npx",
+            "runtimeArgs": [
+                "dotenv",
+                "-e",
+                ".env.test",
+                "--",
+                "node",
+                "--import",
+                "tsx",
+                "--test",
+                "apps/**/src/tests/integration.test.ts"
+            ],
+            "env": {
+                "DOTENV_CONFIG_PATH": ".env.test"
+            },
+            "console": "integratedTerminal"
         }
     ]
 }
