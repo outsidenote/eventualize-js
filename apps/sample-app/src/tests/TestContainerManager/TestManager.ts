@@ -1,6 +1,8 @@
 import { EVENT_STORE_TYPE } from "../steps.js";
 import { DynamoDBClientOptions } from '../DynamoDBClientOptions.js';
-import { DynamoDBConfig } from "./dynamodb-setup.js";
+import { DynamoDBConfig, setupDynamoDBTables } from "./dynamodb-setup.js";
+import { createPostgresSchema } from "./postgresql-setup.js";
+import { createMysqlSchema } from "./mysql-setup.js";
 import { TestContainerManager } from "./TestContainerManager.js";
 
 export class TestManager {
@@ -17,7 +19,36 @@ export class TestManager {
     }
 
     public async start(): Promise<void> {
-        await this.containerManager?.startDatabases(this.supportedDatabases);
+        // Step 1: Start containers if needed (provides dynamic connection info)
+        if (this.containerManager) {
+            await this.containerManager.startDatabases(this.supportedDatabases);
+        }
+
+        // Step 2: Create schemas/tables (same path for both container and bare modes)
+        const setupPromises: Promise<void>[] = [];
+
+        if (this.supportedDatabases.includes(EVENT_STORE_TYPE.POSTGRES)) {
+            const connectionUri = this.getConnection(EVENT_STORE_TYPE.POSTGRES) as string | undefined;
+            if (connectionUri) {
+                setupPromises.push(createPostgresSchema(connectionUri));
+            }
+        }
+
+        if (this.supportedDatabases.includes(EVENT_STORE_TYPE.MYSQL)) {
+            const connectionUri = this.getConnection(EVENT_STORE_TYPE.MYSQL) as string | undefined;
+            if (connectionUri) {
+                setupPromises.push(createMysqlSchema(connectionUri));
+            }
+        }
+
+        if (this.supportedDatabases.includes(EVENT_STORE_TYPE.DYNAMODB)) {
+            const config = this.getConnection(EVENT_STORE_TYPE.DYNAMODB) as DynamoDBConfig | undefined;
+            if (config) {
+                setupPromises.push(setupDynamoDBTables(config));
+            }
+        }
+
+        await Promise.all(setupPromises);
     }
 
     public async stop(): Promise<void> {

@@ -1,16 +1,13 @@
 import { StartedLocalStackContainer, LocalstackContainer } from '@testcontainers/localstack';
 import { StartedMySqlContainer, MySqlContainer } from '@testcontainers/mysql';
 import { StartedPostgreSqlContainer, PostgreSqlContainer } from '@testcontainers/postgresql';
-import { DynamoDBClientOptions } from 'packages/dynamodb-storage-adapter/dist/DynamoDbClient.js';
 import { StoppedTestContainer } from 'testcontainers';
 import { EVENT_STORE_TYPE } from '../steps.js';
-import { DynamoDBConfig, setupDynamoDBTables } from './dynamodb-setup.js';
-import { createMysqlSchema } from './mysql-setup.js';
-import { createPostgresSchema } from './postgresql-setup.js';
+import { DynamoDBConfig } from './dynamodb-setup.js';
 
 /**
  * Manages test container lifecycle for integration tests.
- * Provides methods to start/stop database containers dynamically.
+ * Only responsible for spinning up/stopping containers and providing connection info.
  */
 
 export class TestContainerManager {
@@ -48,11 +45,7 @@ export class TestContainerManager {
         console.log('\n=== All containers started ===\n');
     }
 
-    /** 
-     * Starts a PostgreSQL container, runs schema migration, and returns the connection URI.
-     * Uses the same database name, user, and password as docker-compose setup.
-     */
-    async startPostgres(): Promise<string> {
+    private async startPostgres(): Promise<string> {
         console.log('Starting PostgreSQL container...');
         this.postgresContainer = await new PostgreSqlContainer('postgres:18.1')
             .withDatabase('evdb_test')
@@ -62,18 +55,10 @@ export class TestContainerManager {
 
         const connectionUri = this.postgresContainer.getConnectionUri();
         console.log(`PostgreSQL container started at: ${connectionUri}`);
-
-        // Create schema tables
-        await createPostgresSchema(connectionUri);
-
         return connectionUri;
     }
 
-    /**
-     * Starts a MySQL container, runs schema migration, and returns the connection URI.
-     * Uses MariaDB protocol prefix for compatibility with Prisma adapter.
-     */
-    async startMySql(): Promise<string> {
+    private async startMySql(): Promise<string> {
         console.log('Starting MySQL container...');
         this.mysqlContainer = await new MySqlContainer('mysql:9.0')
             .withDatabase('evdb_test')
@@ -87,20 +72,11 @@ export class TestContainerManager {
         const port = this.mysqlContainer.getPort();
         const connectionUri = `mariadb://evdb:evdbpassword@${host}:${port}/evdb_test`;
         console.log(`MySQL container started at: ${connectionUri}`);
-
-        // Create schema tables
-        await createMysqlSchema(connectionUri);
-
         return connectionUri;
     }
 
-    /**
-     * Starts a LocalStack container with DynamoDB service.
-     * Returns configuration needed to connect to DynamoDB.
-     */
-    async startDynamoDB(): Promise<DynamoDBConfig> {
+    private async startDynamoDB(): Promise<DynamoDBConfig> {
         console.log('Starting LocalStack (DynamoDB) container...');
-        // LocalStack starts all services by default, no need for withServices
         this.localstackContainer = await new LocalstackContainer('localstack/localstack:3.8')
             .start();
 
@@ -112,14 +88,9 @@ export class TestContainerManager {
             region: 'us-east-1',
         };
         console.log(`LocalStack (DynamoDB) container started at: ${endpoint}`);
-
-        await setupDynamoDBTables(config);
         return config;
     }
 
-    /**
-     * Stops all running containers.
-     */
     async stopAll(): Promise<StoppedTestContainer[]> {
         console.log('\n=== Stopping test containers ===\n');
 
@@ -145,17 +116,7 @@ export class TestContainerManager {
         return response;
     }
 
-    /**
- * Gets the DynamoDB options for testcontainers.
- */
-    public getDynamoDbOptions(): DynamoDBClientOptions | undefined {
-        const dynamoDbConfig = this.connections[EVENT_STORE_TYPE.DYNAMODB] as DynamoDBConfig | undefined;
-        if (!dynamoDbConfig) return undefined;
-        return {
-            endpoint: dynamoDbConfig.endpoint,
-            accessKeyId: dynamoDbConfig.accessKeyId,
-            secretAccessKey: dynamoDbConfig.secretAccessKey,
-            region: dynamoDbConfig.region,
-        };
+    public getDynamoDbOptions(): DynamoDBConfig | undefined {
+        return this.connections[EVENT_STORE_TYPE.DYNAMODB] as DynamoDBConfig | undefined;
     };
 }
