@@ -2,24 +2,27 @@ import * as assert from 'node:assert';
 import { test, describe, before, after } from 'node:test';
 import Steps, { EVENT_STORE_TYPE } from './steps.js';
 import { TestContainerManager } from './TestContainerManager/index.js';
-import { startSupportedDatabases } from './testInit.js';
+import { getTestedDatabases, startSupportedDatabases } from './testInit.js';
 
 // Start containers before all tests
 
 describe('Database Integration Tests', () => {
   let containerManager: TestContainerManager;
+  const useContainerLifecycle = process.env.CONTAINER_LIFECYCLE !== 'skip';
+
   before(async () => {
-    containerManager = await startSupportedDatabases();
+    if (useContainerLifecycle)
+      containerManager = await startSupportedDatabases();
   });
 
   // Stop containers after all tests
   after(async () => {
-    console.log('\n=== Stopping test containers ===\n');
-    await containerManager.stopAll();
+    await containerManager?.stopAll();
   });
 
   test('start integration tests', () => {
-    for (const storeType of containerManager.supportedDatabases) {
+    const databasesToTest = getTestedDatabases();
+    for (const storeType of databasesToTest) {
       test(`${storeType} execution`, async t => {
         const testData: any = {};
 

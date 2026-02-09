@@ -29,7 +29,7 @@ export async function listTables(client: DynamoDBClient) {
  * @param options - Optional configuration. Falls back to environment variables if not provided.
  */
 export function createDynamoDBClient(options?: DynamoDBClientOptions): DynamoDBClient {
-    const endpoint = options?.endpoint ?? process.env.DYNAMODB_URL;
+    const endpoint = options?.endpoint ?? process.env.DYNAMODB_CONNECTION;
     const accessKeyId = options?.accessKeyId ?? process.env.AWS_ACCESS_KEY_ID;
     const secretAccessKey = options?.secretAccessKey ?? process.env.AWS_SECRET_ACCESS_KEY;
     const region = options?.region ?? process.env.AWS_REGION ?? 'us-east-1';

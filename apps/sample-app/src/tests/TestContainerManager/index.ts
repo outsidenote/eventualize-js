@@ -25,7 +25,19 @@ export class TestContainerManager {
     }
 
     public getConnection(storeType: EVENT_STORE_TYPE): string | DynamoDBConfig | undefined {
-        return this.connections[storeType];
+        const connection = this.connections[storeType];
+        if (connection)
+            return connection;
+        if (storeType === EVENT_STORE_TYPE.DYNAMODB) {
+            return {
+                endpoint: process.env.DYNAMODB_CONNECTION,
+                accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+                secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+                region: process.env.AWS_REGION,
+            } as DynamoDBConfig;
+        }
+        return this.connections[storeType]
+            ?? process.env[`${storeType.toUpperCase()}_CONNECTION`];
     }
 
     async startDatabases(databases: EVENT_STORE_TYPE[]): Promise<void> {
@@ -124,6 +136,8 @@ export class TestContainerManager {
      * Stops all running containers.
      */
     async stopAll(): Promise<StoppedTestContainer[]> {
+        console.log('\n=== Stopping test containers ===\n');
+
         const stopPromises: Promise<StoppedTestContainer>[] = [];
 
         if (this.postgresContainer) {

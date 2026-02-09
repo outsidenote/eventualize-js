@@ -8,7 +8,7 @@ export default defineConfig({
         path: "prisma/migrations",
     },
     datasource: {
-        url: env("POSTGRES_URL"),
+        url: env("POSTGRES_CONNECTION"),
     },
 });
 //# sourceMappingURL=prisma.config.js.map

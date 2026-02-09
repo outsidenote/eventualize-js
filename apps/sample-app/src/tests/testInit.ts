@@ -1,7 +1,7 @@
 import { TestContainerManager } from './TestContainerManager/index.js';
 import { EVENT_STORE_TYPE } from './steps.js';
 
-const getTestedDatabases = (): EVENT_STORE_TYPE[] => {
+export const getTestedDatabases = (): EVENT_STORE_TYPE[] => {
     if (!process.env.TEST_DATABASES) {
         return [EVENT_STORE_TYPE.MYSQL, EVENT_STORE_TYPE.POSTGRES, EVENT_STORE_TYPE.DYNAMODB];
     }
