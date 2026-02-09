@@ -11,23 +11,15 @@ import { PointsAdded, PointsMultiplied, PointsSubtracted } from "../eventstore/P
 import { EvDbView } from '@eventualize/core/EvDbView';
 import { EvDbPrismaStorageAdapter } from '@eventualize/relational-storage-adapter/EvDbPrismaStorageAdapter'
 import { EvDbEventStoreBuilder, StreamMap, EvDbEventStoreType, IEvDbStorageAdapter } from '@eventualize/core/EvDbEventStore';
-import EvDbPrismaStorageAdmin from '@eventualize/relational-storage-adapter/EvDBPrismaStorageAdmin';
+import EvDbPrismaStorageAdmin from '@eventualize/relational-storage-adapter/EvDbPrismaStorageAdmin';
 import EvDbPostgresPrismaClientFactory from '@eventualize/postgres-storage-adapter/EvDbPostgresPrismaClientFactory';
 import EvDbMySqlPrismaClientFactory from '@eventualize/mysql-storage-adapter/EvDbMySqlPrismaClientFactory';
 import { PrismaClient as PostgresPrismaClient } from '@eventualize/postgres-storage-adapter/generated/prisma/client';
 import { PrismaClient as MySqlPrismaClient } from '@eventualize/mysql-storage-adapter/generated/prisma/client';
 import EvDbDynamoDbStorageAdapter from '@eventualize/dynamodb-storage-adapter/EvDbDynamoDbStorageAdapter';
-import EvDbDynamoDbAdmin from '@eventualize/dynamodb-storage-adapter/EvDbDynamoDbAdmin';
+import EvDbDynamoDbAdmin from '@eventualize/dynamodb-storage-adapter/EvDBDynamoDBAdmin';
 import IEvDbStorageAdmin from '@eventualize/types/IEvDbStorageAdmin';
-
-/** DynamoDB client configuration options for test injection */
-export interface DynamoDBClientOptions {
-    endpoint?: string;
-    accessKeyId?: string;
-    secretAccessKey?: string;
-    region?: string;
-}
-
+import { DynamoDBClientOptions } from './DynamoDBClientOptions.js';
 
 const getEnvPath = () => {
     const __filename = fileURLToPath(import.meta.url);
@@ -86,7 +78,6 @@ export default class Steps {
             .build();
 
         return eventstore;
-
     }
 
     public static createPointsStream<TStreams extends StreamMap>(streamId: string, eventStore: EvDbEventStoreType<TStreams>): PointsStreamType {

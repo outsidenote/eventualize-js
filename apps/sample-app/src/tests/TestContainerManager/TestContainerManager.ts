@@ -1,34 +1,28 @@
-import { PostgreSqlContainer, StartedPostgreSqlContainer } from '@testcontainers/postgresql';
+import { StartedLocalStackContainer, LocalstackContainer } from '@testcontainers/localstack';
+import { StartedMySqlContainer, MySqlContainer } from '@testcontainers/mysql';
+import { StartedPostgreSqlContainer, PostgreSqlContainer } from '@testcontainers/postgresql';
 import { StoppedTestContainer } from 'testcontainers';
-import { MySqlContainer, StartedMySqlContainer } from '@testcontainers/mysql';
-import { LocalstackContainer, StartedLocalStackContainer } from '@testcontainers/localstack';
-import { createPostgresSchema } from './postgresql-setup.js';
-import { createMysqlSchema } from './mysql-setup.js';
-import { setupDynamoDBTables } from './dynamodb-setup.js';
 import { EVENT_STORE_TYPE } from '../steps.js';
 import { DynamoDBConfig } from './dynamodb-setup.js';
-import { DynamoDBClientOptions } from '@eventualize/dynamodb-storage-adapter/DynamoDbClient';
 
 /**
  * Manages test container lifecycle for integration tests.
- * Provides methods to start/stop database containers dynamically.
+ * Only responsible for spinning up/stopping containers and providing connection info.
  */
+
 export class TestContainerManager {
     private postgresContainer?: StartedPostgreSqlContainer;
     private mysqlContainer?: StartedMySqlContainer;
     private localstackContainer?: StartedLocalStackContainer;
-    private databases: EVENT_STORE_TYPE[] = [];
     private connections: Partial<Record<EVENT_STORE_TYPE, string | DynamoDBConfig>> = {};
 
-    public get supportedDatabases(): EVENT_STORE_TYPE[] {
-        return this.databases
+    public getConnection(type: EVENT_STORE_TYPE): string | DynamoDBConfig | undefined {
+        return this.connections[type];
     }
 
-    public getConnection(storeType: EVENT_STORE_TYPE): string | DynamoDBConfig | undefined {
-        return this.connections[storeType];
-    }
+    public async startDatabases(databases: EVENT_STORE_TYPE[]): Promise<void> {
+        console.log('\n=== Starting test containers ===\n');
 
-    async startDatabases(databases: EVENT_STORE_TYPE[]): Promise<void> {
         const startPromises: Promise<void>[] = [];
         if (databases.includes(EVENT_STORE_TYPE.POSTGRES)) {
             startPromises.push(this.startPostgres().then(uri => {
@@ -48,14 +42,10 @@ export class TestContainerManager {
             }));
         }
         await Promise.all(startPromises);
-        this.databases = Object.keys(this.connections) as EVENT_STORE_TYPE[];
+        console.log('\n=== All containers started ===\n');
     }
 
-    /**
-     * Starts a PostgreSQL container, runs schema migration, and returns the connection URI.
-     * Uses the same database name, user, and password as docker-compose setup.
-     */
-    async startPostgres(): Promise<string> {
+    private async startPostgres(): Promise<string> {
         console.log('Starting PostgreSQL container...');
         this.postgresContainer = await new PostgreSqlContainer('postgres:18.1')
             .withDatabase('evdb_test')
@@ -65,18 +55,10 @@ export class TestContainerManager {
 
         const connectionUri = this.postgresContainer.getConnectionUri();
         console.log(`PostgreSQL container started at: ${connectionUri}`);
-
-        // Create schema tables
-        await createPostgresSchema(connectionUri);
-
         return connectionUri;
     }
 
-    /**
-     * Starts a MySQL container, runs schema migration, and returns the connection URI.
-     * Uses MariaDB protocol prefix for compatibility with Prisma adapter.
-     */
-    async startMySql(): Promise<string> {
+    private async startMySql(): Promise<string> {
         console.log('Starting MySQL container...');
         this.mysqlContainer = await new MySqlContainer('mysql:9.0')
             .withDatabase('evdb_test')
@@ -90,20 +72,11 @@ export class TestContainerManager {
         const port = this.mysqlContainer.getPort();
         const connectionUri = `mariadb://evdb:evdbpassword@${host}:${port}/evdb_test`;
         console.log(`MySQL container started at: ${connectionUri}`);
-
-        // Create schema tables
-        await createMysqlSchema(connectionUri);
-
         return connectionUri;
     }
 
-    /**
-     * Starts a LocalStack container with DynamoDB service.
-     * Returns configuration needed to connect to DynamoDB.
-     */
-    async startDynamoDB(): Promise<DynamoDBConfig> {
+    private async startDynamoDB(): Promise<DynamoDBConfig> {
         console.log('Starting LocalStack (DynamoDB) container...');
-        // LocalStack starts all services by default, no need for withServices
         this.localstackContainer = await new LocalstackContainer('localstack/localstack:3.8')
             .start();
 
@@ -115,15 +88,12 @@ export class TestContainerManager {
             region: 'us-east-1',
         };
         console.log(`LocalStack (DynamoDB) container started at: ${endpoint}`);
-
-        await setupDynamoDBTables(config);
         return config;
     }
 
-    /**
-     * Stops all running containers.
-     */
     async stopAll(): Promise<StoppedTestContainer[]> {
+        console.log('\n=== Stopping test containers ===\n');
+
         const stopPromises: Promise<StoppedTestContainer>[] = [];
 
         if (this.postgresContainer) {
@@ -143,20 +113,10 @@ export class TestContainerManager {
 
         const response = await Promise.all(stopPromises);
         console.log('All containers stopped.');
-        return response
+        return response;
     }
 
-    /**
- * Gets the DynamoDB options for testcontainers.
- */
-    public getDynamoDbOptions(): DynamoDBClientOptions | undefined {
-        const dynamoDbConfig = this.connections[EVENT_STORE_TYPE.DYNAMODB] as DynamoDBConfig | undefined;
-        if (!dynamoDbConfig) return undefined;
-        return {
-            endpoint: dynamoDbConfig.endpoint,
-            accessKeyId: dynamoDbConfig.accessKeyId,
-            secretAccessKey: dynamoDbConfig.secretAccessKey,
-            region: dynamoDbConfig.region,
-        };
+    public getDynamoDbOptions(): DynamoDBConfig | undefined {
+        return this.connections[EVENT_STORE_TYPE.DYNAMODB] as DynamoDBConfig | undefined;
     };
 }

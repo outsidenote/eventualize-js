@@ -17,8 +17,8 @@ import type * as Prisma from "./prismaNamespace.js"
 
 const config: runtime.GetPrismaClientConfig = {
   "previewFeatures": [],
-  "clientVersion": "7.1.0",
-  "engineVersion": "ab635e6b9d606fa5c8fb8b1a7f909c3c3c1c98ba",
+  "clientVersion": "7.3.0",
+  "engineVersion": "9d6ad21cbbceab97458517b147a6a09ff43aa735",
   "activeProvider": "postgresql",
   "inlineSchema": "generator client {\n  provider = \"prisma-client\"\n  output   = \"../src/generated/prisma\"\n}\n\ndatasource db {\n  provider = \"postgresql\"\n}\n\n/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.\nmodel events {\n  id                String   @db.Uuid\n  stream_type       String   @db.VarChar(150)\n  stream_id         String   @db.VarChar(150)\n  offset            BigInt\n  event_type        String   @db.VarChar(150)\n  telemetry_context Json?    @db.Json\n  captured_by       String   @db.VarChar(150)\n  captured_at       DateTime @db.Timestamptz(6)\n  stored_at         DateTime @default(now()) @db.Timestamptz(6)\n  payload           Json     @db.Json\n\n  @@id([stream_type, stream_id, offset])\n  @@index([stream_type, stream_id, offset], map: \"ix_event_7ae7ea3b165349e09b3fe6d66a69fd72\")\n  @@index([stored_at], map: \"ix_event_stored_at_7ae7ea3b165349e09b3fe6d66a69fd72\")\n}\n\n/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.\nmodel outbox {\n  id                String   @db.Uuid\n  stream_type       String   @db.VarChar(150)\n  stream_id         String   @db.VarChar(150)\n  offset            BigInt\n  event_type        String   @db.VarChar(150)\n  channel           String   @db.VarChar(150)\n  message_type      String   @db.VarChar(150)\n  serialize_type    String   @db.VarChar(150)\n  telemetry_context Bytes?\n  captured_by       String   @db.VarChar(150)\n  captured_at       DateTime @db.Timestamptz(6)\n  stored_at         DateTime @default(now()) @db.Timestamptz(6)\n  payload           Json     @db.Json\n\n  @@id([captured_at, stream_type, stream_id, offset, channel, message_type])\n  @@index([stream_type, stream_id, offset, channel, message_type], map: \"ix_outbox_7ae7ea3b165349e09b3fe6d66a69fd72\")\n  @@index([stored_at, channel, message_type, offset], map: \"ix_storedat_outbox_captured_at_7ae7ea3b165349e09b3fe6d66a69fd72\")\n}\n\n/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.\nmodel snapshot {\n  id          String   @db.Uuid\n  stream_type String   @db.VarChar(150)\n  stream_id   String   @db.VarChar(150)\n  view_name   String   @db.VarChar(150)\n  offset      BigInt\n  state       Json     @db.Json\n  stored_at   DateTime @default(now()) @db.Timestamptz(6)\n\n  @@id([stream_type, stream_id, view_name, offset])\n  @@index([stream_type, stream_id, view_name, stored_at], map: \"ix_snapshot_earlier_stored_at_7ae7ea3b165349e09b3fe6d66a69fd72\")\n}\n",
   "runtimeDataModel": {
@@ -37,12 +37,14 @@ async function decodeBase64AsWasm(wasmBase64: string): Promise<WebAssembly.Modul
 }
 
 config.compilerWasm = {
-  getRuntime: async () => await import("@prisma/client/runtime/query_compiler_bg.postgresql.mjs"),
+  getRuntime: async () => await import("@prisma/client/runtime/query_compiler_fast_bg.postgresql.mjs"),
 
   getQueryCompilerWasmModule: async () => {
-    const { wasm } = await import("@prisma/client/runtime/query_compiler_bg.postgresql.wasm-base64.mjs")
+    const { wasm } = await import("@prisma/client/runtime/query_compiler_fast_bg.postgresql.wasm-base64.mjs")
     return await decodeBase64AsWasm(wasm)
-  }
+  },
+
+  importName: "./query_compiler_fast_bg.js"
 }
 
 

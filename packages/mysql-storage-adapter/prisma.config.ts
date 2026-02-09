@@ -9,6 +9,6 @@ export default defineConfig({
     path: "prisma/migrations",
   },
   datasource: {
-    url: env("MYSQL_URL"),
+    url: env("MYSQL_CONNECTION"),
   },
 });
