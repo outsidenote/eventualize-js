@@ -32,29 +32,29 @@ describe('Database Integration Tests', () => {
         await Steps.clearEnvironment(testData.storeClient, storeType, dynamoDbOptions);
         });
 
-        t.test('Given: local stream with events', () => {
+        await t.test('Given: local stream with events', () => {
           testData.streamId = 'pointsStream1';
           testData.pointsStream = Steps.createPointsStream(testData.streamId, testData.eventStore);
           Steps.addPointsEventsToStream(testData.pointsStream);
           Steps.assertStreamStateIsCorrect(testData.pointsStream);
         });
 
-        t.test('When: stream stored and fetched', async () => {
+        await t.test('When: stream stored and fetched', async () => {
           await assert.doesNotReject(testData.pointsStream.store());
           testData.fetchedStream = await testData.eventStore.getStream("PointsStream", testData.streamId);
         });
 
-        t.test('Then: fetched stream is correct', async () => {
+        await t.test('Then: fetched stream is correct', async () => {
           Steps.compareFetchedAndStoredStreams(testData.pointsStream, testData.fetchedStream);
         });
 
-        t.test('AND: Duplicate stream cannot be stored', async () => {
+        await t.test('AND: Duplicate stream cannot be stored', async () => {
           testData.dupPointsStream = Steps.createPointsStream(testData.streamId, testData.eventStore);
           Steps.addPointsEventsToStream(testData.dupPointsStream);
           await assert.rejects(testData.dupPointsStream.store(), { message: 'OPTIMISTIC_CONCURRENCY_VIOLATION' });
         });
 
-        t.test('Race condition is handled correctly', async () => {
+        await t.test('Race condition is handled correctly', async () => {
           testData.fetchedStream1 = await testData.eventStore.getStream("PointsStream", testData.streamId);
           testData.fetchedStream2 = await testData.eventStore.getStream("PointsStream", testData.streamId);
           Steps.addPointsEventsToStream(testData.fetchedStream1);

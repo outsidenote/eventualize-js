@@ -9,7 +9,10 @@
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
     },
-    "./*": "./dist/*.js"
+    "./*": {
+      "import": "./dist/*.js",
+      "types": "./dist/*.d.ts"
+    }
   },
   "scripts": {
     "build": "tsc --build",
@@ -22,6 +25,7 @@
   "devDependencies": {
     "@types/node": "^24.10.1"
   },
+  "files": ["dist"],
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.948.0",
     "@aws-sdk/util-dynamodb": "^3.948.0"
