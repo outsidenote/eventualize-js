@@ -1,6 +1,6 @@
 {
   "name": "@eventualize/relational-storage-adapter",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -29,5 +29,7 @@
     "dotenv": "^17.2.3",
     "prisma": "^7.1.0"
   },
-  "files": ["dist"]
+  "files": [
+    "dist"
+  ]
 }
