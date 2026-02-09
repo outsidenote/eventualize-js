@@ -16,10 +16,10 @@ describe('Database Integration Tests', () => {
     await testManager.stop();
   });
 
-  test('start integration tests', () => {
+  test('start integration tests', async () => {
     const databasesToTest = testManager.supportedDatabases;
     for (const storeType of databasesToTest) {
-      test(`${storeType} execution`, async t => {
+      await test(`${storeType} execution`, async t => {
         const testData: any = {};
 
         await t.before(async () => {
