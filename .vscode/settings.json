@@ -1,0 +1,23 @@
+{
+    "npm.scriptExplorerAction": "run",
+    "testExplorer.onStart": "expand",
+    "testExplorer.showInlineError": true,
+    "debug.console.closeOnEnd": false,
+    // Node.js Test Runner (connor4312.nodejs-testing) configuration
+    "nodeTesting.rootDir": ".",
+    "nodeTesting.nodeArgs": [
+        "--import",
+        "tsx"
+    ],
+    "nodeTesting.testFilePattern": "**/*.test.ts",
+    // Legacy configurations for compatibility
+    "nodeTestRunner.nodeArgs": [
+        "--import",
+        "tsx"
+    ],
+    "nodeTestRunner.testFilePatterns": [
+        "apps/**/src/**/*.test.ts",
+        "packages/**/src/**/*.test.ts"
+    ],
+    "nodeTestRunner.envFile": ".env.test"
+}

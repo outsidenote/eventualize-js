@@ -2,7 +2,7 @@
     "TableName": "messages",
     "AttributeDefinitions": [
         {
-            "AttributeName": "message_addres",
+            "AttributeName": "message_address",
             "AttributeType": "S"
         },
         {
@@ -12,7 +12,7 @@
     ],
     "KeySchema": [
         {
-            "AttributeName": "message_addres",
+            "AttributeName": "message_address",
             "KeyType": "HASH"
         },
         {

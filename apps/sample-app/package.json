@@ -8,7 +8,11 @@
     "build": "tsc --build",
     "clean": "rimraf dist",
     "rebuild": "npm run clean && npm run build",
-    "test": "node --import tsx --test 'src/tests/**/*.test.ts'"
+    "test": "node --import tsx --test 'src/tests/**/*.test.ts'",
+    "test:integration": "TEST_DATABASES=MySQL,Postgres,DynamoDB node --import tsx --test 'src/tests/integration.test.ts'",
+    "test:mysql": "TEST_DATABASES=MySQL node --import tsx --test 'src/tests/integration.test.ts'",
+    "test:postgres": "TEST_DATABASES=Postgres node --import tsx --test 'src/tests/integration.test.ts'",
+    "test:dynamodb": "TEST_DATABASES=DynamoDB node --import tsx --test 'src/tests/integration.test.ts'"
   },
   "keywords": [],
   "author": "",
@@ -16,12 +20,21 @@
   "type": "module",
   "dependencies": {
     "@eventualize/core": "^1.0.0",
-    "@eventualize/relational-storage-adapter": "^1.0.0",
-    "@eventualize/postgres-storage-adapter": "^1.0.0",
-    "@eventualize/mysql-storage-adapter": "^1.0.0",
     "@eventualize/dynamodb-storage-adapter": "^1.0.0",
+    "@eventualize/mysql-storage-adapter": "^1.0.0",
+    "@eventualize/postgres-storage-adapter": "^1.0.0",
+    "@eventualize/relational-storage-adapter": "^1.0.0",
     "@eventualize/types": "^1.0.0",
     "@prisma/adapter-pg": "^7.1.0",
     "dotenv": "^17.2.3"
+  },
+  "devDependencies": {
+    "@testcontainers/localstack": "^11.11.0",
+    "@testcontainers/mysql": "^11.11.0",
+    "@testcontainers/postgresql": "^11.11.0",
+    "@types/pg": "^8.16.0",
+    "mysql2": "^3.15.3",
+    "pg": "^8.18.0",
+    "testcontainers": "^11.11.0"
   }
 }

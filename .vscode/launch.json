@@ -1,0 +1,34 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "pwa-node",
+            "request": "launch",
+            "name": "Debug All Tests (Node --test)",
+            "runtimeExecutable": "node",
+            "runtimeArgs": [
+                "--import",
+                "tsx",
+                "--test",
+                "packages/**/src/**/*.test.ts",
+                "apps/**/src/**/*.test.ts"
+            ],
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "envFile": "${workspaceFolder}/.env",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "outputCapture": "std"
+        },
+        {
+            "type": "pwa-node",
+            "request": "attach",
+            "name": "Attach to Node Process",
+            "processId": "${command:PickProcess}",
+            "skipFiles": [
+                "<node_internals>/**"
+            ]
+        }
+    ]
+}
