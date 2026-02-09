@@ -18,9 +18,9 @@ describe('Database Integration Tests', () => {
     await containerManager.stopAll();
   });
 
-  test('start integration tests', () => {
+  test('start integration tests', async () => {
     for (const storeType of containerManager.supportedDatabases) {
-      test(`${storeType} execution`, async t => {
+      await test(`${storeType} execution`, async t => {
         const testData: any = {};
 
         await t.before(async () => {
