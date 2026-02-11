@@ -22,7 +22,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: 'npm'
           registry-url: 'https://registry.npmjs.org'
 
@@ -32,29 +32,17 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Verify npm auth
-        run: |
-          npm whoami
-          npm config get registry
+    
+     
+
+      - name: Create Release Pull Request or Publish
+        id: changesets
+        uses: changesets/action@v1
+        with:
+          publish: npm run release
+          version: npm run version
+          title: 'chore: version packages'
+          commit: 'chore: version packages'
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      # TEST-ONLY: publish is intentionally skipped so you can safely validate auth/build.
-      - name: Test-only confirmation
-        run: echo "Auth OK + build OK. Publish skipped (test-only)."
-
-      # When you're ready to actually release, remove the two steps above and re-enable this:
-      #
-      # - name: Create Release Pull Request or Publish
-      #   if: github.ref == 'refs/heads/main'
-      #   id: changesets
-      #   uses: changesets/action@v1
-      #   with:
-      #     publish: npm run release
-      #     version: npm run version
-      #     title: 'chore: version packages'
-      #     commit: 'chore: version packages'
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #     NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-      #     NPM_CONFIG_PROVENANCE: true
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_CONFIG_PROVENANCE: true
