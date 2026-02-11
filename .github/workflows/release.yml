@@ -35,6 +35,7 @@ jobs:
      
 
       - name: Create Release Pull Request or Publish
+        if: github.ref == 'refs/heads/main'
         id: changesets
         uses: changesets/action@v1
         with:
