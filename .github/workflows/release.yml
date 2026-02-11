@@ -32,13 +32,6 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Verify npm auth
-        run: |
-          npm whoami
-          npm config get registry
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
       - name: Create Release Pull Request or Publish
         if: github.ref == 'refs/heads/main'
         id: changesets
@@ -50,5 +43,4 @@ jobs:
           commit: 'chore: version packages'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_CONFIG_PROVENANCE: true
