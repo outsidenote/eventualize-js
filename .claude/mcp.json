@@ -1,0 +1,17 @@
+{
+    "enableAllProjectMcpServers": true,
+    "enabledMcpjsonServers": [
+        "figma"
+    ],
+    "disabledMcpjsonServers": [
+        "aspire",
+        "playwright",
+        "github",
+        "postgres",
+        "supabase",
+        "firebase",
+        "mongodb-atlas",
+        "neo4j",
+        "falkordb"
+    ]
+}
