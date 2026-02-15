@@ -5,7 +5,7 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/outsidenote/eventualize-js",
-    "directory": "packages/relational-storage-adapter"
+    "directory": "packages/adapters/relational-storage-adapter"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -31,6 +31,7 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
+    "@eventualize/types": "^2.0.0",
     "@prisma/client": "^7.1.0"
   },
   "devDependencies": {

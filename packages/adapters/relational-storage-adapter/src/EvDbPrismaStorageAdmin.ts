@@ -2,6 +2,7 @@ import IEvDbStorageAdmin from "@eventualize/types/IEvDbStorageAdmin";
 
 
 export default class EvDbPrismaStorageAdmin implements IEvDbStorageAdmin {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Each DB adapter generates its own PrismaClient type; accepting `any` allows interoperability.
     constructor(private prisma: any) { }
     async clearEnvironmentAsync(): Promise<void> {
         await Promise.all([

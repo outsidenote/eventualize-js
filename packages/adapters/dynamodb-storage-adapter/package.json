@@ -5,7 +5,7 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/outsidenote/eventualize-js",
-    "directory": "packages/dynamodb-storage-adapter"
+    "directory": "packages/adapters/dynamodb-storage-adapter"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -37,6 +37,7 @@
     "dist"
   ],
   "dependencies": {
+    "@eventualize/types": "^2.0.0",
     "@aws-sdk/client-dynamodb": "^3.948.0",
     "@aws-sdk/util-dynamodb": "^3.948.0"
   }

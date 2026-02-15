@@ -84,14 +84,11 @@ export default class EvDbDynamoDbAdmin implements IEvDbStorageAdmin {
                     }
                 });
                 await this.dynamoDbClient.send(batchWriteCommand);
-                console.log(`Deleted ${items.length} items from ${tableName}.`);
             }
 
             exclusiveStartKey = scanResult.LastEvaluatedKey;
 
         } while (exclusiveStartKey);
-
-        console.log(`Finished item deletion for table: ${tableName}`);
     }
 
     createEnvironmentAsync(): Promise<void> {

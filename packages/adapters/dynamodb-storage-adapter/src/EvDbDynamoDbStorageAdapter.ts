@@ -1,7 +1,5 @@
 import { unmarshall } from "@aws-sdk/util-dynamodb";
 
-import { IEvDbPayloadData } from '@eventualize/types/IEvDbEventPayload';
-import IEvDbEventMetadata from '@eventualize/types/IEvDbEventMetadata';
 import EvDbStreamCursor from '@eventualize/types/EvDbStreamCursor';
 import EvDbMessage from '@eventualize/types/EvDbMessage';
 import IEvDbStorageSnapshotAdapter from '@eventualize/types/IEvDbStorageSnapshotAdapter';
@@ -17,46 +15,12 @@ import EvDbMessageFilter from '@eventualize/types/EvDbMessageFilter';
 import { EvDbShardName } from '@eventualize/types/primitiveTypes';
 
 
-import { createDynamoDBClient, listTables, DynamoDBClientOptions } from './DynamoDbClient.js';
+import { createDynamoDBClient, DynamoDBClientOptions } from './DynamoDbClient.js';
 import QueryProvider, { deserializeStreamAddress, EventRecord, MessageRecord } from './EvDbDynamoDbStorageAdapterQueries.js'
 import { DynamoDBClient, TransactionCanceledException, TransactWriteItemsCommand } from '@aws-sdk/client-dynamodb';
 
-// Type definitions for records
-export interface EvDbEventRecord extends IEvDbEventMetadata {
-    id: string;
-    payload: IEvDbPayloadData;
-}
-
-export interface EvDbSnapshotRecord {
-    id: string;
-    streamType: string;
-    streamId: string;
-    viewName: string;
-    offset: bigint;
-    state: IEvDbPayloadData;
-}
-
-export interface IEvDbOutboxTransformer {
-    transform(message: EvDbMessage): EvDbMessage;
-}
-
-export interface EvDbStorageContext {
-    schema?: string;
-    shortId: string;
-    id: string;
-}
-
-const serializePayload = (payload: IEvDbPayloadData) => Buffer.from(JSON.stringify(payload), 'utf-8');
-const deserializePayload = (payload: any): IEvDbPayloadData => {
-    if (!!payload && typeof payload == 'object') {
-        return payload;
-    }
-    return {};
-}
-
 /**
- * Prisma-based storage adapter for EvDb
- * Replaces SQL Server-specific adapter with database-agnostic Prisma implementation
+ * DynamoDB storage adapter for EvDb
  */
 export default class EvDbDynamoDbStorageAdapter implements IEvDbStorageSnapshotAdapter, IEvDbStorageStreamAdapter {
     /**
@@ -99,7 +63,6 @@ export default class EvDbDynamoDbStorageAdapter implements IEvDbStorageSnapshotA
         messages: ReadonlyArray<EvDbMessage>,
     ): Promise<StreamStoreAffected> {
         try {
-            await listTables(this.dynamoDbClient);
             const eventsToInsert: EventRecord[] = events.map((event) =>
                 EventRecord.createFromEvent(event));
 
@@ -202,38 +165,28 @@ export default class EvDbDynamoDbStorageAdapter implements IEvDbStorageSnapshotA
     async getSnapshotAsync(
         viewAddress: EvDbViewAddress
     ): Promise<EvDbStoredSnapshotResultRaw> {
-        const { streamType, streamId, viewName } = viewAddress;
-        try {
-            const query = QueryProvider.getSnapshot(viewAddress);
-            const response = await this.dynamoDbClient.send(query);
+        const query = QueryProvider.getSnapshot(viewAddress);
+        const response = await this.dynamoDbClient.send(query);
 
-            if (!response.Items) {
-                return EvDbStoredSnapshotResultRaw.Empty;
-            }
-
-            const snapshot = unmarshall(response.Items[0]);
-
-            return new EvDbStoredSnapshotResultRaw(
-                snapshot.offset,
-                new Date(Number(snapshot.stored_at)),
-                snapshot.state,
-            );
-        } catch (error) {
-            throw error;
+        if (!response.Items) {
+            return EvDbStoredSnapshotResultRaw.Empty;
         }
+
+        const snapshot = unmarshall(response.Items[0]);
+
+        return new EvDbStoredSnapshotResultRaw(
+            snapshot.offset,
+            new Date(Number(snapshot.stored_at)),
+            snapshot.state,
+        );
     }
 
     /**
      * Save a snapshot
      */
     async storeSnapshotAsync(record: EvDbStoredSnapshotData): Promise<void> {
-        try {
-            const command = QueryProvider.saveSnapshot(record);
-            await this.dynamoDbClient.send(command);
-
-        } catch (error) {
-            throw error;
-        }
+        const command = QueryProvider.saveSnapshot(record);
+        await this.dynamoDbClient.send(command);
     }
 
     /**

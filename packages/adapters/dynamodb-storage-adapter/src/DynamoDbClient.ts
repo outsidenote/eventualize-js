@@ -1,5 +1,4 @@
-// src/dynamo-client.ts
-import { DynamoDBClient, DynamoDBClientConfig, ListTablesCommand } from "@aws-sdk/client-dynamodb";
+import { DynamoDBClient, DynamoDBClientConfig } from "@aws-sdk/client-dynamodb";
 
 /**
  * Configuration options for DynamoDB client.
@@ -8,20 +7,9 @@ import { DynamoDBClient, DynamoDBClientConfig, ListTablesCommand } from "@aws-sd
 export interface DynamoDBClientOptions {
     endpoint?: string;
     accessKeyId?: string;
+
     secretAccessKey?: string;
     region?: string;
-}
-
-export async function listTables(client: DynamoDBClient) {
-    try {
-        const command = new ListTablesCommand({});
-        const response = await client.send(command);
-        console.log("Tables in DynamoDB Local:", response.TableNames);
-        return response.TableNames;
-    } catch (error) {
-        console.error("Error listing tables:", error);
-        throw error;
-    }
 }
 
 /**
