@@ -13,7 +13,7 @@ export class EvDbStoredSnapshotResultRaw extends EvDbStoredSnapshotResultBase {
     }
 
     static readonly Empty = new EvDbStoredSnapshotResultRaw(
-        0,
+        -1,
         undefined,
         undefined
     );
@@ -34,9 +34,16 @@ export class EvDbStoredSnapshotResult<TState>
         this.state = state;
     }
 
+    /**
+     * Returns an empty snapshot with offset -1.
+     * 
+     * Invariant: Empty position is represented as -1.
+     * A snapshot at offset N means state AFTER applying event N.
+     * So -1 means no events have been applied.
+     */
     static getEmptyState<TState>(): EvDbStoredSnapshotResult<TState> {
         return new EvDbStoredSnapshotResult<TState>(
-            0,
+            -1,
             undefined,
             undefined as unknown as TState
         );

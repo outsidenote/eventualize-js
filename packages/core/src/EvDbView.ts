@@ -74,12 +74,11 @@ export abstract class EvDbView<TState> extends EvDbViewRaw implements IEvDbViewS
         public readonly defaultState: TState
     ) {
         super(storageAdapter, address, snapshot);
-        if (snapshot.offset === 0)
+        if (snapshot.offset < 0 || snapshot.state === undefined) {
             this._state = this.getDefaultState();
-        else
+        } else {
             this._state = snapshot.state;
-
-
+        }
     }
 
     getSnapshotData(): EvDbStoredSnapshotData {
