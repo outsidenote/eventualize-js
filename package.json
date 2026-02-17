@@ -17,6 +17,8 @@
     "test:unit": "TEST_CONTAINER=true DOTENV_CONFIG_PATH=.env.test dotenv -e .env.test -- node --import tsx --test apps/**/src/tests/unit.test.ts",
     "test:integration": "TEST_CONTAINER=true DOTENV_CONFIG_PATH=.env.test dotenv -e .env.test -- node --import tsx --test apps/**/src/tests/*.integration.test.ts",
     "test:integration:bare": "DOTENV_CONFIG_PATH=.env.test dotenv -e .env.test -- node --import tsx --test apps/**/src/tests/*.integration.test.ts",
+    "bench:timetraveler": "node --import tsx/esm apps/sample-app/src/tests/timeTraveler.benchmark.ts",
+    "bench:timetraveler:db": "TEST_CONTAINER=true TEST_DATABASES=MySQL,Postgres node --import tsx/esm apps/sample-app/src/tests/timeTraveler.benchmark.ts",
     "stop-local-dbs": "docker compose down --volumes",
     "build": "tsc --build",
     "clean": "rimraf tsconfig.tsbuildinfo",
