@@ -134,6 +134,10 @@ export class ReplayEngine<TState, TEvents extends IEvDbEventPayload = IEvDbEvent
 
     const targetTimestamp = getTargetTimestamp(target);
     if (targetTimestamp !== null) {
+      const snapshotStoredAt = (snapshot as EvDbStoredSnapshotResult<TState>).storedAt;
+      if (snapshotStoredAt && snapshotOffset >= 0 && snapshotStoredAt <= targetTimestamp) {
+        return snapshotOffset + 1;
+      }
       return 0;
     }
 
@@ -146,7 +150,11 @@ export class ReplayEngine<TState, TEvents extends IEvDbEventPayload = IEvDbEvent
     target?: ReplayTarget
   ): boolean {
     if (target && 'timestamp' in target) {
-      return false;
+      const targetTimestamp = getTargetTimestamp(target);
+      const snapshotStoredAt = (snapshot as EvDbStoredSnapshotResult<TState>).storedAt;
+      if (!targetTimestamp || !snapshotStoredAt || snapshotStoredAt > targetTimestamp) {
+        return false;
+      }
     }
     return startOffset > 0 && snapshot.offset >= 0 && 'state' in snapshot && snapshot.state !== undefined;
   }

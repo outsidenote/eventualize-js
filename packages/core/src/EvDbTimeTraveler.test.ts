@@ -49,6 +49,11 @@ class InMemoryStorageAdapter implements IEvDbStorageSnapshotAdapter, IEvDbStorag
         this.events = [];
     }
 
+    setSnapshot(streamType: string, streamId: string, viewName: string, snapshot: EvDbStoredSnapshotResultRaw): void {
+        const key = `${streamType}:${streamId}:${viewName}`;
+        this.snapshots.set(key, snapshot);
+    }
+
     async close(): Promise<void> { }
 
     async *getEventsAsync(streamCursor: EvDbStreamCursor): AsyncGenerator<EvDbEvent, void, undefined> {
@@ -475,7 +480,7 @@ describe('EvDbTimeTraveler', () => {
     });
 
     describe('Timestamp Replay', () => {
-        test('timestamp replay starts from beginning (ignores snapshot for safety)', async () => {
+        test('timestamp replay produces correct result without snapshot', async () => {
             const time1 = new Date('2024-01-01T10:00:00Z');
             const time2 = new Date('2024-01-01T11:00:00Z');
             const time3 = new Date('2024-01-01T12:00:00Z');
@@ -499,6 +504,47 @@ describe('EvDbTimeTraveler', () => {
 
             const state = await timeTraveler.replayToTimestamp(new Date('2024-01-01T09:00:00Z'));
             assert.strictEqual(state.sum, 0, 'Should return initial state for timestamp before first event');
+        });
+
+        test('timestamp replay uses snapshot when storedAt is before target timestamp', async () => {
+            const time1 = new Date('2024-01-01T10:00:00Z');
+            const time2 = new Date('2024-01-01T11:00:00Z');
+            const time3 = new Date('2024-01-01T12:00:00Z');
+            const snapshotStoredAt = new Date('2024-01-01T10:30:00Z');
+
+            adapter.addEvents([
+                createTestEvent('add', 100, 1, time1),
+                createTestEvent('add', 50, 2, time2),
+                createTestEvent('subtract', 30, 3, time3)
+            ]);
+
+            // Snapshot captures state after event at offset 1 (sum=100), stored before target
+            adapter.setSnapshot('points', 'test-stream', 'Sum',
+                new EvDbStoredSnapshotResultRaw(1, snapshotStoredAt, { sum: 100 })
+            );
+
+            // Target is after snapshotStoredAt → should use snapshot, replay only events at offset 2
+            const state = await timeTraveler.replayToTimestamp(new Date('2024-01-01T11:30:00Z'));
+            assert.strictEqual(state.sum, 150, 'Should produce correct state using snapshot as starting point');
+        });
+
+        test('timestamp replay falls back to offset 0 when snapshot storedAt is after target timestamp', async () => {
+            const time1 = new Date('2024-01-01T10:00:00Z');
+            const time2 = new Date('2024-01-01T11:00:00Z');
+            const snapshotStoredAt = new Date('2024-01-01T12:00:00Z'); // stored AFTER target
+
+            adapter.addEvents([
+                createTestEvent('add', 100, 1, time1),
+                createTestEvent('add', 50, 2, time2),
+            ]);
+
+            // Snapshot stored after target → must NOT use it, replay from beginning
+            adapter.setSnapshot('points', 'test-stream', 'Sum',
+                new EvDbStoredSnapshotResultRaw(2, snapshotStoredAt, { sum: 150 })
+            );
+
+            const state = await timeTraveler.replayToTimestamp(new Date('2024-01-01T10:30:00Z'));
+            assert.strictEqual(state.sum, 100, 'Should replay from beginning when snapshot is after target');
         });
     });
 
