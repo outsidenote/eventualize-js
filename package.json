@@ -19,6 +19,8 @@
     "test:integration": "TEST_CONTAINER=true DOTENV_CONFIG_PATH=.env.test dotenv -e .env.test -- node --import tsx --test apps/**/src/tests/integration.test.ts",
     "test:integration:bare": "DOTENV_CONFIG_PATH=.env.test dotenv -e .env.test -- node --import tsx --test apps/**/src/tests/integration.test.ts",
     "stop-local-dbs": "docker compose down --volumes",
+    "lint": "eslint packages/ apps/ && prettier --check \"packages/**/*.ts\" \"apps/**/*.ts\"",
+    "lint:fix": "eslint --fix packages/ apps/ && prettier --write \"packages/**/*.ts\" \"apps/**/*.ts\"",
     "build": "tsc --build",
     "clean": "rimraf tsconfig.tsbuildinfo",
     "clear": " npm run clean && npm run clean --workspaces --if-present",
@@ -32,9 +34,14 @@
   "license": "ISC",
   "devDependencies": {
     "@changesets/cli": "^2.29.8",
+    "@eslint/js": "^10.0.1",
     "@types/node": "^24.10.1",
     "dotenv-cli": "^11.0.0",
+    "eslint": "^10.0.0",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^2.8.8",
     "tsx": "^4.21.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.56.0"
   }
 }

@@ -10,7 +10,7 @@ import { PointsAdded, PointsMultiplied, PointsSubtracted } from "../eventstore/P
 
 import { EvDbView } from '@eventualize/core/EvDbView';
 import { EvDbPrismaStorageAdapter } from '@eventualize/relational-storage-adapter/EvDbPrismaStorageAdapter'
-import { EvDbEventStoreBuilder, StreamMap, EvDbEventStoreType, IEvDbStorageAdapter } from '@eventualize/core/EvDbEventStore';
+import { EvDbEventStoreBuilder, StreamMap, EvDbEventStoreType } from '@eventualize/core/EvDbEventStore';
 import EvDbPrismaStorageAdmin from '@eventualize/relational-storage-adapter/EvDbPrismaStorageAdmin';
 import EvDbPostgresPrismaClientFactory from '@eventualize/postgres-storage-adapter/EvDbPostgresPrismaClientFactory';
 import EvDbMySqlPrismaClientFactory from '@eventualize/mysql-storage-adapter/EvDbMySqlPrismaClientFactory';
