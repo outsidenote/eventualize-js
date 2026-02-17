@@ -14,7 +14,10 @@
     "test:integration:bare": "TEST_DATABASES=MySQL,Postgres,DynamoDB node --import tsx --test 'src/tests/integration.test.ts'",
     "test:mysql": "TEST_CONTAINER=true TEST_DATABASES=MySQL node --import tsx --test 'src/tests/integration.test.ts'",
     "test:postgres": "TEST_CONTAINER=true TEST_DATABASES=Postgres node --import tsx --test 'src/tests/integration.test.ts'",
-    "test:dynamodb": "TEST_CONTAINER=true TEST_DATABASES=DynamoDB node --import tsx --test 'src/tests/integration.test.ts'"
+    "test:dynamodb": "TEST_CONTAINER=true TEST_DATABASES=DynamoDB node --import tsx --test 'src/tests/integration.test.ts'",
+    "test:timetraveler": "TEST_CONTAINER=true TEST_DATABASES=MySQL,Postgres,DynamoDB node --import tsx --test 'src/tests/timeTraveler.integration.test.ts'",
+    "bench:timetraveler": "node --import tsx/esm src/tests/timeTraveler.benchmark.ts",
+    "bench:timetraveler:db": "TEST_CONTAINER=true TEST_DATABASES=MySQL,Postgres node --import tsx/esm src/tests/timeTraveler.benchmark.ts"
   },
   "keywords": [],
   "author": "",

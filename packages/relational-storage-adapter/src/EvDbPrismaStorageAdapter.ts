@@ -1,4 +1,4 @@
-import { IEvDbPayloadData } from '@eventualize/types/IEvDbEventPayload';
+import IEvDbEventPayload, { IEvDbPayloadData } from '@eventualize/types/IEvDbEventPayload';
 import IEvDbEventMetadata from '@eventualize/types/IEvDbEventMetadata';
 import EvDbStreamCursor from '@eventualize/types/EvDbStreamCursor';
 import EvDbMessage from '@eventualize/types/EvDbMessage';
@@ -190,7 +190,7 @@ export class EvDbPrismaStorageAdapter implements IEvDbStorageSnapshotAdapter, IE
                     yield new EvDbEvent(
                         event.event_type,
                         new EvDbStreamCursor(event.stream_type, event.stream_id, Number(event.offset)),
-                        { payloadType: event.event_type, payload: deserializePayload(event.payload) },
+                        deserializePayload(event.payload) as IEvDbEventPayload,
                         event.captured_at,
                         event.captured_by, event.stored_at
                     );

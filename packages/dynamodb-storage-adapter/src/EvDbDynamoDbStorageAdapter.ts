@@ -183,9 +183,9 @@ export default class EvDbDynamoDbStorageAdapter implements IEvDbStorageSnapshotA
                         new EvDbStreamCursor(streamAddress.streamType, streamAddress.streamId, res.offset),
                         res.event_type,
                         res.captured_by,
-                        new Date(res.captured_at),
+                        new Date(Number(res.captured_at)),
                         res.payload,
-                        new Date(res.stored_at)
+                        new Date(Number(res.stored_at))
                     );
                     yield r.toEvDbEvent();
                 }
@@ -207,7 +207,7 @@ export default class EvDbDynamoDbStorageAdapter implements IEvDbStorageSnapshotA
             const query = QueryProvider.getSnapshot(viewAddress);
             const response = await this.dynamoDbClient.send(query);
 
-            if (!response.Items) {
+            if (!response.Items || response.Items.length === 0) {
                 return EvDbStoredSnapshotResultRaw.Empty;
             }
 
