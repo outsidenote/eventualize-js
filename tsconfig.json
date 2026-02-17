@@ -43,6 +43,12 @@
       "@eventualize/mysql-storage-adapter/*": [
         "packages/adapters/mysql-storage-adapter/src/*"
       ],
+      "@eventualize/dynamodb-storage-adapter": [
+        "packages/adapters/dynamodb-storage-adapter/src"
+      ],
+      "@eventualize/dynamodb-storage-adapter/*": [
+        "packages/adapters/dynamodb-storage-adapter/src/*"
+      ],
     }
   },
   "references": [

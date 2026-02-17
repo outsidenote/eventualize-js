@@ -22,6 +22,9 @@
     {
       "path": "../../packages/adapters/mysql-storage-adapter"
     },
+    {
+      "path": "../../packages/adapters/dynamodb-storage-adapter"
+    },
   ],
   "include": [
     "src/**/*"

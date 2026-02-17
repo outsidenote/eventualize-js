@@ -17,7 +17,7 @@ import EvDbMySqlPrismaClientFactory from '@eventualize/mysql-storage-adapter/EvD
 import { PrismaClient as PostgresPrismaClient } from '@eventualize/postgres-storage-adapter/generated/prisma/client';
 import { PrismaClient as MySqlPrismaClient } from '@eventualize/mysql-storage-adapter/generated/prisma/client';
 import EvDbDynamoDbStorageAdapter from '@eventualize/dynamodb-storage-adapter/EvDbDynamoDbStorageAdapter';
-import EvDbDynamoDbAdmin from '@eventualize/dynamodb-storage-adapter/EvDbDynamoDbAdmin';
+import EvDbDynamoDbAdmin from '@eventualize/dynamodb-storage-adapter/EvDBDynamoDBAdmin';
 import IEvDbStorageAdmin from '@eventualize/types/IEvDbStorageAdmin';
 import { DynamoDBClientOptions } from './DynamoDBClientOptions.js';
 
