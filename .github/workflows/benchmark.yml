@@ -1,0 +1,39 @@
+name: Benchmark
+
+on:
+  pull_request:
+    types: [labeled]
+  workflow_dispatch:
+    inputs:
+      database:
+        description: 'Run with database containers'
+        type: boolean
+        default: false
+
+jobs:
+  benchmark:
+    if: github.event.label.name == 'run-benchmark' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Run in-memory benchmark
+        if: ${{ !inputs.database }}
+        run: npm run bench:timetraveler
+
+      - name: Run database benchmark (MySQL, Postgres)
+        if: ${{ inputs.database }}
+        run: npm run bench:timetraveler:db
