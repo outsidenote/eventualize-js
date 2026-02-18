@@ -14,13 +14,16 @@
       "path": "../../packages/core"
     },
     {
-      "path": "../../packages/relational-storage-adapter"
+      "path": "../../packages/adapters/relational-storage-adapter"
     },
     {
-      "path": "../../packages/postgres-storage-adapter"
+      "path": "../../packages/adapters/postgres-storage-adapter"
     },
     {
-      "path": "../../packages/mysql-storage-adapter"
+      "path": "../../packages/adapters/mysql-storage-adapter"
+    },
+    {
+      "path": "../../packages/adapters/dynamodb-storage-adapter"
     },
   ],
   "include": [

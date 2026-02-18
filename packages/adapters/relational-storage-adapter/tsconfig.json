@@ -1,0 +1,21 @@
+{
+  "extends": "../../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "moduleResolution": "node",
+    "module": "es2020",
+    "target": "es2020",
+    "strict": true,
+    "esModuleInterop": true,
+  },
+  "references": [
+    {
+      "path": "../../types"
+    }
+  ],
+  "include": [
+    "src/**/*.ts",
+    "../prisma.config.ts",
+  ]
+}

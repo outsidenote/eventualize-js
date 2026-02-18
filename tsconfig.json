@@ -26,22 +26,28 @@
         "@eventualize/core/*"
       ],
       "@eventualize/relational-storage-adapter": [
-        "packages/relational-storage-adapter/src"
+        "packages/adapters/relational-storage-adapter/src"
       ],
       "@eventualize/relational-storage-adapter/*": [
-        "packages/relational-storage-adapter/src/*"
+        "packages/adapters/relational-storage-adapter/src/*"
       ],
       "@eventualize/postgres-storage-adapter": [
-        "packages/postgres-storage-adapter/src"
+        "packages/adapters/postgres-storage-adapter/src"
       ],
       "@eventualize/postgres-storage-adapter/*": [
-        "packages/postgres-storage-adapter/src/*"
+        "packages/adapters/postgres-storage-adapter/src/*"
       ],
       "@eventualize/mysql-storage-adapter": [
-        "packages/mysql-storage-adapter/src"
+        "packages/adapters/mysql-storage-adapter/src"
       ],
       "@eventualize/mysql-storage-adapter/*": [
-        "packages/mysql-storage-adapter/src/*"
+        "packages/adapters/mysql-storage-adapter/src/*"
+      ],
+      "@eventualize/dynamodb-storage-adapter": [
+        "packages/adapters/dynamodb-storage-adapter/src"
+      ],
+      "@eventualize/dynamodb-storage-adapter/*": [
+        "packages/adapters/dynamodb-storage-adapter/src/*"
       ],
     }
   },
@@ -53,16 +59,16 @@
       "path": "./packages/core"
     },
     {
-      "path": "./packages/relational-storage-adapter"
+      "path": "./packages/adapters/relational-storage-adapter"
     },
     {
-      "path": "./packages/postgres-storage-adapter"
+      "path": "./packages/adapters/postgres-storage-adapter"
     },
     {
-      "path": "./packages/mysql-storage-adapter"
+      "path": "./packages/adapters/mysql-storage-adapter"
     },
     {
-      "path": "./packages/dynamodb-storage-adapter"
+      "path": "./packages/adapters/dynamodb-storage-adapter"
     },
     {
       "path": "./apps/sample-app"

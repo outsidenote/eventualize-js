@@ -1,0 +1,44 @@
+{
+  "name": "@eventualize/dynamodb-storage-adapter",
+  "version": "2.0.0",
+  "description": "",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/outsidenote/eventualize-js",
+    "directory": "packages/adapters/dynamodb-storage-adapter"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./*": {
+      "import": "./dist/*.js",
+      "types": "./dist/*.d.ts"
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc --build",
+    "clean": "rimraf dist",
+    "rebuild": "npm run clean && npm run build",
+    "test": "echo not tests implemented yet."
+  },
+  "license": "ISC",
+  "type": "module",
+  "devDependencies": {
+    "@types/node": "^24.10.1"
+  },
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "@eventualize/types": "^2.0.0",
+    "@aws-sdk/client-dynamodb": "^3.948.0",
+    "@aws-sdk/util-dynamodb": "^3.948.0"
+  }
+}

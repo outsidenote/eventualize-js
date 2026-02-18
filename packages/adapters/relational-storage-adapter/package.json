@@ -1,0 +1,44 @@
+{
+  "name": "@eventualize/relational-storage-adapter",
+  "version": "2.0.0",
+  "description": "",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/outsidenote/eventualize-js",
+    "directory": "packages/adapters/relational-storage-adapter"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./*": {
+      "import": "./dist/*.js",
+      "types": "./dist/*.d.ts"
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc --build",
+    "clean": "rimraf dist",
+    "rebuild": "npm run clean && npm run build",
+    "test": "echo not tests implemented yet."
+  },
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "@eventualize/types": "^2.0.0",
+    "@prisma/client": "^7.1.0"
+  },
+  "devDependencies": {
+    "dotenv": "^17.2.3",
+    "prisma": "^7.1.0"
+  },
+  "files": [
+    "dist"
+  ]
+}
