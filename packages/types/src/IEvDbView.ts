@@ -1,4 +1,4 @@
-import EvDbViewAddress from "./EvDbViewAddress.js";
+import type EvDbViewAddress from "./EvDbViewAddress.js";
 
 export default interface IEvDbView {
   /**

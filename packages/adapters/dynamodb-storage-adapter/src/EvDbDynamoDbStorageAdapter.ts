@@ -1,216 +1,256 @@
 import { unmarshall } from "@aws-sdk/util-dynamodb";
 
-import EvDbStreamCursor from '@eventualize/types/EvDbStreamCursor';
-import EvDbMessage from '@eventualize/types/EvDbMessage';
-import IEvDbStorageSnapshotAdapter from '@eventualize/types/IEvDbStorageSnapshotAdapter';
-import IEvDbStorageStreamAdapter from '@eventualize/types/IEvDbStorageStreamAdapter';
-import EvDbStreamAddress from '@eventualize/types/EvDbStreamAddress';
-import EvDbViewAddress from '@eventualize/types/EvDbViewAddress';
-import { EvDbStoredSnapshotResultRaw } from '@eventualize/types/EvDbStoredSnapshotResult';
-import { EvDbStoredSnapshotData } from '@eventualize/types/EvDbStoredSnapshotData';
-import EvDbEvent from '@eventualize/types/EvDbEvent';
-import StreamStoreAffected from '@eventualize/types/StreamStoreAffected';
-import EvDbContinuousFetchOptions from '@eventualize/types/EvDbContinuousFetchOptions';
-import EvDbMessageFilter from '@eventualize/types/EvDbMessageFilter';
-import { EvDbShardName } from '@eventualize/types/primitiveTypes';
+import EvDbStreamCursor from "@eventualize/types/EvDbStreamCursor";
+import type EvDbMessage from "@eventualize/types/EvDbMessage";
+import type IEvDbStorageSnapshotAdapter from "@eventualize/types/IEvDbStorageSnapshotAdapter";
+import type IEvDbStorageStreamAdapter from "@eventualize/types/IEvDbStorageStreamAdapter";
+import type EvDbStreamAddress from "@eventualize/types/EvDbStreamAddress";
+import type EvDbViewAddress from "@eventualize/types/EvDbViewAddress";
+import { EvDbStoredSnapshotResultRaw } from "@eventualize/types/EvDbStoredSnapshotResult";
+import type { EvDbStoredSnapshotData } from "@eventualize/types/EvDbStoredSnapshotData";
+import type EvDbEvent from "@eventualize/types/EvDbEvent";
+import StreamStoreAffected from "@eventualize/types/StreamStoreAffected";
+import type EvDbContinuousFetchOptions from "@eventualize/types/EvDbContinuousFetchOptions";
+import type EvDbMessageFilter from "@eventualize/types/EvDbMessageFilter";
+import type { EvDbShardName } from "@eventualize/types/primitiveTypes";
 
-
-import { createDynamoDBClient, DynamoDBClientOptions } from './DynamoDbClient.js';
-import QueryProvider, { deserializeStreamAddress, EventRecord, MessageRecord } from './EvDbDynamoDbStorageAdapterQueries.js'
-import { DynamoDBClient, TransactionCanceledException, TransactWriteItemsCommand } from '@aws-sdk/client-dynamodb';
+import type { DynamoDBClientOptions } from "./DynamoDbClient.js";
+import { createDynamoDBClient } from "./DynamoDbClient.js";
+import type { MessageRecord } from "./EvDbDynamoDbStorageAdapterQueries.js";
+import QueryProvider, {
+  deserializeStreamAddress,
+  EventRecord,
+} from "./EvDbDynamoDbStorageAdapterQueries.js";
+import type { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { TransactionCanceledException, TransactWriteItemsCommand } from "@aws-sdk/client-dynamodb";
 
 /**
  * DynamoDB storage adapter for EvDb
  */
-export default class EvDbDynamoDbStorageAdapter implements IEvDbStorageSnapshotAdapter, IEvDbStorageStreamAdapter {
-    /**
-     * Creates a DynamoDB storage adapter.
-     * @param dynamoDbClientOrOptions - Either a DynamoDBClient instance or configuration options.
-     *        If options are provided, a new client will be created. Falls back to env vars if not provided.
-     */
-    constructor(private dynamoDbClient: DynamoDBClient = createDynamoDBClient()) {
+export default class EvDbDynamoDbStorageAdapter
+  implements IEvDbStorageSnapshotAdapter, IEvDbStorageStreamAdapter
+{
+  /**
+   * Creates a DynamoDB storage adapter.
+   * @param dynamoDbClientOrOptions - Either a DynamoDBClient instance or configuration options.
+   *        If options are provided, a new client will be created. Falls back to env vars if not provided.
+   */
+  constructor(private dynamoDbClient: DynamoDBClient = createDynamoDBClient()) {}
+
+  /**
+   * Factory method to create adapter with configuration options.
+   * @param options - DynamoDB client configuration options.
+   */
+  static withOptions(options: DynamoDBClientOptions): EvDbDynamoDbStorageAdapter {
+    return new EvDbDynamoDbStorageAdapter(createDynamoDBClient(options));
+  }
+  getFromOutbox(
+    _filter: EvDbMessageFilter,
+    _options?: EvDbContinuousFetchOptions | null,
+  ): Promise<AsyncIterable<EvDbMessage>> {
+    throw new Error("Method not implemented.");
+  }
+  getFromOutboxAsync(
+    _shard: EvDbShardName,
+    _filter: EvDbMessageFilter,
+    _options?: EvDbContinuousFetchOptions | null,
+    _cancellation?: AbortSignal,
+  ): AsyncIterable<EvDbMessage> {
+    throw new Error("Method not implemented.");
+  }
+  getRecordsFromOutboxAsync(
+    filter: EvDbMessageFilter,
+    options?: EvDbContinuousFetchOptions | null,
+    cancellation?: AbortSignal,
+  ): AsyncIterable<EvDbMessage>;
+  getRecordsFromOutboxAsync(
+    shard: EvDbShardName,
+    filter: EvDbMessageFilter,
+    options?: EvDbContinuousFetchOptions | null,
+    cancellation?: AbortSignal,
+  ): AsyncIterable<EvDbMessage>;
+  getRecordsFromOutboxAsync(
+    _shard: unknown,
+    _filter?: unknown,
+    _options?: unknown,
+    _cancellation?: unknown,
+  ): AsyncIterable<EvDbMessage> {
+    throw new Error("Method not implemented.");
+  }
+  subscribeToMessageAsync(
+    handler: (message: EvDbMessage) => Promise<void>,
+    filter: EvDbMessageFilter,
+    options?: EvDbContinuousFetchOptions | null,
+  ): Promise<void>;
+  subscribeToMessageAsync(
+    handler: (message: EvDbMessage) => Promise<void>,
+    shard: EvDbShardName,
+    filter: EvDbMessageFilter,
+    options?: EvDbContinuousFetchOptions | null,
+  ): Promise<void>;
+  subscribeToMessageAsync(
+    _handler: unknown,
+    _shard: unknown,
+    _filter?: unknown,
+    _options?: unknown,
+  ): Promise<void> {
+    throw new Error("Method not implemented.");
+  }
+
+  /**
+   * Store stream events in a transaction
+   */
+  async storeStreamAsync(
+    events: ReadonlyArray<EvDbEvent>,
+    messages: ReadonlyArray<EvDbMessage>,
+  ): Promise<StreamStoreAffected> {
+    try {
+      const eventsToInsert: EventRecord[] = events.map((event) =>
+        EventRecord.createFromEvent(event),
+      );
+
+      const messagesToInsert: MessageRecord[] = messages.map((message) => {
+        return {
+          id: crypto.randomUUID(),
+          stream_cursor: message.streamCursor,
+          channel: message.channel,
+          message_type: message.messageType,
+          event_type: message.eventType,
+          captured_by: message.capturedBy,
+          captured_at: message.capturedAt,
+          payload: message.payload,
+        };
+      });
+
+      const storeEventsQuery = QueryProvider.saveEvents(eventsToInsert);
+      const storeMessagesQuery = QueryProvider.saveMessages(messagesToInsert);
+
+      const transactItems = { TransactItems: [...storeEventsQuery, ...storeMessagesQuery] };
+
+      const command = new TransactWriteItemsCommand(transactItems);
+      await this.dynamoDbClient.send(command);
+
+      const numEvents = eventsToInsert.length;
+      const numMessages = messagesToInsert.reduce(
+        (prev, { message_type: t }) => Object.assign(prev, { [t]: (prev[t] ?? 0) + 1 }),
+        {} as Record<string, number>,
+      );
+      return new StreamStoreAffected(numEvents, new Map(Object.entries(numMessages)));
+    } catch (error) {
+      if (this.isOccException(error)) {
+        throw new Error("OPTIMISTIC_CONCURRENCY_VIOLATION");
+      }
+      throw error;
     }
+  }
 
-    /**
-     * Factory method to create adapter with configuration options.
-     * @param options - DynamoDB client configuration options.
-     */
-    static withOptions(options: DynamoDBClientOptions): EvDbDynamoDbStorageAdapter {
-        return new EvDbDynamoDbStorageAdapter(createDynamoDBClient(options));
+  /**
+   * Store outbox messages in a transaction
+   */
+  async storeOutboxMessagesAsync(
+    _shardName: EvDbShardName,
+    _records: EvDbMessage[],
+  ): Promise<number> {
+    throw new Error("Method not implemented.");
+  }
+
+  /**
+   * Get the last offset for a stream
+   */
+  async getLastOffsetAsync(streamAddress: EvDbStreamAddress): Promise<number> {
+    const query = QueryProvider.getLastOffset(streamAddress);
+    const response = await this.dynamoDbClient.send(query);
+    if (!response.Items) {
+      return -1;
     }
-    getFromOutbox(filter: EvDbMessageFilter, options?: EvDbContinuousFetchOptions | null): Promise<AsyncIterable<EvDbMessage>> {
-        throw new Error('Method not implemented.');
-    }
-    getFromOutboxAsync(shard: EvDbShardName, filter: EvDbMessageFilter, options?: EvDbContinuousFetchOptions | null, cancellation?: AbortSignal): AsyncIterable<EvDbMessage> {
-        throw new Error('Method not implemented.');
-    }
-    getRecordsFromOutboxAsync(filter: EvDbMessageFilter, options?: EvDbContinuousFetchOptions | null, cancellation?: AbortSignal): AsyncIterable<EvDbMessage>;
-    getRecordsFromOutboxAsync(shard: EvDbShardName, filter: EvDbMessageFilter, options?: EvDbContinuousFetchOptions | null, cancellation?: AbortSignal): AsyncIterable<EvDbMessage>;
-    getRecordsFromOutboxAsync(shard: unknown, filter?: unknown, options?: unknown, cancellation?: unknown): AsyncIterable<EvDbMessage> {
-        throw new Error('Method not implemented.');
-    }
-    subscribeToMessageAsync(handler: (message: EvDbMessage) => Promise<void>, filter: EvDbMessageFilter, options?: EvDbContinuousFetchOptions | null): Promise<void>;
-    subscribeToMessageAsync(handler: (message: EvDbMessage) => Promise<void>, shard: EvDbShardName, filter: EvDbMessageFilter, options?: EvDbContinuousFetchOptions | null): Promise<void>;
-    subscribeToMessageAsync(handler: unknown, shard: unknown, filter?: unknown, options?: unknown): Promise<void> {
-        throw new Error('Method not implemented.');
-    }
+    return parseInt(response.Items[0]?.offset.N ?? "-1", 10);
+  }
 
-    /**
-     * Store stream events in a transaction
-     */
-    async storeStreamAsync(
-        events: ReadonlyArray<EvDbEvent>,
-        messages: ReadonlyArray<EvDbMessage>,
-    ): Promise<StreamStoreAffected> {
-        try {
-            const eventsToInsert: EventRecord[] = events.map((event) =>
-                EventRecord.createFromEvent(event));
+  /**
+   * Get events for a stream since a specific offset
+   */
+  async *getEventsAsync(
+    streamCursor: EvDbStreamCursor,
+    _pageSize: number = 100,
+  ): AsyncGenerator<EvDbEvent, void, undefined> {
+    let queryCursor: Record<string, any> | undefined = undefined;
 
-            const messagesToInsert: MessageRecord[] = messages.map(message => {
-                return {
-                    id: crypto.randomUUID(),
-                    stream_cursor: message.streamCursor,
-                    channel: message.channel,
-                    message_type: message.messageType,
-                    event_type: message.eventType,
-                    captured_by: message.capturedBy,
-                    captured_at: message.capturedAt,
-                    payload: message.payload,
-                }
-            })
+    do {
+      const getEventsCommand = QueryProvider.getEvents(streamCursor);
+      const response = await this.dynamoDbClient.send(getEventsCommand);
 
-            const storeEventsQuery = QueryProvider.saveEvents(eventsToInsert);
-            const storeMessagesQuery = QueryProvider.saveMessages(messagesToInsert);
-
-            const transactItems = { TransactItems: [...storeEventsQuery, ...storeMessagesQuery] };
-
-            const command = new TransactWriteItemsCommand(transactItems)
-            await this.dynamoDbClient.send(command);
-
-            const numEvents = eventsToInsert.length;
-            const numMessages = messagesToInsert
-                .reduce((prev, { message_type: t }) =>
-                    Object.assign(prev, { [t]: (prev[t] ?? 0) + 1 }), {} as Record<string, number>);
-            return new StreamStoreAffected(numEvents, new Map(Object.entries(numMessages)));
-        } catch (error) {
-            if (this.isOccException(error)) {
-                throw new Error('OPTIMISTIC_CONCURRENCY_VIOLATION');
-            }
-            throw error;
+      if (response.Items && response.Items.length > 0) {
+        for (const item of response.Items) {
+          const res = unmarshall(item);
+          const streamAddress = deserializeStreamAddress(res.stream_address);
+          const r: EventRecord = new EventRecord(
+            crypto.randomUUID(),
+            new EvDbStreamCursor(streamAddress.streamType, streamAddress.streamId, res.offset),
+            res.event_type,
+            res.captured_by,
+            new Date(res.captured_at),
+            res.payload,
+            new Date(res.stored_at),
+          );
+          yield r.toEvDbEvent();
         }
+      }
+
+      queryCursor = response.LastEvaluatedKey;
+    } while (queryCursor);
+  }
+
+  /**
+   * Get snapshot for a stream view
+   */
+  async getSnapshotAsync(viewAddress: EvDbViewAddress): Promise<EvDbStoredSnapshotResultRaw> {
+    const query = QueryProvider.getSnapshot(viewAddress);
+    const response = await this.dynamoDbClient.send(query);
+
+    if (!response.Items) {
+      return EvDbStoredSnapshotResultRaw.Empty;
     }
 
-    /**
-     * Store outbox messages in a transaction
-     */
-    async storeOutboxMessagesAsync(
-        shardName: EvDbShardName,
-        records: EvDbMessage[],
-    ): Promise<number> {
-        throw new Error('Method not implemented.');
+    const snapshot = unmarshall(response.Items[0]);
+
+    return new EvDbStoredSnapshotResultRaw(
+      snapshot.offset,
+      new Date(Number(snapshot.stored_at)),
+      snapshot.state,
+    );
+  }
+
+  /**
+   * Save a snapshot
+   */
+  async storeSnapshotAsync(record: EvDbStoredSnapshotData): Promise<void> {
+    const command = QueryProvider.saveSnapshot(record);
+    await this.dynamoDbClient.send(command);
+  }
+
+  /**
+   * Check if an exception is an optimistic concurrency conflict
+   */
+  private isOccException(error: unknown): boolean {
+    if (!(error instanceof TransactionCanceledException)) {
+      return false;
     }
+    return !!(error as TransactionCanceledException).CancellationReasons?.some(
+      ({ Code }) => Code === "ConditionalCheckFailed",
+    );
+  }
 
-    /**
-     * Get the last offset for a stream
-     */
-    async getLastOffsetAsync(
-        streamAddress: EvDbStreamAddress
-    ): Promise<number> {
-        const query = QueryProvider.getLastOffset(streamAddress);
-        const response = await this.dynamoDbClient.send(query);
-        if (!response.Items) {
-            return -1;
-        }
-        return parseInt(response.Items[0]?.offset.N ?? '-1', 10);
-    }
+  /**
+   * Get table name for shard
+   */
+  private getTableNameForShard(_shardName: EvDbShardName): string {
+    throw new Error("Method not implemented.");
+  }
 
-    /**
-     * Get events for a stream since a specific offset
-     */
-    async *getEventsAsync(
-        streamCursor: EvDbStreamCursor,
-        pageSize: number = 100
-    ): AsyncGenerator<EvDbEvent, void, undefined> {
-        let queryCursor: Record<string, any> | undefined = undefined;
-
-        do {
-            const getEventsCommand = QueryProvider.getEvents(streamCursor);
-            const response = await this.dynamoDbClient.send(getEventsCommand);
-
-            if (response.Items && response.Items.length > 0) {
-                for (const item of response.Items) {
-                    const res = unmarshall(item);
-                    const streamAddress = deserializeStreamAddress(res.stream_address)
-                    const r: EventRecord = new EventRecord(
-                        crypto.randomUUID(),
-                        new EvDbStreamCursor(streamAddress.streamType, streamAddress.streamId, res.offset),
-                        res.event_type,
-                        res.captured_by,
-                        new Date(res.captured_at),
-                        res.payload,
-                        new Date(res.stored_at)
-                    );
-                    yield r.toEvDbEvent();
-                }
-            }
-
-            queryCursor = response.LastEvaluatedKey;
-
-        } while (queryCursor)
-    }
-
-    /**
-     * Get snapshot for a stream view
-     */
-    async getSnapshotAsync(
-        viewAddress: EvDbViewAddress
-    ): Promise<EvDbStoredSnapshotResultRaw> {
-        const query = QueryProvider.getSnapshot(viewAddress);
-        const response = await this.dynamoDbClient.send(query);
-
-        if (!response.Items) {
-            return EvDbStoredSnapshotResultRaw.Empty;
-        }
-
-        const snapshot = unmarshall(response.Items[0]);
-
-        return new EvDbStoredSnapshotResultRaw(
-            snapshot.offset,
-            new Date(Number(snapshot.stored_at)),
-            snapshot.state,
-        );
-    }
-
-    /**
-     * Save a snapshot
-     */
-    async storeSnapshotAsync(record: EvDbStoredSnapshotData): Promise<void> {
-        const command = QueryProvider.saveSnapshot(record);
-        await this.dynamoDbClient.send(command);
-    }
-
-    /**
-     * Check if an exception is an optimistic concurrency conflict
-     */
-    private isOccException(error: unknown): boolean {
-        if (!(error instanceof TransactionCanceledException)) {
-            return false;
-        }
-        return !!(error as TransactionCanceledException)
-            .CancellationReasons?.some(({ Code }) => Code === 'ConditionalCheckFailed')
-    }
-
-    /**
-     * Get table name for shard
-     */
-    private getTableNameForShard(shardName: EvDbShardName): string {
-        throw new Error('Method not implemented.');
-    }
-
-    /**
-     * Close the database connection
-     */
-    async close(): Promise<void> {
-        return;
-    }
+  /**
+   * Close the database connection
+   */
+  async close(): Promise<void> {
+    return;
+  }
 }

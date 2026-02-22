@@ -1,6 +1,6 @@
 /**
-* Indicate how many events and messages were affected.
-*/
+ * Indicate how many events and messages were affected.
+ */
 
 type EvDbOutboxShardName = string;
 
@@ -12,7 +12,7 @@ export default class StreamStoreAffected {
 
   constructor(
     numEvents: number,
-    numMessages: ReadonlyMap<EvDbOutboxShardName, number> | undefined
+    numMessages: ReadonlyMap<EvDbOutboxShardName, number> | undefined,
   ) {
     this.numEvents = numEvents;
     this.numMessages = numMessages;

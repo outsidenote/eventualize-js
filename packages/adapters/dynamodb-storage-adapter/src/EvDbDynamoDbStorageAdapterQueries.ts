@@ -1,210 +1,224 @@
-import IEvDbEventPayload, { IEvDbPayloadData } from "@eventualize/types/IEvDbEventPayload"
-import { AttributeValue, GetItemCommandInput, PutItemCommand, PutItemCommandInput, QueryCommand, QueryCommandInput, TransactWriteItem } from "@aws-sdk/client-dynamodb";
-import EvDbStreamCursor from "@eventualize/types/EvDbStreamCursor";
+import type { IEvDbPayloadData } from "@eventualize/types/IEvDbEventPayload";
+import type IEvDbEventPayload from "@eventualize/types/IEvDbEventPayload";
+import type {
+  AttributeValue,
+  PutItemCommandInput,
+  TransactWriteItem,
+} from "@aws-sdk/client-dynamodb";
+import { PutItemCommand, QueryCommand } from "@aws-sdk/client-dynamodb";
+import type EvDbStreamCursor from "@eventualize/types/EvDbStreamCursor";
 import EvDbStreamAddress from "@eventualize/types/EvDbStreamAddress";
 import EvDbEvent from "@eventualize/types/EvDbEvent";
 import EvDbViewAddress from "@eventualize/types/EvDbViewAddress";
-import { EvDbStoredSnapshotData } from "@eventualize/types/EvDbStoredSnapshotData";
+import type { EvDbStoredSnapshotData } from "@eventualize/types/EvDbStoredSnapshotData";
 import { marshall } from "@aws-sdk/util-dynamodb";
 
-
 export class EventRecord {
-    constructor(
-        public readonly id: string,
-        public readonly stream_cursor: EvDbStreamCursor,
-        public readonly event_type: string,
-        public readonly captured_by: string,
-        public readonly captured_at: Date,
-        public readonly payload: IEvDbEventPayload,
-        public readonly stored_at?: Date,
-    ) { }
+  constructor(
+    public readonly id: string,
+    public readonly stream_cursor: EvDbStreamCursor,
+    public readonly event_type: string,
+    public readonly captured_by: string,
+    public readonly captured_at: Date,
+    public readonly payload: IEvDbEventPayload,
+    public readonly stored_at?: Date,
+  ) {}
 
-    public static createFromEvent(e: EvDbEvent): EventRecord {
-        return new EventRecord(
-            crypto.randomUUID(),
-            e.streamCursor,
-            e.eventType,
-            e.capturedBy,
-            e.capturedAt,
-            e.payload,
-            e.storedAt)
-    }
+  public static createFromEvent(e: EvDbEvent): EventRecord {
+    return new EventRecord(
+      crypto.randomUUID(),
+      e.streamCursor,
+      e.eventType,
+      e.capturedBy,
+      e.capturedAt,
+      e.payload,
+      e.storedAt,
+    );
+  }
 
-    public toEvDbEvent(): EvDbEvent {
-        return new EvDbEvent(
-            this.event_type,
-            this.stream_cursor,
-            this.payload,
-            this.captured_at,
-            this.captured_by,
-            new Date(Number(this.stored_at))
-        )
-    }
+  public toEvDbEvent(): EvDbEvent {
+    return new EvDbEvent(
+      this.event_type,
+      this.stream_cursor,
+      this.payload,
+      this.captured_at,
+      this.captured_by,
+      new Date(Number(this.stored_at)),
+    );
+  }
 }
 
 export type MessageRecord = {
-    id: string
-    stream_cursor: EvDbStreamCursor
-    channel: string
-    message_type: string
-    event_type: string
-    captured_by: string
-    captured_at: Date
-    payload: IEvDbPayloadData
-    stored_at?: Date
-}
+  id: string;
+  stream_cursor: EvDbStreamCursor;
+  channel: string;
+  message_type: string;
+  event_type: string;
+  captured_by: string;
+  captured_at: Date;
+  payload: IEvDbPayloadData;
+  stored_at?: Date;
+};
 
 const serializeStreamAddress = (streamAddress: EvDbStreamAddress) => {
-    return `${streamAddress.streamType}::${streamAddress.streamId}`;
-}
+  return `${streamAddress.streamType}::${streamAddress.streamId}`;
+};
 
 export const deserializeStreamAddress = (streamAddressStr: string): EvDbStreamAddress => {
-    const [streamType, streamId] = streamAddressStr.split('::');
-    return new EvDbStreamAddress(streamType, streamId);
-}
+  const [streamType, streamId] = streamAddressStr.split("::");
+  return new EvDbStreamAddress(streamType, streamId);
+};
 
 const serializeMessageAddress = (m: MessageRecord) => {
-    return `${m.channel}::${m.message_type}`;
-}
+  return `${m.channel}::${m.message_type}`;
+};
 
 const serializeViewAddress = (viewAddress: EvDbViewAddress) => {
-    return `${serializeStreamAddress(viewAddress)}::${viewAddress.viewName}`;
-}
+  return `${serializeStreamAddress(viewAddress)}::${viewAddress.viewName}`;
+};
 
 export default class EvDbDynamoDbStorageAdapterQueries {
+  public static saveEvents(events: EventRecord[]): TransactWriteItem[] {
+    const TransactItems = events.map((e) => ({
+      Put: {
+        TableName: "events",
+        Item: {
+          stream_address: { S: serializeStreamAddress(e.stream_cursor) } as AttributeValue,
+          offset: { N: e.stream_cursor.offset.toString() },
+          event_type: { S: e.event_type },
+          captured_by: { S: e.captured_by },
+          captured_at: { S: e.captured_at.getTime().toString() },
+          payload: {
+            M: marshall(e.payload, {
+              convertClassInstanceToMap: true,
+              removeUndefinedValues: true,
+            }),
+          },
+          stored_at: { S: Date.now().toString() },
+        },
+        ConditionExpression:
+          "(attribute_not_exists(#sa)) Or (attribute_exists(#sa) And attribute_not_exists(#offset))",
+        ExpressionAttributeNames: {
+          "#sa": "stream_address",
+          "#offset": "offset",
+        },
+      },
+    }));
 
-    public static saveEvents(events: EventRecord[]): TransactWriteItem[] {
-        const TransactItems = events.map(e => ({
-            Put: {
-                TableName: "events",
-                Item: {
-                    stream_address: { S: serializeStreamAddress(e.stream_cursor) } as AttributeValue,
-                    offset: { N: e.stream_cursor.offset.toString() },
-                    event_type: { S: e.event_type },
-                    captured_by: { S: e.captured_by },
-                    captured_at: { S: e.captured_at.getTime().toString() },
-                    payload: {
-                        M: marshall(e.payload, {
-                            convertClassInstanceToMap: true,
-                            removeUndefinedValues: true
-                        })
-                    },
-                    stored_at: { S: Date.now().toString() }
-                },
-                ConditionExpression: "(attribute_not_exists(#sa)) Or (attribute_exists(#sa) And attribute_not_exists(#offset))",
-                ExpressionAttributeNames: {
-                    "#sa": "stream_address",
-                    "#offset": "offset"
-                }
-            }
-        }));
+    return TransactItems;
+  }
 
-        return TransactItems;
+  public static saveMessages(messages: MessageRecord[]): TransactWriteItem[] {
+    const TransactItems = messages.map((m) => ({
+      Put: {
+        TableName: "messages",
+        Item: {
+          message_address: { S: serializeMessageAddress(m) },
+          stream_address: { S: serializeStreamAddress(m.stream_cursor) },
+          offset: { N: m.stream_cursor.offset.toString() },
+          event_type: { S: m.event_type },
+          captured_by: { S: m.captured_by },
+          captured_at: { S: `${m.captured_at.getTime().toString()}::${crypto.randomUUID()}` },
+          payload: {
+            M: marshall(m.payload, {
+              convertClassInstanceToMap: true,
+              removeUndefinedValues: true,
+            }),
+          },
+          stored_at: { S: Date.now().toString() },
+        },
+      },
+    }));
 
-    }
+    return TransactItems;
+  }
 
-    public static saveMessages(messages: MessageRecord[]): TransactWriteItem[] {
-        const TransactItems = messages.map(m => ({
-            Put: {
-                TableName: "messages",
-                Item: {
-                    message_address: { S: serializeMessageAddress(m) },
-                    stream_address: { S: serializeStreamAddress(m.stream_cursor) },
-                    offset: { N: m.stream_cursor.offset.toString() },
-                    event_type: { S: m.event_type },
-                    captured_by: { S: m.captured_by },
-                    captured_at: { S: `${m.captured_at.getTime().toString()}::${crypto.randomUUID()}` },
-                    payload: {
-                        M: marshall(m.payload, {
-                            convertClassInstanceToMap: true,
-                            removeUndefinedValues: true
-                        })
-                    },
-                    stored_at: { S: Date.now().toString() }
-                }
-            }
-        }));
+  public static getLastOffset(streamAddress: EvDbStreamAddress): QueryCommand {
+    const queryParams = {
+      TableName: "events",
+      KeyConditionExpression: "stream_address = :pk",
+      ExpressionAttributeValues: {
+        ":pk": { S: serializeStreamAddress(streamAddress) },
+      },
+      ScanIndexForward: false,
+      Limit: 1,
+    };
 
-        return TransactItems;
-    }
+    return new QueryCommand(queryParams);
+  }
 
-    public static getLastOffset(streamAddress: EvDbStreamAddress): QueryCommand {
-        const queryParams = {
-            TableName: "events",
-            KeyConditionExpression: "stream_address = :pk",
-            ExpressionAttributeValues: {
-                ":pk": { S: serializeStreamAddress(streamAddress) }
-            },
-            ScanIndexForward: false,
-            Limit: 1
-        }
+  public static getEvents(
+    streamCursor: EvDbStreamCursor,
+    queryCursor: Record<string, any> | undefined = undefined,
+    pageSize: number = 100,
+  ) {
+    const queryParams = {
+      TableName: "events",
+      KeyConditionExpression: "#sa = :sa AND #o >= :offsetValue",
+      ExpressionAttributeNames: {
+        "#o": "offset",
+        "#sa": "stream_address",
+        "#cb": "captured_by",
+      },
+      ExpressionAttributeValues: {
+        ":sa": { S: serializeStreamAddress(streamCursor) },
+        ":offsetValue": { N: streamCursor.offset.toString() },
+      },
+      ProjectionExpression: "#sa, #o, id, event_type, captured_at, #cb, stored_at, payload",
+      Limit: pageSize,
+      ExclusiveStartKey: queryCursor,
+    };
 
-        return new QueryCommand(queryParams);
-    }
+    return new QueryCommand(queryParams);
+  }
 
-    public static getEvents(streamCursor: EvDbStreamCursor, queryCursor: Record<string, any> | undefined = undefined, pageSize: number = 100) {
-        const queryParams = {
-            TableName: "events",
-            KeyConditionExpression: "#sa = :sa AND #o >= :offsetValue",
-            ExpressionAttributeNames: {
-                "#o": "offset",
-                "#sa": "stream_address",
-                "#cb": "captured_by"
-            },
-            ExpressionAttributeValues: {
-                ":sa": { S: serializeStreamAddress(streamCursor) },
-                ":offsetValue": { N: streamCursor.offset.toString() }
-            },
-            ProjectionExpression: '#sa, #o, id, event_type, captured_at, #cb, stored_at, payload',
-            Limit: pageSize,
-            ExclusiveStartKey: queryCursor
-        }
+  public static getSnapshot(viewAddress: EvDbViewAddress) {
+    const queryParams = {
+      TableName: "snapshots",
+      KeyConditionExpression: "view_address = :sa",
 
-        return new QueryCommand(queryParams);
-    }
+      ExpressionAttributeValues: {
+        ":sa": { S: serializeViewAddress(viewAddress) },
+      },
+      ProjectionExpression: "#o, #s, stored_at",
+      ExpressionAttributeNames: {
+        "#o": "offset",
+        "#s": "state",
+      },
+      ScanIndexForward: false, // false = descending order
+      Limit: 1,
+    };
 
-    public static getSnapshot(viewAddress: EvDbViewAddress) {
-        const queryParams = {
-            TableName: "snapshots",
-            KeyConditionExpression: "view_address = :sa",
+    return new QueryCommand(queryParams);
+  }
 
-            ExpressionAttributeValues: {
-                ":sa": { S: serializeViewAddress(viewAddress) },
-            },
-            ProjectionExpression: '#o, #s, stored_at',
-            ExpressionAttributeNames: {
-                "#o": "offset",
-                "#s": "state"
-            },
-            ScanIndexForward: false,  // false = descending order
-            Limit: 1
-        }
+  public static saveSnapshot(snapshot: EvDbStoredSnapshotData): PutItemCommand {
+    const viewAddress = new EvDbViewAddress(
+      snapshot.streamType,
+      snapshot.streamId,
+      snapshot.viewName,
+    );
+    const queryParams: PutItemCommandInput = {
+      TableName: "snapshots",
+      Item: {
+        view_address: { S: serializeViewAddress(viewAddress) },
+        offset: { N: snapshot.offset.toString() },
+        state: {
+          M: marshall(snapshot.state, {
+            convertClassInstanceToMap: true,
+            removeUndefinedValues: true,
+          }),
+        },
+        stored_at: { S: Date.now().toString() },
+      },
+      ConditionExpression:
+        "(attribute_not_exists(#va)) Or (attribute_exists(#va) And attribute_not_exists(#offset))",
+      ExpressionAttributeNames: {
+        "#va": "view_address",
+        "#offset": "offset",
+      },
+    };
 
-        return new QueryCommand(queryParams);
-    }
-
-    public static saveSnapshot(snapshot: EvDbStoredSnapshotData): PutItemCommand {
-        const viewAddress = new EvDbViewAddress(snapshot.streamType, snapshot.streamId, snapshot.viewName);
-        const queryParams: PutItemCommandInput = {
-            TableName: "snapshots",
-            Item: {
-                view_address: { S: serializeViewAddress(viewAddress) },
-                offset: { N: snapshot.offset.toString() },
-                state: {
-                    M: marshall(snapshot.state, {
-                        convertClassInstanceToMap: true,
-                        removeUndefinedValues: true
-                    })
-                },
-                stored_at: { S: Date.now().toString() }
-            },
-            ConditionExpression: "(attribute_not_exists(#va)) Or (attribute_exists(#va) And attribute_not_exists(#offset))",
-            ExpressionAttributeNames: {
-                "#va": "view_address",
-                "#offset": "offset"
-            }
-        };
-
-        return new PutItemCommand(queryParams);
-    }
+    return new PutItemCommand(queryParams);
+  }
 }

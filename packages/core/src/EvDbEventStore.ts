@@ -1,9 +1,9 @@
-import EvDbStream from './EvDbStream.js';
-import IEvDbStorageSnapshotAdapter from '@eventualize/types/IEvDbStorageSnapshotAdapter';
-import IEvDbStorageStreamAdapter from '@eventualize/types/IEvDbStorageStreamAdapter';
-import IEvDbEventPayload from "@eventualize/types/IEvDbEventPayload";
-import { EvDbStreamFactory } from './EvDbStreamFactory.js';
-import { IEvDbStorageAdapter } from './IEvDbStorageAdapter.js';
+import type EvDbStream from "./EvDbStream.js";
+import type IEvDbStorageSnapshotAdapter from "@eventualize/types/IEvDbStorageSnapshotAdapter";
+import type IEvDbStorageStreamAdapter from "@eventualize/types/IEvDbStorageStreamAdapter";
+import type IEvDbEventPayload from "@eventualize/types/IEvDbEventPayload";
+import type { EvDbStreamFactory } from "./EvDbStreamFactory.js";
+import type { IEvDbStorageAdapter } from "./IEvDbStorageAdapter.js";
 
 /**
  * Storage configuration - either separate adapters or combined
@@ -41,14 +41,14 @@ class BaseStore {
     if (!factory) {
       throw new Error(
         `No stream factory registered for stream type: ${streamType}. ` +
-        `Available types: ${Object.keys(this.streamFactories).join(', ')}`
+          `Available types: ${Object.keys(this.streamFactories).join(", ")}`,
       );
     }
 
     const stream = factory.create(
       streamId,
       this.storage.streamAdapter,
-      this.storage.snapshotAdapter
+      this.storage.snapshotAdapter,
     );
 
     return stream;
@@ -63,15 +63,11 @@ class BaseStore {
     if (!factory) {
       throw new Error(
         `No stream factory registered for stream type: ${streamType}. ` +
-        `Available types: ${Object.keys(this.streamFactories).join(', ')}`
+          `Available types: ${Object.keys(this.streamFactories).join(", ")}`,
       );
     }
 
-    return factory.get(
-      streamId,
-      this.storage.streamAdapter,
-      this.storage.snapshotAdapter
-    );
+    return factory.get(streamId, this.storage.streamAdapter, this.storage.snapshotAdapter);
   }
 
   /**
@@ -114,7 +110,7 @@ class BaseStoreBuilder {
    */
   public withAdapters(
     streamAdapter: IEvDbStorageStreamAdapter,
-    snapshotAdapter: IEvDbStorageSnapshotAdapter
+    snapshotAdapter: IEvDbStorageSnapshotAdapter,
   ): this {
     this.streamAdapter = streamAdapter;
     this.snapshotAdapter = snapshotAdapter;
@@ -134,7 +130,7 @@ class BaseStoreBuilder {
    * Register a stream factory
    */
   public withStreamFactory<TEvents extends IEvDbEventPayload, TStreamType extends string>(
-    factory: EvDbStreamFactory<TEvents, TStreamType>
+    factory: EvDbStreamFactory<TEvents, TStreamType>,
   ): this {
     const streamType = factory.getStreamType();
     if (this.streamFactories[streamType]) {
@@ -147,10 +143,8 @@ class BaseStoreBuilder {
   /**
    * Register multiple stream factories at once
    */
-  public withStreamFactories(
-    factories: ReadonlyArray<EvDbStreamFactory<any, string>>
-  ): this {
-    factories.forEach(factory => {
+  public withStreamFactories(factories: ReadonlyArray<EvDbStreamFactory<any, string>>): this {
+    factories.forEach((factory) => {
       this.withStreamFactory(factory);
     });
     return this;
@@ -161,21 +155,19 @@ class BaseStoreBuilder {
    */
   public build(): BaseStore {
     if (!this.streamAdapter || !this.snapshotAdapter) {
-      throw new Error(
-        'Storage adapters must be configured. Use withAdapter() or withAdapters()'
-      );
+      throw new Error("Storage adapters must be configured. Use withAdapter() or withAdapters()");
     }
 
     if (Object.keys(this.streamFactories).length === 0) {
-      console.warn('Store created with no stream factories registered');
+      console.warn("Store created with no stream factories registered");
     }
 
     return new BaseStore(
       {
         streamAdapter: this.streamAdapter,
-        snapshotAdapter: this.snapshotAdapter
+        snapshotAdapter: this.snapshotAdapter,
       },
-      this.streamFactories
+      this.streamFactories,
     );
   }
 }
@@ -187,9 +179,10 @@ class BaseStoreBuilder {
 /**
  * Helper type to create method signatures for each stream factory
  */
-export type StreamCreatorMethods<TStreamTypes extends Record<string, EvDbStreamFactory<any, any>>> = {
-  [K in keyof TStreamTypes as `create${K & string}`]: (streamId: string) => EvDbStream;
-};
+export type StreamCreatorMethods<TStreamTypes extends Record<string, EvDbStreamFactory<any, any>>> =
+  {
+    [K in keyof TStreamTypes as `create${K & string}`]: (streamId: string) => EvDbStream;
+  };
 
 export type StreamMap = Record<string, any>;
 
@@ -217,9 +210,8 @@ export class EvDbEventStore<TStreamTypes extends Record<string, EvDbStreamFactor
    */
   public getStream<K extends keyof TStreamTypes & string>(
     streamType: K,
-    streamId: string
+    streamId: string,
   ): Promise<EvDbStream> {
-
     return this.store.getStream(streamType, streamId);
   }
 
@@ -251,21 +243,20 @@ export class EvDbEventStore<TStreamTypes extends Record<string, EvDbStreamFactor
 // export interface TypedStore<TStreamTypes extends Record<string, StreamFactory<any>>>
 //     extends StreamCreatorMethods<TStreamTypes> { }
 
-export type TypedStoreType<
-  TStreamTypes extends Record<string, EvDbStreamFactory<any, any>>
-> = StreamCreatorMethods<TStreamTypes>;
+export type TypedStoreType<TStreamTypes extends Record<string, EvDbStreamFactory<any, any>>> =
+  StreamCreatorMethods<TStreamTypes>;
 
 /**
  * Type-safe store builder
  */
 export class EvDbEventStoreBuilder<
-  TStreamTypes extends Record<string, EvDbStreamFactory<any, string>> = {}
+  TStreamTypes extends Record<string, EvDbStreamFactory<any, string>> = {},
 > {
   private builder = BaseStore.builder();
 
   public withAdapters(
     streamAdapter: IEvDbStorageStreamAdapter,
-    snapshotAdapter: IEvDbStorageSnapshotAdapter
+    snapshotAdapter: IEvDbStorageSnapshotAdapter,
   ): this {
     this.builder.withAdapters(streamAdapter, snapshotAdapter);
     return this;
@@ -279,10 +270,8 @@ export class EvDbEventStoreBuilder<
   // Track stream type in generics
   public withStreamFactory<
     F extends EvDbStreamFactory<any, string>,
-    K extends F extends EvDbStreamFactory<any, infer ST> ? ST : never
-  >(
-    factory: F
-  ): EvDbEventStoreBuilder<TStreamTypes & Record<K, F>> {
+    K extends F extends EvDbStreamFactory<any, infer ST> ? ST : never,
+  >(factory: F): EvDbEventStoreBuilder<TStreamTypes & Record<K, F>> {
     this.builder.withStreamFactory(factory);
     // return as the new type that tracks K
     return this as unknown as EvDbEventStoreBuilder<TStreamTypes & Record<K, F>>;
@@ -294,5 +283,5 @@ export class EvDbEventStoreBuilder<
   }
 }
 
-export type EvDbEventStoreType<TStreams extends StreamMap = StreamMap> =
-  EvDbEventStore<TStreams> & StreamCreatorMethods<TStreams>;
+export type EvDbEventStoreType<TStreams extends StreamMap = StreamMap> = EvDbEventStore<TStreams> &
+  StreamCreatorMethods<TStreams>;

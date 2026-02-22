@@ -1,4 +1,4 @@
-import { EvDbChannelName, EvDbMessageTypeName } from "../../types/src/primitiveTypes.js";
+import type { EvDbChannelName, EvDbMessageTypeName } from "../../types/src/primitiveTypes.js";
 
 export default class EvDbMessageFilter {
   public readonly since: Date;
@@ -8,7 +8,7 @@ export default class EvDbMessageFilter {
   constructor(
     since: Date = new Date(0),
     channels: ReadonlyArray<EvDbChannelName> = [],
-    messageTypes: ReadonlyArray<EvDbMessageTypeName> = []
+    messageTypes: ReadonlyArray<EvDbMessageTypeName> = [],
   ) {
     this.since = since;
     this.channels = channels;
@@ -49,11 +49,7 @@ export default class EvDbMessageFilter {
    * Ignore this property if you want to get all messages.
    */
   public addChannel(channel: EvDbChannelName): EvDbMessageFilter {
-    return new EvDbMessageFilter(
-      this.since,
-      [...this.channels, channel],
-      this.messageTypes
-    );
+    return new EvDbMessageFilter(this.since, [...this.channels, channel], this.messageTypes);
   }
 
   /**
@@ -62,11 +58,7 @@ export default class EvDbMessageFilter {
    * Ignore this property if you want to get all messages.
    */
   public addMessageType(messageType: EvDbMessageTypeName): EvDbMessageFilter {
-    return new EvDbMessageFilter(
-      this.since,
-      this.channels,
-      [...this.messageTypes, messageType]
-    );
+    return new EvDbMessageFilter(this.since, this.channels, [...this.messageTypes, messageType]);
   }
 
   /**
@@ -80,7 +72,7 @@ export default class EvDbMessageFilter {
     return new EvDbMessageFilter(
       updates.since ?? this.since,
       updates.channels ?? this.channels,
-      updates.messageTypes ?? this.messageTypes
+      updates.messageTypes ?? this.messageTypes,
     );
   }
 }

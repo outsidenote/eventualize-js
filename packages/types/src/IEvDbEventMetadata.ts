@@ -1,4 +1,4 @@
-import EvDbStreamCursor from "./EvDbStreamCursor.js";
+import type EvDbStreamCursor from "./EvDbStreamCursor.js";
 
 export default interface IEvDbEventMetadata {
   /**
@@ -28,5 +28,5 @@ export default interface IEvDbEventMetadata {
    * The value will be null if the Trace is null when persisting the record or before persistent.
    */
   // TODO: implement telemetry context
-//   readonly telemetryContext: EvDbTelemetryContextName;
+  //   readonly telemetryContext: EvDbTelemetryContextName;
 }
