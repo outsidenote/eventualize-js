@@ -1,18 +1,18 @@
 import { unmarshall } from "@aws-sdk/util-dynamodb";
 
-import EvDbStreamCursor from "@eventualize/types/EvDbStreamCursor";
-import type EvDbMessage from "@eventualize/types/EvDbMessage";
-import type IEvDbStorageSnapshotAdapter from "@eventualize/types/IEvDbStorageSnapshotAdapter";
-import type IEvDbStorageStreamAdapter from "@eventualize/types/IEvDbStorageStreamAdapter";
-import type EvDbStreamAddress from "@eventualize/types/EvDbStreamAddress";
-import type EvDbViewAddress from "@eventualize/types/EvDbViewAddress";
-import { EvDbStoredSnapshotResultRaw } from "@eventualize/types/EvDbStoredSnapshotResult";
-import type { EvDbStoredSnapshotData } from "@eventualize/types/EvDbStoredSnapshotData";
-import type EvDbEvent from "@eventualize/types/EvDbEvent";
-import StreamStoreAffected from "@eventualize/types/StreamStoreAffected";
-import type EvDbContinuousFetchOptions from "@eventualize/types/EvDbContinuousFetchOptions";
-import type EvDbMessageFilter from "@eventualize/types/EvDbMessageFilter";
-import type { EvDbShardName } from "@eventualize/types/primitiveTypes";
+import EvDbStreamCursor from "@eventualize/types/stream/EvDbStreamCursor";
+import type EvDbMessage from "@eventualize/types/messages/EvDbMessage";
+import type IEvDbStorageSnapshotAdapter from "@eventualize/types/adapters/IEvDbStorageSnapshotAdapter";
+import type IEvDbStorageStreamAdapter from "@eventualize/types/adapters/IEvDbStorageStreamAdapter";
+import type EvDbStreamAddress from "@eventualize/types/stream/EvDbStreamAddress";
+import type EvDbViewAddress from "@eventualize/types/view/EvDbViewAddress";
+import { EvDbStoredSnapshotResultRaw } from "@eventualize/types/snapshots/EvDbStoredSnapshotResultRaw";
+import type { EvDbStoredSnapshotData } from "@eventualize/types/snapshots/EvDbStoredSnapshotData";
+import type EvDbEvent from "@eventualize/types/events/EvDbEvent";
+import StreamStoreAffected from "@eventualize/types/stream/StreamStoreAffected";
+import type EvDbContinuousFetchOptions from "@eventualize/types/primitives/EvDbContinuousFetchOptions";
+import type EvDbMessageFilter from "@eventualize/types/messages/EvDbMessageFilter";
+import type { EvDbShardName } from "@eventualize/types/primitives/EvDbShardName";
 
 import type { DynamoDBClientOptions } from "./DynamoDbClient.js";
 import { createDynamoDBClient } from "./DynamoDbClient.js";

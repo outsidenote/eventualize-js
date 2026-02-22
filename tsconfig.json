@@ -20,10 +20,10 @@
         "packages/types/src/*"
       ],
       "@eventualize/core": [
-        "@eventualize/core"
+        "packages/core/src"
       ],
       "@eventualize/core/*": [
-        "@eventualize/core/*"
+        "packages/core/src/*"
       ],
       "@eventualize/relational-storage-adapter": [
         "packages/adapters/relational-storage-adapter/src"

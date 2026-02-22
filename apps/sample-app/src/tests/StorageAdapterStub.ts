@@ -1,16 +1,16 @@
-import type IEvDbStorageSnapshotAdapter from "@eventualize/types/IEvDbStorageSnapshotAdapter";
-import type EvDbViewAddress from "@eventualize/types/EvDbViewAddress";
-import type { EvDbStoredSnapshotData } from "@eventualize/types/EvDbStoredSnapshotData";
-import type { EvDbStoredSnapshotResultRaw } from "@eventualize/types/EvDbStoredSnapshotResult";
-import type IEvDbStorageStreamAdapter from "@eventualize/types/IEvDbStorageStreamAdapter";
-import type EvDbContinuousFetchOptions from "@eventualize/types/EvDbContinuousFetchOptions";
-import type EvDbEvent from "@eventualize/types/EvDbEvent";
-import type EvDbMessage from "@eventualize/types/EvDbMessage";
-import type EvDbMessageFilter from "@eventualize/types/EvDbMessageFilter";
-import type EvDbStreamAddress from "@eventualize/types/EvDbStreamAddress";
-import type EvDbStreamCursor from "@eventualize/types/EvDbStreamCursor";
-import type { EvDbShardName } from "@eventualize/types/primitiveTypes";
-import type StreamStoreAffected from "@eventualize/types/StreamStoreAffected";
+import type IEvDbStorageSnapshotAdapter from "@eventualize/types/adapters/IEvDbStorageSnapshotAdapter";
+import type EvDbViewAddress from "@eventualize/types/view/EvDbViewAddress";
+import type { EvDbStoredSnapshotData } from "@eventualize/types/snapshots/EvDbStoredSnapshotData";
+import type { EvDbStoredSnapshotResultRaw } from "@eventualize/types/snapshots/EvDbStoredSnapshotResultRaw";
+import type IEvDbStorageStreamAdapter from "@eventualize/types/adapters/IEvDbStorageStreamAdapter";
+import type EvDbContinuousFetchOptions from "@eventualize/types/primitives/EvDbContinuousFetchOptions";
+import type EvDbEvent from "@eventualize/types/events/EvDbEvent";
+import type EvDbMessage from "@eventualize/types/messages/EvDbMessage";
+import type EvDbMessageFilter from "@eventualize/types/messages/EvDbMessageFilter";
+import type EvDbStreamAddress from "@eventualize/types/stream/EvDbStreamAddress";
+import type EvDbStreamCursor from "@eventualize/types/stream/EvDbStreamCursor";
+import type { EvDbShardName } from "@eventualize/types/primitives/EvDbShardName";
+import type StreamStoreAffected from "@eventualize/types/stream/StreamStoreAffected";
 
 export default class StorageAdapterStub
   implements IEvDbStorageSnapshotAdapter, IEvDbStorageStreamAdapter

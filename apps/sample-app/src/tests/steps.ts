@@ -4,19 +4,18 @@ import * as assert from "node:assert";
 import { fileURLToPath } from "node:url";
 
 import StorageAdapterStub from "./StorageAdapterStub.js";
-import type { PointsStreamType } from "../eventstore/PointsStream/index.js";
-import PointsStreamFactory from "../eventstore/PointsStream/index.js";
-import type { SumViewState, CountViewState } from "../eventstore/PointsStream/views.js";
-import {
-  PointsAdded,
-  PointsMultiplied,
-  PointsSubtracted,
-} from "../eventstore/PointsStream/events.js";
+import type { PointsStreamType } from "../eventstore/PointsStream/PointsStreamFactory.js";
+import PointsStreamFactory from "../eventstore/PointsStream/PointsStreamFactory.js";
+import type { SumViewState } from "../eventstore/PointsStream/PointsViews/SumViewState.js";
+import type { CountViewState } from "../eventstore/PointsStream/PointsViews/CountViewState.js";
+import { PointsAdded } from "../eventstore/PointsStream/PointsEvents/PointsAdded.js";
+import { PointsMultiplied } from "../eventstore/PointsStream/PointsEvents/PointsMultiplied.js";
+import { PointsSubtracted } from "../eventstore/PointsStream/PointsEvents/PointsSubtracted.js";
 
-import type { EvDbView } from "@eventualize/core/EvDbView";
+import type { EvDbView } from "@eventualize/core/view/EvDbView";
 import { EvDbPrismaStorageAdapter } from "@eventualize/relational-storage-adapter/EvDbPrismaStorageAdapter";
-import type { StreamMap, EvDbEventStoreType } from "@eventualize/core/EvDbEventStore";
-import { EvDbEventStoreBuilder } from "@eventualize/core/EvDbEventStore";
+import type { StreamMap, EvDbEventStoreType } from "@eventualize/core/store/EvDbEventStoreTypes";
+import { EvDbEventStoreBuilder } from "@eventualize/core/store/EvDbEventStoreBuilder";
 import EvDbPrismaStorageAdmin from "@eventualize/relational-storage-adapter/EvDbPrismaStorageAdmin";
 import EvDbPostgresPrismaClientFactory from "@eventualize/postgres-storage-adapter/EvDbPostgresPrismaClientFactory";
 import EvDbMySqlPrismaClientFactory from "@eventualize/mysql-storage-adapter/EvDbMySqlPrismaClientFactory";
@@ -24,7 +23,7 @@ import type { PrismaClient as PostgresPrismaClient } from "@eventualize/postgres
 import type { PrismaClient as MySqlPrismaClient } from "@eventualize/mysql-storage-adapter/generated/prisma/client";
 import EvDbDynamoDbStorageAdapter from "@eventualize/dynamodb-storage-adapter/EvDbDynamoDbStorageAdapter";
 import EvDbDynamoDbAdmin from "@eventualize/dynamodb-storage-adapter/EvDBDynamoDBAdmin";
-import type IEvDbStorageAdmin from "@eventualize/types/IEvDbStorageAdmin";
+import type IEvDbStorageAdmin from "@eventualize/types/adapters/IEvDbStorageAdmin";
 import type { DynamoDBClientOptions } from "./DynamoDBClientOptions.js";
 
 const getEnvPath = () => {

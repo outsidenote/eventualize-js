@@ -1,4 +1,4 @@
-import type IEvDbStorageAdmin from "@eventualize/types/IEvDbStorageAdmin";
+import type IEvDbStorageAdmin from "@eventualize/types/adapters/IEvDbStorageAdmin";
 
 export default class EvDbPrismaStorageAdmin implements IEvDbStorageAdmin {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Each DB adapter generates its own PrismaClient type; accepting `any` allows interoperability.

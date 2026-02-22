@@ -1,6 +1,6 @@
 import type { AttributeValue, DynamoDBClient, WriteRequest } from "@aws-sdk/client-dynamodb";
 import { BatchWriteItemCommand, ScanCommand } from "@aws-sdk/client-dynamodb";
-import type IEvDbStorageAdmin from "@eventualize/types/IEvDbStorageAdmin";
+import type IEvDbStorageAdmin from "@eventualize/types/adapters/IEvDbStorageAdmin";
 import type { DynamoDBClientOptions } from "./DynamoDbClient.js";
 import { createDynamoDBClient } from "./DynamoDbClient.js";
 

@@ -1,16 +1,16 @@
-import type { IEvDbPayloadData } from "@eventualize/types/IEvDbEventPayload";
-import type IEvDbEventPayload from "@eventualize/types/IEvDbEventPayload";
+import type { IEvDbPayloadData } from "@eventualize/types/events/IEvDbPayloadData";
+import type IEvDbEventPayload from "@eventualize/types/events/IEvDbEventPayload";
 import type {
   AttributeValue,
   PutItemCommandInput,
   TransactWriteItem,
 } from "@aws-sdk/client-dynamodb";
 import { PutItemCommand, QueryCommand } from "@aws-sdk/client-dynamodb";
-import type EvDbStreamCursor from "@eventualize/types/EvDbStreamCursor";
-import EvDbStreamAddress from "@eventualize/types/EvDbStreamAddress";
-import EvDbEvent from "@eventualize/types/EvDbEvent";
-import EvDbViewAddress from "@eventualize/types/EvDbViewAddress";
-import type { EvDbStoredSnapshotData } from "@eventualize/types/EvDbStoredSnapshotData";
+import type EvDbStreamCursor from "@eventualize/types/stream/EvDbStreamCursor";
+import EvDbStreamAddress from "@eventualize/types/stream/EvDbStreamAddress";
+import EvDbEvent from "@eventualize/types/events/EvDbEvent";
+import EvDbViewAddress from "@eventualize/types/view/EvDbViewAddress";
+import type { EvDbStoredSnapshotData } from "@eventualize/types/snapshots/EvDbStoredSnapshotData";
 import { marshall } from "@aws-sdk/util-dynamodb";
 
 export class EventRecord {
