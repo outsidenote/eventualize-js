@@ -45,12 +45,9 @@ export class StreamFactoryBuilder<
    */
   public withView<TViewName extends string, TState>(
     viewName: TViewName,
-    stateClass: new (...args: any[]) => TState,
+    defaultState: TState,
     handlers: EvDbStreamEventHandlersMap<TState, TEvents>,
   ): StreamFactoryBuilder<TStreamType, TEvents, TViews & Record<TViewName, EvDbView<TState>>> {
-    // Create default state instance
-    const defaultState = new stateClass();
-
     // Create the view factory
     const viewFactory = createViewFactory<TState, TEvents>({
       viewName,

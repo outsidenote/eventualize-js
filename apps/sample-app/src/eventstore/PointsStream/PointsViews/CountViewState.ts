@@ -1,3 +1,1 @@
-export class CountViewState {
-  constructor(public count: number = 0) {}
-}
+export type CountViewState = Readonly<{ count: number }>;

@@ -1,3 +1,1 @@
-export class SumViewState {
-  constructor(public sum: number = 0) {}
-}
+export type SumViewState = Readonly<{ sum: number }>;
