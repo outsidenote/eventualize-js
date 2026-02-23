@@ -1,4 +1,4 @@
-import pg from 'pg';
+import pg from "pg";
 
 const POSTGRES_SCHEMA_SQL = `
 CREATE TABLE IF NOT EXISTS events (
@@ -53,16 +53,16 @@ CREATE INDEX IF NOT EXISTS ix_snapshot_earlier_stored_at_7ae7ea3b165349e09b3fe6d
 `;
 
 export async function createPostgresSchema(connectionUri: string): Promise<void> {
-    console.log('Creating PostgreSQL schema tables...');
-    const client = new pg.Client({ connectionString: connectionUri });
-    try {
-        await client.connect();
-        await client.query(POSTGRES_SCHEMA_SQL);
-        console.log('✓ PostgreSQL schema created successfully');
-    } catch (error: any) {
-        console.error(`✗ Failed to create PostgreSQL schema: ${error.message}`);
-        throw error;
-    } finally {
-        await client.end();
-    }
+  console.log("Creating PostgreSQL schema tables...");
+  const client = new pg.Client({ connectionString: connectionUri });
+  try {
+    await client.connect();
+    await client.query(POSTGRES_SCHEMA_SQL);
+    console.log("✓ PostgreSQL schema created successfully");
+  } catch (error: any) {
+    console.error(`✗ Failed to create PostgreSQL schema: ${error.message}`);
+    throw error;
+  } finally {
+    await client.end();
+  }
 }

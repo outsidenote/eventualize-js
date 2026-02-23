@@ -1,260 +1,281 @@
-import { IEvDbPayloadData } from '@eventualize/types/IEvDbEventPayload';
-import EvDbStreamCursor from '@eventualize/types/EvDbStreamCursor';
-import EvDbMessage from '@eventualize/types/EvDbMessage';
-import IEvDbStorageSnapshotAdapter from '@eventualize/types/IEvDbStorageSnapshotAdapter';
-import IEvDbStorageStreamAdapter from '@eventualize/types/IEvDbStorageStreamAdapter';
-import EvDbStreamAddress from '@eventualize/types/EvDbStreamAddress';
-import EvDbViewAddress from '@eventualize/types/EvDbViewAddress';
-import { EvDbStoredSnapshotResultRaw } from '@eventualize/types/EvDbStoredSnapshotResult';
-import { EvDbStoredSnapshotData } from '@eventualize/types/EvDbStoredSnapshotData';
-import EvDbEvent from '@eventualize/types/EvDbEvent';
-import StreamStoreAffected from '@eventualize/types/StreamStoreAffected';
-import EvDbContinuousFetchOptions from '@eventualize/types/EvDbContinuousFetchOptions';
-import EvDbMessageFilter from '@eventualize/types/EvDbMessageFilter';
-import { EvDbShardName } from '@eventualize/types/primitiveTypes';
+import type { IEvDbPayloadData } from "@eventualize/types/events/IEvDbPayloadData";
+import EvDbStreamCursor from "@eventualize/types/stream/EvDbStreamCursor";
+import type EvDbMessage from "@eventualize/types/messages/EvDbMessage";
+import type IEvDbStorageSnapshotAdapter from "@eventualize/types/adapters/IEvDbStorageSnapshotAdapter";
+import type IEvDbStorageStreamAdapter from "@eventualize/types/adapters/IEvDbStorageStreamAdapter";
+import type EvDbStreamAddress from "@eventualize/types/stream/EvDbStreamAddress";
+import type EvDbViewAddress from "@eventualize/types/view/EvDbViewAddress";
+import { EvDbStoredSnapshotResultRaw } from "@eventualize/types/snapshots/EvDbStoredSnapshotResultRaw";
+import type { EvDbStoredSnapshotData } from "@eventualize/types/snapshots/EvDbStoredSnapshotData";
+import EvDbEvent from "@eventualize/types/events/EvDbEvent";
+import StreamStoreAffected from "@eventualize/types/stream/StreamStoreAffected";
+import type EvDbContinuousFetchOptions from "@eventualize/types/primitives/EvDbContinuousFetchOptions";
+import type EvDbMessageFilter from "@eventualize/types/messages/EvDbMessageFilter";
+import type { EvDbShardName } from "@eventualize/types/primitives/EvDbShardName";
 
-import { Prisma } from './generated/prisma/client.js';
-import { PrismaQueryProvider } from './EvDbRelationalStorageAdapterQueries.js';
-
+import type { Prisma } from "./generated/prisma/client.js";
+import { PrismaQueryProvider } from "./EvDbRelationalStorageAdapterQueries.js";
 
 const deserializePayload = (payload: any): IEvDbPayloadData => {
-    if (!!payload && typeof payload == 'object') {
-        return payload;
-    }
-    return {};
-}
+  if (!!payload && typeof payload == "object") {
+    return payload;
+  }
+  return {};
+};
 
 /**
  * Prisma-based storage adapter for EvDb
  * Replaces SQL Server-specific adapter with database-agnostic Prisma implementation
  */
-export class EvDbPrismaStorageAdapter implements IEvDbStorageSnapshotAdapter, IEvDbStorageStreamAdapter {
-    private readonly queryProvider: PrismaQueryProvider;
-    protected readonly databaseType: string = 'prisma';
+export class EvDbPrismaStorageAdapter
+  implements IEvDbStorageSnapshotAdapter, IEvDbStorageStreamAdapter
+{
+  private readonly queryProvider: PrismaQueryProvider;
+  protected readonly databaseType: string = "prisma";
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Each DB adapter generates its own PrismaClient type; accepting `any` allows interoperability.
-    constructor(
-        private readonly prisma: any,
-    ) {
-        this.queryProvider = new PrismaQueryProvider(prisma);
+  constructor(private readonly prisma: any) {
+    this.queryProvider = new PrismaQueryProvider(prisma);
+  }
+  getFromOutbox(
+    _filter: EvDbMessageFilter,
+    _options?: EvDbContinuousFetchOptions | null,
+  ): Promise<AsyncIterable<EvDbMessage>> {
+    throw new Error("Method not implemented.");
+  }
+  getFromOutboxAsync(
+    _shard: EvDbShardName,
+    _filter: EvDbMessageFilter,
+    _options?: EvDbContinuousFetchOptions | null,
+    _cancellation?: AbortSignal,
+  ): AsyncIterable<EvDbMessage> {
+    throw new Error("Method not implemented.");
+  }
+  getRecordsFromOutboxAsync(
+    filter: EvDbMessageFilter,
+    options?: EvDbContinuousFetchOptions | null,
+    cancellation?: AbortSignal,
+  ): AsyncIterable<EvDbMessage>;
+  getRecordsFromOutboxAsync(
+    shard: EvDbShardName,
+    filter: EvDbMessageFilter,
+    options?: EvDbContinuousFetchOptions | null,
+    cancellation?: AbortSignal,
+  ): AsyncIterable<EvDbMessage>;
+  getRecordsFromOutboxAsync(
+    _shard: unknown,
+    _filter?: unknown,
+    _options?: unknown,
+    _cancellation?: unknown,
+  ): AsyncIterable<EvDbMessage> {
+    throw new Error("Method not implemented.");
+  }
+  subscribeToMessageAsync(
+    handler: (message: EvDbMessage) => Promise<void>,
+    filter: EvDbMessageFilter,
+    options?: EvDbContinuousFetchOptions | null,
+  ): Promise<void>;
+  subscribeToMessageAsync(
+    handler: (message: EvDbMessage) => Promise<void>,
+    shard: EvDbShardName,
+    filter: EvDbMessageFilter,
+    options?: EvDbContinuousFetchOptions | null,
+  ): Promise<void>;
+  subscribeToMessageAsync(
+    _handler: unknown,
+    _shard: unknown,
+    _filter?: unknown,
+    _options?: unknown,
+  ): Promise<void> {
+    throw new Error("Method not implemented.");
+  }
+
+  /**
+   * Store stream events in a transaction
+   */
+  async storeStreamAsync(
+    events: ReadonlyArray<EvDbEvent>,
+    messages: ReadonlyArray<EvDbMessage>,
+  ): Promise<StreamStoreAffected> {
+    try {
+      const eventsToInsert: Prisma.eventsCreateInput[] = events.map((event) => {
+        const streamCursor = event.streamCursor as EvDbStreamCursor;
+        return {
+          id: crypto.randomUUID(),
+          stream_type: streamCursor.streamType,
+          stream_id: streamCursor.streamId,
+          offset: streamCursor.offset,
+          event_type: event.eventType,
+          captured_by: event.capturedBy,
+          captured_at: event.capturedAt,
+          payload: event.payload,
+        };
+      });
+
+      const messagesToInsert: Prisma.outboxCreateInput[] = messages.map((message) => {
+        const streamCursor = message.streamCursor as EvDbStreamCursor;
+        return {
+          id: message.id,
+          stream_type: streamCursor.streamType,
+          stream_id: streamCursor.streamId,
+          offset: streamCursor.offset,
+          event_type: message.eventType,
+          channel: message.channel,
+          message_type: message.messageType,
+          captured_by: message.capturedBy,
+          captured_at: message.capturedAt,
+          stored_at: message.storedAt,
+          payload: message.payload,
+          serialize_type: "json",
+        };
+      });
+
+      const storeEventsQuery = this.queryProvider.saveEvents(eventsToInsert);
+      const storeMessagesQuery = this.queryProvider.saveMessages(messagesToInsert);
+
+      const queryResult = await this.prisma.$transaction([storeEventsQuery, storeMessagesQuery]);
+
+      const numEvents = queryResult[0].count;
+      const numMessages = messagesToInsert.reduce(
+        (prev, { message_type: t }) => Object.assign(prev, { [t]: (prev[t] ?? 0) + 1 }),
+        {} as Record<string, number>,
+      );
+      return new StreamStoreAffected(numEvents, new Map(Object.entries(numMessages)));
+    } catch (error) {
+      if (this.isOccException(error)) {
+        throw new Error("OPTIMISTIC_CONCURRENCY_VIOLATION");
+      }
+      throw error;
     }
-    getFromOutbox(filter: EvDbMessageFilter, options?: EvDbContinuousFetchOptions | null): Promise<AsyncIterable<EvDbMessage>> {
-        throw new Error('Method not implemented.');
-    }
-    getFromOutboxAsync(shard: EvDbShardName, filter: EvDbMessageFilter, options?: EvDbContinuousFetchOptions | null, cancellation?: AbortSignal): AsyncIterable<EvDbMessage> {
-        throw new Error('Method not implemented.');
-    }
-    getRecordsFromOutboxAsync(filter: EvDbMessageFilter, options?: EvDbContinuousFetchOptions | null, cancellation?: AbortSignal): AsyncIterable<EvDbMessage>;
-    getRecordsFromOutboxAsync(shard: EvDbShardName, filter: EvDbMessageFilter, options?: EvDbContinuousFetchOptions | null, cancellation?: AbortSignal): AsyncIterable<EvDbMessage>;
-    getRecordsFromOutboxAsync(shard: unknown, filter?: unknown, options?: unknown, cancellation?: unknown): AsyncIterable<EvDbMessage> {
-        throw new Error('Method not implemented.');
-    }
-    subscribeToMessageAsync(handler: (message: EvDbMessage) => Promise<void>, filter: EvDbMessageFilter, options?: EvDbContinuousFetchOptions | null): Promise<void>;
-    subscribeToMessageAsync(handler: (message: EvDbMessage) => Promise<void>, shard: EvDbShardName, filter: EvDbMessageFilter, options?: EvDbContinuousFetchOptions | null): Promise<void>;
-    subscribeToMessageAsync(handler: unknown, shard: unknown, filter?: unknown, options?: unknown): Promise<void> {
-        throw new Error('Method not implemented.');
-    }
+  }
 
-    /**
-     * Store stream events in a transaction
-     */
-    async storeStreamAsync(
-        events: ReadonlyArray<EvDbEvent>,
-        messages: ReadonlyArray<EvDbMessage>,
-    ): Promise<StreamStoreAffected> {
-        try {
-            const eventsToInsert: Prisma.eventsCreateInput[] = events.map((event) => {
-                const streamCursor = event.streamCursor as EvDbStreamCursor;
-                return {
-                    id: crypto.randomUUID(),
-                    stream_type: streamCursor.streamType,
-                    stream_id: streamCursor.streamId,
-                    offset: streamCursor.offset,
-                    event_type: event.eventType,
-                    captured_by: event.capturedBy,
-                    captured_at: event.capturedAt,
-                    payload: event.payload,
-                }
-            });
+  /**
+   * Store outbox messages in a transaction
+   */
+  async storeOutboxMessagesAsync(
+    _shardName: EvDbShardName,
+    _records: EvDbMessage[],
+  ): Promise<number> {
+    throw new Error("Method not implemented.");
+  }
 
-            const messagesToInsert: Prisma.outboxCreateInput[] = messages.map(message => {
-                const streamCursor = message.streamCursor as EvDbStreamCursor;
-                return {
-                    id: message.id,
-                    stream_type: streamCursor.streamType,
-                    stream_id: streamCursor.streamId,
-                    offset: streamCursor.offset,
-                    event_type: message.eventType,
-                    channel: message.channel,
-                    message_type: message.messageType,
-                    captured_by: message.capturedBy,
-                    captured_at: message.capturedAt,
-                    stored_at: message.storedAt,
-                    payload: message.payload,
-                    serialize_type: 'json',
-                }
-            })
+  /**
+   * Get the last offset for a stream
+   */
+  async getLastOffsetAsync(streamAddress: EvDbStreamAddress): Promise<number> {
+    const { streamType, streamId } = streamAddress;
+    const result = await this.queryProvider.getLastOffset(streamType, streamId);
+    return Number(result?.offset ?? -1);
+  }
 
-            const storeEventsQuery = this.queryProvider.saveEvents(eventsToInsert);
-            const storeMessagesQuery = this.queryProvider.saveMessages(messagesToInsert);
+  /**
+   * Get events for a stream since a specific offset
+   */
+  async *getEventsAsync(
+    streamCursor: EvDbStreamCursor,
+    _pageSize: number = 100,
+  ): AsyncGenerator<EvDbEvent, void, undefined> {
+    const { streamType, streamId } = streamCursor;
+    let currentOffset = streamCursor.offset;
+    while (true) {
+      const events = await this.queryProvider.getEvents(streamType, streamId, currentOffset);
 
-            const queryResult = await this.prisma.$transaction([
-                storeEventsQuery,
-                storeMessagesQuery
-            ]);
+      if (events.length === 0) {
+        break;
+      }
 
-            const numEvents = queryResult[0].count;
-            const numMessages = messagesToInsert
-                .reduce((prev, { message_type: t }) =>
-                    Object.assign(prev, { [t]: (prev[t] ?? 0) + 1 }), {} as Record<string, number>);
-            return new StreamStoreAffected(numEvents, new Map(Object.entries(numMessages)));
-        } catch (error) {
-            if (this.isOccException(error)) {
-                throw new Error('OPTIMISTIC_CONCURRENCY_VIOLATION');
-            }
-            throw error;
-        }
-    }
-
-    /**
-     * Store outbox messages in a transaction
-     */
-    async storeOutboxMessagesAsync(
-        shardName: EvDbShardName,
-        records: EvDbMessage[],
-    ): Promise<number> {
-        throw new Error('Method not implemented.');
-    }
-
-    /**
-     * Get the last offset for a stream
-     */
-    async getLastOffsetAsync(
-        streamAddress: EvDbStreamAddress
-    ): Promise<number> {
-        const { streamType, streamId } = streamAddress;
-        const result = await this.queryProvider.getLastOffset(streamType, streamId);
-        return Number(result?.offset ?? -1);
-    }
-
-    /**
-     * Get events for a stream since a specific offset
-     */
-    async *getEventsAsync(
-        streamCursor: EvDbStreamCursor,
-        pageSize: number = 100
-    ): AsyncGenerator<EvDbEvent, void, undefined> {
-        const { streamType, streamId } = streamCursor;
-        let currentOffset = streamCursor.offset;
-        while (true) {
-            const events = await this.queryProvider.getEvents(
-                streamType,
-                streamId,
-                currentOffset
-            );
-
-            if (events.length === 0) {
-                break;
-            }
-
-            for (const event of events) {
-                yield new EvDbEvent(
-                    event.event_type,
-                    new EvDbStreamCursor(event.stream_type, event.stream_id, Number(event.offset)),
-                    { payloadType: event.event_type, payload: deserializePayload(event.payload) },
-                    event.captured_at,
-                    event.captured_by, event.stored_at
-                );
-                currentOffset = Math.max(currentOffset, Number(event.offset))
-            }
-
-            if (events.length < pageSize) {
-                break;
-            }
-        }
-    }
-
-    /**
-     * Get messages from outbox with optional filtering
-     */
-    async getMessagesAsync(
-        shardName: EvDbShardName,
-        sinceDate: Date,
-        channels?: string[],
-        messageTypes?: string[],
-        cancellationToken?: AbortSignal
-    ): Promise<EvDbMessage[]> {
-        const tableName = this.getTableNameForShard(shardName);
-        const messages = await this.queryProvider.getMessages(
-            tableName,
-            sinceDate,
-            channels,
-            messageTypes
+      for (const event of events) {
+        yield new EvDbEvent(
+          event.event_type,
+          new EvDbStreamCursor(event.stream_type, event.stream_id, Number(event.offset)),
+          { payloadType: event.event_type, payload: deserializePayload(event.payload) },
+          event.captured_at,
+          event.captured_by,
+          event.stored_at,
         );
+        currentOffset = Math.max(currentOffset, Number(event.offset));
+      }
 
-        return messages as EvDbMessage[];
+      if (events.length < _pageSize) {
+        break;
+      }
     }
+  }
 
-    /**
-     * Get snapshot for a stream view
-     */
-    async getSnapshotAsync(
-        viewAddress: EvDbViewAddress
-    ): Promise<EvDbStoredSnapshotResultRaw> {
-        const { streamType, streamId, viewName } = viewAddress;
-        const snapshot = await this.queryProvider.getSnapshot(
-            streamType,
-            streamId,
-            viewName
-        );
+  /**
+   * Get messages from outbox with optional filtering
+   */
+  async getMessagesAsync(
+    shardName: EvDbShardName,
+    sinceDate: Date,
+    channels?: string[],
+    messageTypes?: string[],
+    _cancellationToken?: AbortSignal,
+  ): Promise<EvDbMessage[]> {
+    const tableName = this.getTableNameForShard(shardName);
+    const messages = await this.queryProvider.getMessages(
+      tableName,
+      sinceDate,
+      channels,
+      messageTypes,
+    );
 
-        if (!snapshot) return EvDbStoredSnapshotResultRaw.Empty;
+    return messages as EvDbMessage[];
+  }
 
-        return new EvDbStoredSnapshotResultRaw(
-            Number(snapshot.offset),
-            snapshot.stored_at,
-            deserializePayload(snapshot.state),
-        );
-    }
+  /**
+   * Get snapshot for a stream view
+   */
+  async getSnapshotAsync(viewAddress: EvDbViewAddress): Promise<EvDbStoredSnapshotResultRaw> {
+    const { streamType, streamId, viewName } = viewAddress;
+    const snapshot = await this.queryProvider.getSnapshot(streamType, streamId, viewName);
 
-    /**
-     * Save a snapshot
-     */
-    async storeSnapshotAsync(record: EvDbStoredSnapshotData): Promise<void> {
-        await this.queryProvider.saveSnapshot({
-            id: record.id,
-            stream_type: record.streamType,
-            stream_id: record.streamId,
-            view_name: record.viewName,
-            offset: record.offset,
-            state: record.state,
-            stored_at: new Date(),
-        });
-    }
+    if (!snapshot) return EvDbStoredSnapshotResultRaw.Empty;
 
-    /**
-     * Check if an exception is an optimistic concurrency conflict
-     */
-    private isOccException(error: unknown): boolean {
-        // P2002 = Unique constraint violation
-        // P2034 = Transaction conflict
-        const anyError = error as any;
-        return !!error && (anyError?.code === 'P2002' || anyError?.code === 'P2034');
-    }
+    return new EvDbStoredSnapshotResultRaw(
+      Number(snapshot.offset),
+      snapshot.stored_at,
+      deserializePayload(snapshot.state),
+    );
+  }
 
-    /**
-     * Get table name for shard
-     */
-    private getTableNameForShard(shardName: EvDbShardName): string {
-        throw new Error('Method not implemented.');
-    }
+  /**
+   * Save a snapshot
+   */
+  async storeSnapshotAsync(record: EvDbStoredSnapshotData): Promise<void> {
+    await this.queryProvider.saveSnapshot({
+      id: record.id,
+      stream_type: record.streamType,
+      stream_id: record.streamId,
+      view_name: record.viewName,
+      offset: record.offset,
+      state: record.state,
+      stored_at: new Date(),
+    });
+  }
 
-    /**
-     * Close the database connection
-     */
-    async close(): Promise<void> {
-        await this.prisma.$disconnect();
-    }
+  /**
+   * Check if an exception is an optimistic concurrency conflict
+   */
+  private isOccException(error: unknown): boolean {
+    // P2002 = Unique constraint violation
+    // P2034 = Transaction conflict
+    const anyError = error as any;
+    return !!error && (anyError?.code === "P2002" || anyError?.code === "P2034");
+  }
+
+  /**
+   * Get table name for shard
+   */
+  private getTableNameForShard(_shardName: EvDbShardName): string {
+    throw new Error("Method not implemented.");
+  }
+
+  /**
+   * Close the database connection
+   */
+  async close(): Promise<void> {
+    await this.prisma.$disconnect();
+  }
 }
 
 export default EvDbPrismaStorageAdapter;
