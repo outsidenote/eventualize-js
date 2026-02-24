@@ -25,6 +25,8 @@ import EvDbDynamoDbStorageAdapter from "@eventualize/dynamodb-storage-adapter/Ev
 import EvDbDynamoDbAdmin from "@eventualize/dynamodb-storage-adapter/EvDBDynamoDBAdmin";
 import type IEvDbStorageAdmin from "@eventualize/types/adapters/IEvDbStorageAdmin";
 import type { DynamoDBClientOptions } from "./DynamoDBClientOptions.js";
+import { EVENT_STORE_TYPE } from "./EVENT_STORE_TYPE.js";
+import type { PrismaClient } from "@eventualize/relational-storage-adapter/generated/prisma/client";
 
 const getEnvPath = () => {
   const __filename = fileURLToPath(import.meta.url);
@@ -35,13 +37,6 @@ const getEnvPath = () => {
 
 const envPath = getEnvPath();
 dotenv.config({ path: envPath });
-
-export enum EVENT_STORE_TYPE {
-  STUB = "Stub",
-  POSTGRES = "Postgres",
-  MYSQL = "MySQL",
-  DYNAMODB = "DynamoDB",
-}
 
 type RelationalClientType =
   | PostgresPrismaClient<never, any, any>
@@ -57,7 +52,7 @@ export default class Steps {
   public static createStoreClient(
     storeType: EVENT_STORE_TYPE = EVENT_STORE_TYPE.STUB,
     connectionString?: string,
-  ): StoreClientType {
+  ): PrismaClient | undefined {
     switch (storeType) {
       case EVENT_STORE_TYPE.POSTGRES:
         return EvDbPostgresPrismaClientFactory.create(connectionString);
@@ -83,7 +78,7 @@ export default class Steps {
     dynamoDbOptions?: DynamoDBClientOptions,
   ) {
     const storageAdapter = [EVENT_STORE_TYPE.POSTGRES, EVENT_STORE_TYPE.MYSQL].includes(storeType)
-      ? new EvDbPrismaStorageAdapter(storeClient)
+      ? new EvDbPrismaStorageAdapter(storeClient as PrismaClient)
       : storeType === EVENT_STORE_TYPE.DYNAMODB
       ? EvDbDynamoDbStorageAdapter.withOptions(dynamoDbOptions ?? {})
       : new StorageAdapterStub();

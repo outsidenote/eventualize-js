@@ -6,7 +6,7 @@ export default class EvDbMySqlPrismaClientFactory {
    * Creates a Prisma client configured for MySQL.
    * @param connectionString - Optional connection string. Falls back to MYSQL_CONNECTION env var if not provided.
    */
-  public static create(connectionString?: string) {
+  public static create(connectionString?: string): PrismaClient {
     const connStr = connectionString ?? process.env.MYSQL_CONNECTION;
     if (!connStr) {
       throw new Error(

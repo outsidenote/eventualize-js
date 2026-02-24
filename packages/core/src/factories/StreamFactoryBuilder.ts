@@ -21,6 +21,16 @@ export class StreamFactoryBuilder<
 
   constructor(private streamType: TStreamType) {}
 
+
+  /**
+   * Register event type for dynamic method generation - infers the event name from class name
+   */
+  withEvent<TEvent extends IEvDbEventPayload>(
+  ): StreamFactoryBuilder<TStreamType, TEvents | TEvent, TViews> {
+    // Use the class name as the event name
+      return this as StreamFactoryBuilder<TStreamType, TEvents | TEvent, TViews>;
+  }
+
   /**
    * Register event type for dynamic method generation - infers the event name from class name
    */

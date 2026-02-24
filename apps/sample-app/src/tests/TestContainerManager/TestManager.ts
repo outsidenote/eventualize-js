@@ -1,4 +1,4 @@
-import { EVENT_STORE_TYPE } from "../steps.js";
+import { EVENT_STORE_TYPE } from "../EVENT_STORE_TYPE.js";
 import type { DynamoDBClientOptions } from "../DynamoDBClientOptions.js";
 import type { DynamoDBConfig } from "./dynamodb-setup.js";
 import { setupDynamoDBTables } from "./dynamodb-setup.js";

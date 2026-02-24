@@ -14,7 +14,7 @@ import type { EvDbStreamFactoryConfig } from "./EvDbStreamFactoryTypes.js";
  * Type helper to extract event methods
  */
 type EventMethods<TEvents extends IEvDbEventPayload> = {
-  [K in TEvents as `appendEvent${K["payloadType"]}`]: (event: K) => Promise<void>;
+  [K in TEvents as `appendEvent${K["payloadType"]}`]: (event: Omit<K, "payloadType">) => Promise<void>;
 };
 
 /**
@@ -98,14 +98,16 @@ export class EvDbStreamFactory<
     }
 
     // Add dynamic methods for each event type
-    eventTypes.forEach(({ eventName }) => {
+    eventTypes.forEach(({ eventName, eventClass: _eventClass }) => {
       const methodName = `appendEvent${eventName}`;
-      (DynamicStream.prototype as any)[methodName] = async function (event: IEvDbEventPayload) {
-        return this.appendEvent(event);
+      (DynamicStream.prototype as any)[methodName] = async function (
+        event: Omit<InstanceType<typeof _eventClass>, "payloadType">,
+      ) {
+        return this.appendEvent({ ...event, payloadType: eventName });
       };
     });
 
-    return DynamicStream as any;
+  return DynamicStream as any;
   }
 
   /**
@@ -114,10 +116,12 @@ export class EvDbStreamFactory<
   public create(
     streamId: string,
     streamStorageAdapter: IEvDbStorageStreamAdapter,
-    snapshotStorageAdapter: IEvDbStorageSnapshotAdapter,
+    snapshotStorageAdapter: IEvDbStorageSnapshotAdapter | undefined = undefined,
     lastStreamOffset: number = 0,
   ): StreamWithEventMethods<TEvents, TViews> {
-    const views = this.createViews(streamId, snapshotStorageAdapter);
+    const views = snapshotStorageAdapter
+                    ? this.createViews(streamId, snapshotStorageAdapter)
+                    : [] as EvDbView<never>[];
 
     return new this.DynamicStreamClass(
       this.config.streamType,
@@ -154,11 +158,13 @@ export class EvDbStreamFactory<
   public async get(
     streamId: string,
     streamStorageAdapter: IEvDbStorageStreamAdapter,
-    snapshotStorageAdapter: IEvDbStorageSnapshotAdapter,
+    snapshotStorageAdapter: IEvDbStorageSnapshotAdapter | undefined = undefined,
   ): Promise<StreamWithEventMethods<TEvents, TViews>> {
     const streamAddress = new EvDbStreamAddress(this.config.streamType, streamId);
 
-    const views = await Promise.all(this.getViews(streamId, snapshotStorageAdapter));
+    const views = snapshotStorageAdapter
+      ? await Promise.all(this.getViews(streamId, snapshotStorageAdapter))
+      : [];
 
     if (!views.length) {
       const lastStreamOffset = await streamStorageAdapter.getLastOffsetAsync(streamAddress);
@@ -177,14 +183,22 @@ export class EvDbStreamFactory<
       Number.MAX_VALUE,
     );
 
-    const streamCursor = new EvDbStreamCursor(streamAddress, lowestViewOffset + 1);
-    const events = await streamStorageAdapter.getEventsAsync(streamCursor);
+    
+    let streamOffset: number = -1;
+    if (snapshotStorageAdapter) {
+      const streamCursor = new EvDbStreamCursor(streamAddress, lowestViewOffset + 1);
+      const events = await streamStorageAdapter.getEventsAsync(streamCursor);
 
-    let streamOffset = lowestViewOffset;
-    for await (const event of events) {
-      views.forEach((view) => view.applyEvent(event));
-      streamOffset = event.streamCursor.offset;
+      streamOffset = lowestViewOffset;
+      for await (const event of events) {
+        views.forEach((view) => view.applyEvent(event));
+        streamOffset = event.streamCursor.offset;
+      }
+    } else {
+      streamOffset = // TODO: get last offset from stream storage adapter if no snapshot adapter is provided
+        streamOffset = await streamStorageAdapter.getLastOffsetAsync(streamAddress);
     }
+
 
     return new this.DynamicStreamClass(
       this.config.streamType,

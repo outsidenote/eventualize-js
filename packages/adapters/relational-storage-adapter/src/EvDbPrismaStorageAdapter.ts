@@ -13,7 +13,7 @@ import type EvDbContinuousFetchOptions from "@eventualize/types/primitives/EvDbC
 import type EvDbMessageFilter from "@eventualize/types/messages/EvDbMessageFilter";
 import type { EvDbShardName } from "@eventualize/types/primitives/EvDbShardName";
 
-import type { Prisma } from "./generated/prisma/client.js";
+import type { Prisma, PrismaClient } from "./generated/prisma/client.js";
 import { PrismaQueryProvider } from "./EvDbRelationalStorageAdapterQueries.js";
 
 const deserializePayload = (payload: any): IEvDbPayloadData => {
@@ -33,7 +33,7 @@ export class EvDbPrismaStorageAdapter
   private readonly queryProvider: PrismaQueryProvider;
   protected readonly databaseType: string = "prisma";
 
-  constructor(private readonly prisma: any) {
+constructor(private readonly prisma: PrismaClient) {
     this.queryProvider = new PrismaQueryProvider(prisma);
   }
   getFromOutbox(

@@ -1,13 +1,12 @@
-import { PrismaPg } from "@prisma/adapter-pg";
-
 import { PrismaClient } from "./generated/prisma/client.js";
+import { PrismaPg } from "@prisma/adapter-pg";
 
 export default class EvDbPostgresPrismaClientFactory {
   /**
    * Creates a Prisma client configured for PostgreSQL.
    * @param connectionString - Optional connection string. Falls back to POSTGRES_CONNECTION env var if not provided.
    */
-  public static create(connectionString?: string) {
+  public static create(connectionString?: string): PrismaClient {
     const connStr = connectionString ?? process.env.POSTGRES_CONNECTION;
     if (!connStr) {
       throw new Error(

@@ -19,5 +19,8 @@
         "apps/**/src/**/*.test.ts",
         "packages/**/src/**/*.test.ts"
     ],
-    "nodeTestRunner.envFile": ".env.test"
-}
+    "nodeTestRunner.envFile": ".env.test",
+    "[typescript]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode"
+    }
+}  
