@@ -1,0 +1,35 @@
+{
+  "name": "sample-withdrawal",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Withdrawal Approval event modeling slice - sample app",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc --build",
+    "clean": "rimraf dist",
+    "rebuild": "npm run clean && npm run build",
+    "test": "node --import tsx --test 'src/tests/**/*.test.ts'",
+    "test:unit": "node --import tsx --test 'src/tests/unit.test.ts'",
+    "test:postgres": "node --import tsx --test 'src/tests/integration.test.ts'",
+    "start": "node --import tsx src/server.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "@eventualize/core": "^2.0.0",
+    "@eventualize/postgres-storage-adapter": "^2.0.0",
+    "@eventualize/relational-storage-adapter": "^2.0.0",
+    "@eventualize/types": "^2.0.0",
+    "express": "^4.21.0",
+    "swagger-ui-express": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/swagger-ui-express": "^4.1.0",
+    "@types/pg": "^8.16.0",
+    "pg": "^8.18.0"
+  }
+}

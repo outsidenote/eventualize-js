@@ -1,0 +1,26 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "strict": true,
+    "esModuleInterop": true,
+  },
+  "references": [
+    {
+      "path": "../../packages/types"
+    },
+    {
+      "path": "../../packages/core"
+    },
+    {
+      "path": "../../packages/adapters/relational-storage-adapter"
+    },
+    {
+      "path": "../../packages/adapters/postgres-storage-adapter"
+    },
+  ],
+  "include": [
+    "src/**/*"
+  ]
+}
