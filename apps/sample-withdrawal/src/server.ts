@@ -4,7 +4,6 @@ import { EvDbEventStoreBuilder } from "@eventualize/core/store/EvDbEventStoreBui
 import { EvDbPrismaStorageAdapter } from "@eventualize/relational-storage-adapter/EvDbPrismaStorageAdapter";
 import EvDbPostgresPrismaClientFactory from "@eventualize/postgres-storage-adapter/EvDbPostgresPrismaClientFactory";
 import WithdrawalApprovalStreamFactory from "./eventstore/withdrawal-approval-stream/withdrawalApprovalStreamFactory.js";
-import { ensurePostgresSchema } from "./tests/postgres-setup.js";
 import { createWithdrawalRouter } from "./routes/withdrawal.js";
 import { swaggerDocument } from "./swagger.js";
 
@@ -13,8 +12,6 @@ const CONNECTION_URI =
   process.env.POSTGRES_CONNECTION ?? "postgres://eventualize:eventualize123@localhost:5433/eventualize";
 
 async function main() {
-  await ensurePostgresSchema(CONNECTION_URI);
-
   const storeClient = EvDbPostgresPrismaClientFactory.create(CONNECTION_URI);
   const storageAdapter = new EvDbPrismaStorageAdapter(storeClient);
 
