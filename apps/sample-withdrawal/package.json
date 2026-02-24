@@ -11,7 +11,7 @@
     "rebuild": "npm run clean && npm run build",
     "test": "node --import tsx --test 'src/tests/**/*.test.ts'",
     "test:unit": "node --import tsx --test 'src/tests/unit.test.ts'",
-    "test:postgres": "node --import tsx --test 'src/tests/integration.test.ts'",
+    "test:behaviour": "node --import tsx --test 'src/tests/behaviour.test.ts'",
     "start": "node --import tsx src/server.ts"
   },
   "keywords": [],
@@ -28,8 +28,10 @@
   },
   "devDependencies": {
     "@types/express": "^5.0.0",
-    "@types/swagger-ui-express": "^4.1.0",
     "@types/pg": "^8.16.0",
-    "pg": "^8.18.0"
+    "@types/supertest": "^6.0.3",
+    "@types/swagger-ui-express": "^4.1.0",
+    "pg": "^8.18.0",
+    "supertest": "^7.2.2"
   }
 }
