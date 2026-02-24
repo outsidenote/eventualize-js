@@ -2,6 +2,11 @@ name: Sample Withdrawal — Tests
 
 on:
   workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - "apps/sample-withdrawal/**"
+      - "packages/**"
 
 jobs:
   test-unit:
