@@ -19,7 +19,7 @@ export interface EvDbStreamFactoryConfig<
  * Configuration for each event type
  */
 export interface EventTypeConfig<TEvent extends IEvDbEventPayload> {
-  eventClass: new (...args: any[]) => TEvent;
+  eventClass?: new (...args: any[]) => TEvent;
   eventName: string;
   eventMessagesProducer?: EVDbMessagesProducer;
 }

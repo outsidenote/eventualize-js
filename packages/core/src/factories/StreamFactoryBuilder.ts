@@ -2,7 +2,7 @@ import type IEvDbEventPayload from "@eventualize/types/events/IEvDbEventPayload"
 import type EVDbMessagesProducer from "@eventualize/types/messages/EvDbMessagesProducer";
 import { EvDbStreamFactory } from "./EvDbStreamFactory.js";
 import type { StreamWithEventMethods } from "./EvDbStreamFactory.js";
-import type { EventTypeConfig } from "./EvDbStreamFactoryTypes.js";
+import type { EventTypeConfig } from "./EvDbStreamFactoryTypes.js"; // used by withEventType
 import type { ViewFactory, EvDbStreamEventHandlersMap } from "./EvDbViewFactory.js";
 import { createViewFactory } from "./EvDbViewFactory.js";
 import type { EvDbView } from "../view/EvDbView.js";
@@ -23,12 +23,16 @@ export class StreamFactoryBuilder<
 
 
   /**
-   * Register event type for dynamic method generation - infers the event name from class name
+   * Register a POCO event type for type inference only.
+   * The runtime event name is supplied by the code generator via `createEvDbStreamFactory`.
+   * Do not call this method manually — use `npm run generate:stream-factory` instead.
    */
-  withEvent<TEvent extends IEvDbEventPayload>(
-  ): StreamFactoryBuilder<TStreamType, TEvents | TEvent, TViews> {
-    // Use the class name as the event name
-      return this as StreamFactoryBuilder<TStreamType, TEvents | TEvent, TViews>;
+  withEvent<TEvent extends IEvDbEventPayload>(): StreamFactoryBuilder<
+    TStreamType,
+    TEvents | TEvent,
+    TViews
+  > {
+    return this as any;
   }
 
   /**
@@ -84,7 +88,7 @@ export class StreamFactoryBuilder<
   }
 
   /**
-   * Build the stream factory
+   * Build the stream factory using event types registered via `withEventType`.
    */
   public build() {
     const factory = new EvDbStreamFactory({
@@ -100,4 +104,5 @@ export class StreamFactoryBuilder<
       StreamType: null as unknown as StreamWithEventMethods<TEvents, TViews>,
     });
   }
+
 }

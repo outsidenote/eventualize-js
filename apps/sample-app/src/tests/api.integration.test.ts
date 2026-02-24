@@ -1,6 +1,7 @@
 //import * as assert from "node:assert";
 import { test, describe, before, after } from "node:test";
 import Steps from "./steps.js";
+import Helpers from "./testHelpers.js";
 import { EVENT_STORE_TYPE } from "./EVENT_STORE_TYPE.js";
 import { TestManager } from "./TestContainerManager/TestManager.js";
 import FundsStreamFactory from "../eventstore/FundsStream/FundsStreamFactory.js";
@@ -30,26 +31,24 @@ describe("Database Integration Tests", () => {
 
         await t.before(async () => {
           const connectionConfig = testManager.getConnection(storeType);
+          const dynamoDbOptions: DynamoDBClientOptions | undefined =
+            testManager.getDynamoDbOptions();
           if (storeType !== EVENT_STORE_TYPE.DYNAMODB) {
             testData.storeClient = Steps.createStoreClient(
               storeType,
               connectionConfig as string | undefined,
             );
+          } else {
+            testData.storeClient = dynamoDbOptions;
           }
-          const dynamoDbOptions: DynamoDBClientOptions | undefined =
-            testManager.getDynamoDbOptions();
-          // testData.eventStore = Steps.createEventStore(
-          //   testData.storeClient,
-          //   storeType,
-          //   dynamoDbOptions,
-          // );
           await Steps.clearEnvironment(testData.storeClient, storeType, dynamoDbOptions);
         });
 
         await t.test("Store Events", async () => {
           const streamId = "api-points-stream";
-          const stream = await FundsStreamFactory.get(streamId, testData.storeClient);
-          await stream.appendEventFundsDeposited({ amount: 100, currency: "USD" } );
+          const storageAdapter = Helpers.createEventStore(storeType, testData.storeClient);
+          const stream = await FundsStreamFactory.get(streamId, storageAdapter);
+          await stream.appendEventFundsDeposited({ amount: 100, Currency: "USD" });
         });
 
       // await t.test("When: stream stored and fetched", async () => {

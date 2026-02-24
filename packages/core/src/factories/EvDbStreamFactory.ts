@@ -95,19 +95,32 @@ export class EvDbStreamFactory<
           }
         });
       }
+
+      public appendEventPayload(payload: Record<string, unknown>): void {
+        this.appendEvent(payload as IEvDbEventPayload);
+      }
     }
 
-    // Add dynamic methods for each event type
-    eventTypes.forEach(({ eventName, eventClass: _eventClass }) => {
-      const methodName = `appendEvent${eventName}`;
-      (DynamicStream.prototype as any)[methodName] = async function (
-        event: Omit<InstanceType<typeof _eventClass>, "payloadType">,
-      ) {
-        return this.appendEvent({ ...event, payloadType: eventName });
-      };
+    // Proxy the class constructor so each instance intercepts appendEvent* calls.
+    // The payloadType is derived directly from the method name — no registration needed.
+    const ProxiedStream = new Proxy(DynamicStream, {
+      construct(target, args) {
+        const instance = new target(...(args as ConstructorParameters<typeof target>));
+        return new Proxy(instance, {
+          get(obj, prop) {
+            if (typeof prop === "string" && prop.startsWith("appendEvent")) {
+              const payloadType = prop.slice("appendEvent".length);
+              return (event: Record<string, unknown>) =>
+                obj.appendEventPayload({ ...event, payloadType });
+            }
+            const value = Reflect.get(obj, prop, obj);
+            return typeof value === "function" ? value.bind(obj) : value;
+          },
+        });
+      },
     });
 
-  return DynamicStream as any;
+    return ProxiedStream as any;
   }
 
   /**
