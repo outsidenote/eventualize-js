@@ -21,20 +21,6 @@ export class StreamFactoryBuilder<
 
   constructor(private streamType: TStreamType) {}
 
-
-  /**
-   * Register a POCO event type for type inference only.
-   * The runtime event name is supplied by the code generator via `createEvDbStreamFactory`.
-   * Do not call this method manually — use `npm run generate:stream-factory` instead.
-   */
-  withEvent<TEvent extends IEvDbEventPayload>(): StreamFactoryBuilder<
-    TStreamType,
-    TEvents | TEvent,
-    TViews
-  > {
-    return this as any;
-  }
-
   /**
    * Register event type for dynamic method generation - infers the event name from class name
    */
@@ -104,5 +90,4 @@ export class StreamFactoryBuilder<
       StreamType: null as unknown as StreamWithEventMethods<TEvents, TViews>,
     });
   }
-
 }
