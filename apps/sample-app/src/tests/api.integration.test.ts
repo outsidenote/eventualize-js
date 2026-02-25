@@ -7,6 +7,7 @@ import { TestManager } from "./TestContainerManager/TestManager.js";
 import FundsPureEventsStreamFactory from "../eventstore/FundsStream/FundsPureEventsStreamFactory.js";
 import type { DynamoDBClientOptions } from "./DynamoDBClientOptions.js";
 import type { PrismaClient } from "@prisma/client/extension";
+import * as assert from "node:assert";
 
 // Start containers before all tests
 describe("Database Integration Tests", () => {
@@ -48,9 +49,34 @@ describe("Database Integration Tests", () => {
           const streamId = "api-points-stream";
           const storageAdapter = Helpers.createEventStore(storeType, testData.storeClient);
           const stream = await FundsPureEventsStreamFactory.get(streamId, storageAdapter);
+
+          assert.strictEqual(
+            stream.storedOffset,
+            -1,
+            "Stream offset should be 2 after storing events",
+          );
+
           await stream.appendEventFundsDeposited({ amount: 100, Currency: "USD" });
           await stream.appendEventFundsCaptured({ amount: 20, Currency: "USD" });
-          await stream.store();
+          const affected = await stream.store();
+          assert.strictEqual(affected.numEvents, 2, "Two events should have been stored");
+
+          const stream1 = await FundsPureEventsStreamFactory.get(streamId, storageAdapter);
+          assert.strictEqual(
+            stream1.storedOffset,
+            1,
+            "Stream offset should be 2 after storing events",
+          );
+          assert.deepStrictEqual(
+            stream1.getMessages(),
+            [],
+            "There should be no pending messages after storing events",
+          );
+          assert.deepStrictEqual(
+            stream1.views,
+            {},
+            "There should be no views registered for this stream",
+          );
         });
 
         // await t.test("When: stream stored and fetched", async () => {

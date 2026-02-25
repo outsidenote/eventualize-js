@@ -96,6 +96,29 @@
                 "TEST_DATABASES": "Postgres"
             },
             "console": "integratedTerminal"
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Debug API.Integration Tests Postgres",
+            "runtimeExecutable": "npx",
+            "runtimeArgs": [
+                "dotenv",
+                "-e",
+                ".env.test",
+                "--",
+                "node",
+                "--import",
+                "tsx",
+                "--test",
+                "apps/**/src/tests/api.integration.test.ts"
+            ],
+            "env": {
+                "DOTENV_CONFIG_PATH": ".env.test",
+                "TEST_CONTAINER": "true",
+                "TEST_DATABASES": "Postgres"
+            },
+            "console": "integratedTerminal"
         }
     ]
 }
