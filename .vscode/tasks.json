@@ -23,6 +23,21 @@
             "group": "test"
         },
         {
+            "label": "evdb: watch stream factories",
+            "type": "npm",
+            "script": "generate:watch",
+            "isBackground": true,
+            "presentation": {
+                "reveal": "silent",
+                "panel": "dedicated",
+                "label": "EvDb codegen"
+            },
+            "problemMatcher": [],
+            "runOptions": {
+                "runOn": "folderOpen"
+            }
+        },
+        {
             "label": "docker: compose up",
             "type": "shell",
             "command": "docker compose up -d",

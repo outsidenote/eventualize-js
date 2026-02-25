@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "ES2020", // The language features you want to use
+    "target": "ES2022", // The language features you want to use
     "module": "NodeNext", // Output code appropriate for modern Node.js
     "moduleResolution": "NodeNext", // Use Node.js specific resolution logic
     "composite": true,

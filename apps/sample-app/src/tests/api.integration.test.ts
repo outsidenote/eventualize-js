@@ -4,7 +4,7 @@ import Steps from "./steps.js";
 import Helpers from "./testHelpers.js";
 import { EVENT_STORE_TYPE } from "./EVENT_STORE_TYPE.js";
 import { TestManager } from "./TestContainerManager/TestManager.js";
-import FundsStreamFactory from "../eventstore/FundsStream/FundsStreamFactory.js";
+import { FundsStreamFactory } from "../eventstore/FundsStream/FundsStreamFactory.js";
 import type { DynamoDBClientOptions } from "./DynamoDBClientOptions.js";
 import type { PrismaClient } from "@prisma/client/extension";
 
@@ -47,7 +47,7 @@ describe("Database Integration Tests", () => {
         await t.test("Store Events", async () => {
           const streamId = "api-points-stream";
           const storageAdapter = Helpers.createEventStore(storeType, testData.storeClient);
-          const stream = await FundsStreamFactory.get(streamId, storageAdapter);
+          const stream = await FundsStreamFactory("funds-stream").build().get(streamId, storageAdapter);
           await stream.appendEventFundsDeposited({ amount: 100, Currency: "USD" });
         });
 

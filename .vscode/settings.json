@@ -1,4 +1,5 @@
 {
+    "task.allowAutomaticTasks": "on",
     "npm.scriptExplorerAction": "run",
     "testExplorer.onStart": "expand",
     "testExplorer.showInlineError": true,

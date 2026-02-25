@@ -23,15 +23,22 @@ export class StreamFactoryBuilder<
 
 
   /**
-   * Register a POCO event type for type inference only.
-   * The runtime event name is supplied by the code generator via `createEvDbStreamFactory`.
-   * Do not call this method manually — use `npm run generate:stream-factory` instead.
+   * Register a POCO event type for type inference and runtime dispatch.
+   * When called from generated code, pass the `payloadType` string so the factory
+   * can install a concrete `appendEvent*` method on the stream prototype.
+   * When called without args (legacy / hand-written), only type inference is applied.
+   *
+   * Do not call this method manually with the string arg — use
+   * `npm run generate:stream-factory` to regenerate the factory from the spec file.
    */
-  withEvent<TEvent extends IEvDbEventPayload>(): StreamFactoryBuilder<
+  withEvent<TEvent extends IEvDbEventPayload>(payloadType?: string): StreamFactoryBuilder<
     TStreamType,
     TEvents | TEvent,
     TViews
   > {
+    if (payloadType) {
+      this.eventTypes.push({ eventName: payloadType } as EventTypeConfig<TEvent>);
+    }
     return this as any;
   }
 
