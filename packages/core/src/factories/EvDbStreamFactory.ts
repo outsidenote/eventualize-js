@@ -14,7 +14,9 @@ import type { EvDbStreamFactoryConfig } from "./EvDbStreamFactoryTypes.js";
  * Type helper to extract event methods
  */
 type EventMethods<TEvents extends IEvDbEventPayload> = {
-  [K in TEvents as `appendEvent${K["payloadType"]}`]: (event: Omit<K, "payloadType">) => Promise<void>;
+  [K in TEvents as `appendEvent${K["payloadType"]}`]: (
+    event: Omit<K, "payloadType">,
+  ) => Promise<void>;
 };
 
 /**
@@ -95,32 +97,19 @@ export class EvDbStreamFactory<
           }
         });
       }
-
-      public appendEventPayload(payload: Record<string, unknown>): void {
-        this.appendEvent(payload as IEvDbEventPayload);
-      }
     }
 
-    // Proxy the class constructor so each instance intercepts appendEvent* calls.
-    // The payloadType is derived directly from the method name — no registration needed.
-    const ProxiedStream = new Proxy(DynamicStream, {
-      construct(target, args) {
-        const instance = new target(...(args as ConstructorParameters<typeof target>));
-        return new Proxy(instance, {
-          get(obj, prop) {
-            if (typeof prop === "string" && prop.startsWith("appendEvent")) {
-              const payloadType = prop.slice("appendEvent".length);
-              return (event: Record<string, unknown>) =>
-                obj.appendEventPayload({ ...event, payloadType });
-            }
-            const value = Reflect.get(obj, prop, obj);
-            return typeof value === "function" ? value.bind(obj) : value;
-          },
-        });
-      },
+    // Add dynamic methods for each event type
+    eventTypes.forEach(({ eventName, eventClass: _eventClass }) => {
+      const methodName = `appendEvent${eventName}`;
+      (DynamicStream.prototype as any)[methodName] = async function (
+        event: any,
+      ) {
+        return this.appendEvent({ ...event, payloadType: eventName });
+      };
     });
 
-    return ProxiedStream as any;
+    return DynamicStream as any;
   }
 
   /**
@@ -133,8 +122,8 @@ export class EvDbStreamFactory<
     lastStreamOffset: number = 0,
   ): StreamWithEventMethods<TEvents, TViews> {
     const views = snapshotStorageAdapter
-                    ? this.createViews(streamId, snapshotStorageAdapter)
-                    : [] as EvDbView<never>[];
+      ? this.createViews(streamId, snapshotStorageAdapter)
+      : ([] as EvDbView<never>[]);
 
     return new this.DynamicStreamClass(
       this.config.streamType,
@@ -196,7 +185,6 @@ export class EvDbStreamFactory<
       Number.MAX_VALUE,
     );
 
-    
     let streamOffset: number = -1;
     if (snapshotStorageAdapter) {
       const streamCursor = new EvDbStreamCursor(streamAddress, lowestViewOffset + 1);
@@ -211,7 +199,6 @@ export class EvDbStreamFactory<
       streamOffset = // TODO: get last offset from stream storage adapter if no snapshot adapter is provided
         streamOffset = await streamStorageAdapter.getLastOffsetAsync(streamAddress);
     }
-
 
     return new this.DynamicStreamClass(
       this.config.streamType,

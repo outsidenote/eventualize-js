@@ -1,4 +1,6 @@
 import type IEvDbEventPayload from "@eventualize/types/events/IEvDbEventPayload";
 
-
-export type FundsRefunded = IEvDbEventPayload & { readonly payloadType: "FundsRefunded"; readonly amount: number; Currency: string; };
+export class FundsRefunded implements IEvDbEventPayload {
+  readonly payloadType = "FundsRefunded";
+  constructor(public readonly amount: number, public readonly Currency: string) {}
+}
