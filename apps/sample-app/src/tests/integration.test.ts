@@ -1,6 +1,7 @@
 import * as assert from "node:assert";
 import { test, describe, before, after } from "node:test";
-import Steps, { EVENT_STORE_TYPE } from "./steps.js";
+import Steps from "./steps.js";
+import { EVENT_STORE_TYPE } from "./EVENT_STORE_TYPE.js";
 import { TestManager } from "./TestContainerManager/TestManager.js";
 
 // Start containers before all tests
@@ -24,13 +25,13 @@ describe("Database Integration Tests", () => {
 
         await t.before(async () => {
           const connectionConfig = testManager.getConnection(storeType);
+          const dynamoDbOptions = testManager.getDynamoDbOptions();
           if (storeType !== EVENT_STORE_TYPE.DYNAMODB) {
             testData.storeClient = Steps.createStoreClient(
               storeType,
               connectionConfig as string | undefined,
             );
           }
-          const dynamoDbOptions = testManager.getDynamoDbOptions();
           testData.eventStore = Steps.createEventStore(
             testData.storeClient,
             storeType,

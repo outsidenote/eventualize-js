@@ -16,8 +16,23 @@ import type EVDbMessagesProducer from "@eventualize/types/messages/EvDbMessagesP
 import type { EvDbView } from "../view/EvDbView.js";
 
 type ImmutableIEvDbView = Readonly<EvDbView<unknown>>;
+
+/**
+ * A read-only map of view name to view instance for a stream.
+ * Use this type when you need to pass or store the full set of a stream's views
+ * without allowing structural mutation.
+ */
 export type ImmutableIEvDbViewMap = Readonly<Record<string, ImmutableIEvDbView>>;
 
+/**
+ * Core event-sourcing stream that coordinates event appending, view projection,
+ * outbox message production, and optimistic-concurrency-controlled persistence.
+ *
+ * Use `EvDbStream` as the base class for all domain streams. It implements
+ * `IEvDbStreamStore` (store/query pending events) and `IEvDbStreamStoreData`
+ * (access unspecialized events, messages, and views) so consumers can work
+ * against those interfaces without coupling to this concrete class.
+ */
 export default class EvDbStream implements IEvDbStreamStore, IEvDbStreamStoreData {
   protected _pendingEvents: ReadonlyArray<EvDbEvent> = [];
   protected _pendingMessages: ReadonlyArray<EvDbMessage> = [];
@@ -34,29 +49,70 @@ export default class EvDbStream implements IEvDbStreamStore, IEvDbStreamStoreDat
   // Views
   protected readonly _views: ImmutableIEvDbViewMap;
 
+  /**
+   * Returns all views registered on this stream, keyed by view name.
+   * Use this when you need to inspect or iterate over every projection without
+   * knowing the view names up-front (e.g. generic tooling or serialization).
+   */
   getViews(): ImmutableIEvDbViewMap {
     return this._views;
   }
 
+  /**
+   * Returns a single view by its name, or `undefined` if not registered.
+   * Use this for targeted access to a specific projection when you know the
+   * view name at call-site (prefer typed accessors on concrete subclasses when
+   * available).
+   */
   getView(viewName: string): Readonly<IEvDbView> | undefined {
     return this._views[viewName];
   }
 
-  // Events
   /**
-   * Unspecialized events
+   * Returns the full list of pending (not-yet-stored) events as untyped
+   * `EvDbEvent` instances.
+   * Use this when you need generic/unspecialized access to the pending event
+   * list, e.g. for logging, debugging, or framework-level inspection.
+   * Strongly-typed subclasses may expose a narrower accessor instead.
    */
   getEvents(): ReadonlyArray<EvDbEvent> {
     return this._pendingEvents;
   }
 
-  // StreamAddress
+  /**
+   * The unique address that identifies this stream instance, combining the
+   * stream type and stream ID.
+   * Use this to correlate events, cursors, and log entries back to a specific
+   * stream without holding a reference to the full stream object.
+   */
   public streamAddress: EvDbStreamAddress;
 
-  // StoredOffset
+  /**
+   * The offset of the last event successfully persisted to storage.
+   * Use this to determine the persistence watermark of the stream — it is
+   * updated after each successful `store()` call and drives OCC conflict
+   * detection on the next write.
+   */
   public storedOffset: number;
 
-  // Constructor
+  /**
+   * Constructs a new stream instance, wiring together storage, views, and
+   * the outbox message producer.
+   *
+   * You should not call this constructor directly; use the stream factory
+   * (e.g. `EvDbStreamFactory`) so that the adapter, views, and producer are
+   * configured consistently.
+   *
+   * @param streamType    - Descriptor that categorises the stream (domain + version).
+   * @param views         - Projection views that fold events into query-ready state.
+   * @param storageAdapter - Adapter used to persist events and outbox messages.
+   * @param streamId      - Instance-level identifier that, together with `streamType`,
+   *                        uniquely addresses this stream.
+   * @param lastStoredOffset - Offset of the last event already in storage; used as
+   *                           the starting cursor and for OCC checks.
+   * @param messagesProducer - Function invoked after each `appendEvent` to derive
+   *                           outbox messages from the new event and current view states.
+   */
   public constructor(
     streamType: EvDbStreamType,
     views: ImmutableIEvDbView[],
@@ -75,6 +131,21 @@ export default class EvDbStream implements IEvDbStreamStore, IEvDbStreamStoreDat
     this.storedOffset = lastStoredOffset;
   }
 
+  /**
+   * Appends a domain event to the pending list, applies it to all registered
+   * views, and invokes the outbox producer to derive any resulting messages.
+   *
+   * Use this in concrete subclass methods (e.g. `deposited(amount)`) rather than
+   * calling storage directly. The event is **not** persisted until `store()` is
+   * called, so multiple `appendEvent` calls can be batched into a single atomic
+   * write.
+   *
+   * @param payload    - Typed event payload; `payloadType` must match a type
+   *                     registered on this stream's factory.
+   * @param capturedBy - Optional label identifying who/what produced this event
+   *                     (defaults to the core assembly identifier).
+   * @returns The populated event metadata (cursor, timestamp, capturedBy).
+   */
   protected appendEvent(
     payload: IEvDbEventPayload,
     capturedBy?: string | null,
@@ -113,15 +184,34 @@ export default class EvDbStream implements IEvDbStreamStore, IEvDbStreamStoreDat
     return new EvDbStreamCursor(this.streamAddress, offset + 1);
   }
 
-  // AppendToOutbox
   /**
-   * Put a row into the publication (out-box pattern).
+   * Manually inserts a message into the pending outbox without going through
+   * the domain event flow.
+   *
+   * Use this when you need to publish a notification or integration event that
+   * is not a direct consequence of a domain event — for example, a saga
+   * coordination message or a manually triggered notification. For event-driven
+   * messages prefer the `messagesProducer` callback passed to the constructor,
+   * which fires automatically inside `appendEvent`.
    */
   public appendToOutbox(e: EvDbMessage): void {
     this._pendingMessages = [...this._pendingMessages, e];
   }
 
-  // StoreAsync
+  /**
+   * Atomically persists all pending events and outbox messages to storage,
+   * advances `storedOffset`, potentialy saves view snapshots, and clears the pending
+   * buffers.
+   *
+   * Use this once you have finished building up a unit of work via one or more
+   * `appendEvent` / `appendToOutbox` calls. The call is a no-op (returns
+   * `StreamStoreAffected.Empty`) when there are no pending events. Throws
+   * `OCCException` if another writer has already stored events at or beyond
+   * the current `storedOffset` (optimistic concurrency conflict).
+   *
+   * @returns A `StreamStoreAffected` value describing how many events and
+   *          outbox messages were written.
+   */
   public async store(): Promise<StreamStoreAffected> {
     // Telemetry
     // const tags = this.streamAddress.toOtelTags();
@@ -155,17 +245,21 @@ export default class EvDbStream implements IEvDbStreamStore, IEvDbStreamStoreDat
     }
   }
 
-  // CountOfPendingEvents
   /**
-   * number of events that were not stored yet.
+   * The number of events appended since the last successful `store()` call.
+   * Use this to guard against accidentally calling `store()` with an empty
+   * batch or to implement pre-store validation that requires at least one event.
    */
   public get countOfPendingEvents(): number {
     return this._pendingEvents.length;
   }
 
-  // Notifications
   /**
-   * Unspecialized messages
+   * Returns the full list of pending outbox messages (integration events,
+   * notifications, saga commands) that have not yet been stored.
+   * Use this for generic/unspecialized access — e.g. framework-level
+   * inspection, testing, or logging — when you do not need message-type
+   * discrimination. Persisted alongside events during `store()`.
    */
   public getMessages(): ReadonlyArray<EvDbMessage> {
     return this._pendingMessages;

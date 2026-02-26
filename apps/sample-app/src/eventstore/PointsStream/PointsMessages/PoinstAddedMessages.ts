@@ -4,7 +4,7 @@ import type { PointsAdded } from "../PointsEvents/PointsAdded.js";
 import type { SumViewState } from "../PointsViews/SumViewState.js";
 import type { CountViewState } from "../PointsViews/CountViewState.js";
 
-export const poinstAddedMessages = (
+export const pointsAddedMessages = (
   event: EvDbEvent,
   viewStates: Readonly<Record<string, unknown>>,
 ) => [

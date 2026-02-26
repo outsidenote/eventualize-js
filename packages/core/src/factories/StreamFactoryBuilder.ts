@@ -2,7 +2,7 @@ import type IEvDbEventPayload from "@eventualize/types/events/IEvDbEventPayload"
 import type EVDbMessagesProducer from "@eventualize/types/messages/EvDbMessagesProducer";
 import { EvDbStreamFactory } from "./EvDbStreamFactory.js";
 import type { StreamWithEventMethods } from "./EvDbStreamFactory.js";
-import type { EventTypeConfig } from "./EvDbStreamFactoryTypes.js";
+import type { EventTypeConfig } from "./EvDbStreamFactoryTypes.js"; // used by withEventType
 import type { ViewFactory, EvDbStreamEventHandlersMap } from "./EvDbViewFactory.js";
 import { createViewFactory } from "./EvDbViewFactory.js";
 import type { EvDbView } from "../view/EvDbView.js";
@@ -45,12 +45,9 @@ export class StreamFactoryBuilder<
    */
   public withView<TViewName extends string, TState>(
     viewName: TViewName,
-    stateClass: new (...args: any[]) => TState,
+    defaultState: TState,
     handlers: EvDbStreamEventHandlersMap<TState, TEvents>,
   ): StreamFactoryBuilder<TStreamType, TEvents, TViews & Record<TViewName, EvDbView<TState>>> {
-    // Create default state instance
-    const defaultState = new stateClass();
-
     // Create the view factory
     const viewFactory = createViewFactory<TState, TEvents>({
       viewName,
@@ -77,7 +74,7 @@ export class StreamFactoryBuilder<
   }
 
   /**
-   * Build the stream factory
+   * Build the stream factory using event types registered via `withEventType`.
    */
   public build() {
     const factory = new EvDbStreamFactory({

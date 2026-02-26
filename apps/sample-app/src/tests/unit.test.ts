@@ -1,6 +1,7 @@
 import * as _assert from "node:assert";
 import { test, describe } from "node:test"; // Use require or import
-import Steps, { EVENT_STORE_TYPE } from "./steps.js";
+import Steps from "./steps.js";
+import { EVENT_STORE_TYPE } from "./EVENT_STORE_TYPE.js";
 
 describe("Unit Tests", () => {
   test("Add events to empty stream", async (t) => {

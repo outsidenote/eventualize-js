@@ -5,7 +5,7 @@ import { MySqlContainer } from "@testcontainers/mysql";
 import type { StartedPostgreSqlContainer } from "@testcontainers/postgresql";
 import { PostgreSqlContainer } from "@testcontainers/postgresql";
 import type { StoppedTestContainer } from "testcontainers";
-import { EVENT_STORE_TYPE } from "../steps.js";
+import { EVENT_STORE_TYPE } from "../EVENT_STORE_TYPE.js";
 import type { DynamoDBConfig } from "./dynamodb-setup.js";
 
 /**
