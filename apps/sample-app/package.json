@@ -21,12 +21,12 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
-    "@eventualize/core": "^2.0.0",
-    "@eventualize/dynamodb-storage-adapter": "^2.0.0",
-    "@eventualize/mysql-storage-adapter": "^2.0.0",
-    "@eventualize/postgres-storage-adapter": "^2.0.0",
-    "@eventualize/relational-storage-adapter": "^2.0.0",
-    "@eventualize/types": "^2.0.0",
+    "@eventualize/core": "^2.1.0",
+    "@eventualize/dynamodb-storage-adapter": "^2.1.0",
+    "@eventualize/mysql-storage-adapter": "^2.1.0",
+    "@eventualize/postgres-storage-adapter": "^2.1.0",
+    "@eventualize/relational-storage-adapter": "^2.1.0",
+    "@eventualize/types": "^2.1.0",
     "@prisma/adapter-pg": "^7.1.0",
     "dotenv": "^17.2.3"
   },

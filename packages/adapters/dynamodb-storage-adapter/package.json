@@ -1,6 +1,6 @@
 {
   "name": "@eventualize/dynamodb-storage-adapter",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "",
   "repository": {
     "type": "git",
@@ -37,7 +37,7 @@
     "dist"
   ],
   "dependencies": {
-    "@eventualize/types": "^2.0.0",
+    "@eventualize/types": "^2.1.0",
     "@aws-sdk/client-dynamodb": "^3.948.0",
     "@aws-sdk/util-dynamodb": "^3.948.0"
   }
