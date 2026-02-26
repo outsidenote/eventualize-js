@@ -13,16 +13,16 @@ import { PointsMultiplied } from "../eventstore/PointsStream/PointsEvents/Points
 import { PointsSubtracted } from "../eventstore/PointsStream/PointsEvents/PointsSubtracted.js";
 
 import type { EvDbView } from "@eventualize/core/view/EvDbView";
-import { EvDbPrismaStorageAdapter } from "@eventualize/relational-storage-adapter/EvDbPrismaStorageAdapter";
+import { EvDbPrismaStorageAdapter } from "@eventualize/relational-storage-adapter/EvDbPrismaStorageAdapter.js";
 import type { StreamMap, EvDbEventStoreType } from "@eventualize/core/store/EvDbEventStoreTypes";
 import { EvDbEventStoreBuilder } from "@eventualize/core/store/EvDbEventStoreBuilder";
-import EvDbPrismaStorageAdmin from "@eventualize/relational-storage-adapter/EvDbPrismaStorageAdmin";
-import EvDbPostgresPrismaClientFactory from "@eventualize/postgres-storage-adapter/EvDbPostgresPrismaClientFactory";
-import EvDbMySqlPrismaClientFactory from "@eventualize/mysql-storage-adapter/EvDbMySqlPrismaClientFactory";
-import type { PrismaClient as PostgresPrismaClient } from "@eventualize/postgres-storage-adapter/generated/prisma/client";
-import type { PrismaClient as MySqlPrismaClient } from "@eventualize/mysql-storage-adapter/generated/prisma/client";
-import EvDbDynamoDbStorageAdapter from "@eventualize/dynamodb-storage-adapter/EvDbDynamoDbStorageAdapter";
-import EvDbDynamoDbAdmin from "@eventualize/dynamodb-storage-adapter/EvDBDynamoDBAdmin";
+import EvDbPrismaStorageAdmin from "@eventualize/relational-storage-adapter/EvDbPrismaStorageAdmin.js";
+import EvDbPostgresPrismaClientFactory from "@eventualize/postgres-storage-adapter/EvDbPostgresPrismaClientFactory.js";
+import EvDbMySqlPrismaClientFactory from "@eventualize/mysql-storage-adapter/EvDbMySqlPrismaClientFactory.js";
+import type { PrismaClient as PostgresPrismaClient } from "@eventualize/postgres-storage-adapter/generated/prisma/client.js";
+import type { PrismaClient as MySqlPrismaClient } from "@eventualize/mysql-storage-adapter/generated/prisma/client.js";
+import EvDbDynamoDbStorageAdapter from "@eventualize/dynamodb-storage-adapter/EvDbDynamoDbStorageAdapter.js";
+import EvDbDynamoDbAdmin from "@eventualize/dynamodb-storage-adapter/EvDBDynamoDBAdmin.js";
 import type IEvDbStorageAdmin from "@eventualize/types/adapters/IEvDbStorageAdmin";
 import type { DynamoDBClientOptions } from "./DynamoDBClientOptions.js";
 import { EVENT_STORE_TYPE } from "./EVENT_STORE_TYPE.js";
