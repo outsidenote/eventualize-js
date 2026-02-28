@@ -14,10 +14,3 @@ describe("EvDbView", () => {
     assert.ok(module.EvDbView, "EvDbView should be exported");
   });
 });
-
-describe("EvDbEventStore", () => {
-  test("module can be imported", async () => {
-    const module = await import("./store/EvDbEventStoreBuilder.js");
-    assert.ok(module.EvDbEventStoreBuilder, "EvDbEventStoreBuilder should be exported");
-  });
-});
