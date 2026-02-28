@@ -6,17 +6,21 @@ import { EVENT_STORE_TYPE } from "./EVENT_STORE_TYPE.js";
 describe("Unit Tests", () => {
   test("Add events to empty stream", async (t) => {
     const testData: any = {};
-    await t.test("Given: empty stream", () => {
+    t.test("Given: empty stream", () => {
       testData.client = Steps.createStoreClient(EVENT_STORE_TYPE.STUB);
-      testData.eventStoreStub = Steps.createEventStore(testData.client, EVENT_STORE_TYPE.STUB);
-      testData.pointsStream = Steps.createPointsStream("pointsStream1", testData.eventStoreStub);
+      testData.storageAdapter = Steps.createStorageAdapter(
+        EVENT_STORE_TYPE.STUB,
+        testData.client,
+        undefined,
+      );
+      testData.pointsStream = Steps.createPointsStream("pointsStream1", testData.storageAdapter);
     });
 
-    await t.test("When: new events added to stream", () => {
+    t.test("When: new events added to stream", () => {
       Steps.addPointsEventsToStream(testData.pointsStream);
     });
 
-    await t.test("Then: stream applies events correctly", () => {
+    t.test("Then: stream applies events correctly", () => {
       Steps.assertStreamStateIsCorrect(testData.pointsStream);
     });
   });
