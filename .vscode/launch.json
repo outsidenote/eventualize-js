@@ -119,6 +119,28 @@
                 "TEST_DATABASES": "Postgres"
             },
             "console": "integratedTerminal"
-        }
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Debug Unit Tests (bare)",
+            "runtimeExecutable": "npx",
+            "runtimeArgs": [
+                "dotenv",
+                "-e",
+                ".env.test",
+                "--",
+                "node",
+                "--import",
+                "tsx",
+                "--test",
+                "apps/**/src/tests/unit.test.ts"
+            ],
+            "env": {
+                "DOTENV_CONFIG_PATH": ".env.test",
+                "TEST_CONTAINER": "true",
+            },
+            "console": "integratedTerminal"
+        },
     ]
 }

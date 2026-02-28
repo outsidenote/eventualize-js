@@ -14,8 +14,6 @@ import { PointsSubtracted } from "../eventstore/PointsStream/PointsEvents/Points
 
 import type { EvDbView } from "@eventualize/core/view/EvDbView";
 import { EvDbPrismaStorageAdapter } from "@eventualize/relational-storage-adapter/EvDbPrismaStorageAdapter.js";
-import type { StreamMap, EvDbEventStoreType } from "@eventualize/core/store/EvDbEventStoreTypes";
-import { EvDbEventStoreBuilder } from "@eventualize/core/store/EvDbEventStoreBuilder";
 import EvDbPrismaStorageAdmin from "@eventualize/relational-storage-adapter/EvDbPrismaStorageAdmin.js";
 import EvDbPostgresPrismaClientFactory from "@eventualize/postgres-storage-adapter/EvDbPostgresPrismaClientFactory.js";
 import EvDbMySqlPrismaClientFactory from "@eventualize/mysql-storage-adapter/EvDbMySqlPrismaClientFactory.js";
@@ -26,6 +24,7 @@ import EvDbDynamoDbAdmin from "@eventualize/dynamodb-storage-adapter/EvDBDynamoD
 import type IEvDbStorageAdmin from "@eventualize/types/adapters/IEvDbStorageAdmin";
 import type { DynamoDBClientOptions } from "./DynamoDBClientOptions.js";
 import { EVENT_STORE_TYPE } from "./EVENT_STORE_TYPE.js";
+import { IEvDbStorageAdapter } from "@eventualize/core/adapters/IEvDbStorageAdapter";
 
 const getEnvPath = () => {
   const __filename = fileURLToPath(import.meta.url);
@@ -65,36 +64,19 @@ export default class Steps {
     }
   }
 
-  /**
-   * Creates an event store with the specified storage adapter.
-   * @param storeClient - The Prisma client for relational databases (or undefined for DynamoDB/Stub).
-   * @param storeType - The type of database to use.
-   * @param dynamoDbOptions - Optional DynamoDB configuration for testcontainers.
-   */
-  public static createEventStore(
-    storeClient: StoreClientType,
-    storeType: EVENT_STORE_TYPE,
-    dynamoDbOptions?: DynamoDBClientOptions,
-  ) {
-    const storageAdapter = [EVENT_STORE_TYPE.POSTGRES, EVENT_STORE_TYPE.MYSQL].includes(storeType)
+  public static createStorageAdapter(storeType: EVENT_STORE_TYPE, storeClient: StoreClientType, dynamoDbOptions: DynamoDBClientOptions | undefined): IEvDbStorageAdapter {
+    return [EVENT_STORE_TYPE.POSTGRES, EVENT_STORE_TYPE.MYSQL].includes(storeType)
       ? new EvDbPrismaStorageAdapter(storeClient as any)
       : storeType === EVENT_STORE_TYPE.DYNAMODB
-      ? EvDbDynamoDbStorageAdapter.withOptions(dynamoDbOptions ?? {})
-      : new StorageAdapterStub();
-
-    const eventstore = new EvDbEventStoreBuilder()
-      .withAdapter(storageAdapter)
-      .withStreamFactory(PointsStreamFactory)
-      .build();
-
-    return eventstore;
+        ? EvDbDynamoDbStorageAdapter.withOptions(dynamoDbOptions ?? {})
+        : new StorageAdapterStub();
   }
 
-  public static createPointsStream<TStreams extends StreamMap>(
+  public static createPointsStream(
     streamId: string,
-    eventStore: EvDbEventStoreType<TStreams>,
+    storageAdapter: IEvDbStorageAdapter,
   ): PointsStreamType {
-    return eventStore.createPointsStream(streamId) as PointsStreamType;
+    return PointsStreamFactory.create(streamId, storageAdapter, storageAdapter) as PointsStreamType;
   }
 
   public static addPointsEventsToStream(stream: PointsStreamType) {
@@ -126,7 +108,7 @@ export default class Steps {
   ) {
     assert.strictEqual(fetchedStream.getEvents().length, 0);
     assert.strictEqual(fetchedStream.storedOffset, storedStream.storedOffset);
-    const fetchedSumView = fetchedStream.views.Sum as EvDbView<SumViewState>;
+    const fetchedSumView = (fetchedStream as PointsStreamType).views.Sum as EvDbView<SumViewState>;
     const storedSumView = storedStream.views.Sum as EvDbView<SumViewState>;
     assert.strictEqual(storedSumView.state.sum, fetchedSumView.state.sum);
     assert.strictEqual(storedSumView.storeOffset, fetchedSumView.memoryOffset);
@@ -160,3 +142,5 @@ export default class Steps {
     await admin.close();
   }
 }
+
+

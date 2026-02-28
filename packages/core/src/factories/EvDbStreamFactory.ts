@@ -9,6 +9,7 @@ import type EvDbEvent from "@eventualize/types/events/EvDbEvent";
 import EvDbStream from "../store/EvDbStream.js";
 import type { EvDbView } from "../view/EvDbView.js";
 import type { EvDbStreamFactoryConfig } from "./EvDbStreamFactoryTypes.js";
+import { IEvDbStreamFactory } from "./IEvDbStreamFactory.js";
 
 /**
  * Type helper to extract event methods
@@ -41,7 +42,7 @@ export class EvDbStreamFactory<
   TEvents extends IEvDbEventPayload,
   TStreamType extends string,
   TViews extends Record<string, EvDbView<any>> = {},
-> {
+> implements IEvDbStreamFactory<TEvents, TStreamType, TViews> {
   private DynamicStreamClass: new (
     streamType: string,
     views: EvDbView<any>[],
@@ -223,7 +224,7 @@ export function createEvDbStreamFactory<
   TViews extends Record<string, EvDbView<any>> = {},
 >(
   config: EvDbStreamFactoryConfig<TEvents, TStreamType>,
-): EvDbStreamFactory<TEvents, TStreamType, TViews> {
+): IEvDbStreamFactory<TEvents, TStreamType, TViews> {
   return new EvDbStreamFactory(config);
 }
 
