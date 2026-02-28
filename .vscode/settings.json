@@ -21,6 +21,6 @@
     ],
     "nodeTestRunner.envFile": ".env.test",
     "[typescript]": {
-      "editor.defaultFormatter": "esbenp.prettier-vscode"
+      "editor.defaultFormatter": "vscode.typescript-language-features"
     }
 }  
