@@ -41,7 +41,7 @@ export default class EvDbMessage {
     capturedAt: Date,
     capturedBy: string,
     streamCursor: EvDbStreamCursor,
-    payload: any,
+    payload: IEvDbPayloadData | undefined,
   ): EvDbMessage {
     return new EvDbMessage(
       id,
@@ -66,7 +66,7 @@ export default class EvDbMessage {
     capturedAt: Date,
     capturedBy: string,
     streamCursor: EvDbStreamCursor,
-    payload: any,
+    payload: IEvDbPayloadData | undefined,
   ): EvDbMessage {
     return new EvDbMessage(
       crypto.randomUUID(),

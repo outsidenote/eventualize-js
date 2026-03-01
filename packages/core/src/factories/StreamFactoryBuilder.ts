@@ -13,10 +13,10 @@ import type { EvDbView } from "../view/EvDbView.js";
 export class StreamFactoryBuilder<
   TStreamType extends string,
   TEvents extends IEvDbEventPayload = never,
-  TViews extends Record<string, EvDbView<any>> = {},
+  TViews extends Record<string, EvDbView<unknown>> = {},
 > {
-  private viewFactories: ViewFactory<any, TEvents>[] = [];
-  private eventTypes: EventTypeConfig<any>[] = [];
+  private viewFactories: ViewFactory<unknown, TEvents>[] = [];
+  private eventTypes: EventTypeConfig<IEvDbEventPayload>[] = [];
   private viewNames: string[] = [];
 
   constructor(private streamType: TStreamType) {}
@@ -25,7 +25,7 @@ export class StreamFactoryBuilder<
    * Register event type for dynamic method generation - infers the event name from class name
    */
   withEventType<TEvent extends IEvDbEventPayload>(
-    eventClass: new (...args: any[]) => TEvent,
+    eventClass: new (...args: unknown[]) => TEvent,
     eventMessagesProducer?: EVDbMessagesProducer,
   ): StreamFactoryBuilder<TStreamType, TEvents | TEvent, TViews> {
     // Use the class name as the event name
@@ -36,7 +36,7 @@ export class StreamFactoryBuilder<
       eventName,
       eventMessagesProducer,
     } as EventTypeConfig<TEvent>);
-    return this as any;
+    return this as unknown as StreamFactoryBuilder<TStreamType, TEvents | TEvent, TViews>;
   }
 
   /**
@@ -58,7 +58,7 @@ export class StreamFactoryBuilder<
 
     this.viewFactories.push(viewFactory);
     this.viewNames.push(viewName);
-    return this as any;
+    return this as unknown as StreamFactoryBuilder<TStreamType, TEvents, TViews & Record<TViewName, EvDbView<TState>>>;
   }
 
   /**
@@ -70,7 +70,7 @@ export class StreamFactoryBuilder<
   ): StreamFactoryBuilder<TStreamType, TEvents, TViews & Record<TViewName, EvDbView<TState>>> {
     this.viewFactories.push(viewFactory);
     this.viewNames.push(viewName);
-    return this as any;
+    return this as unknown as StreamFactoryBuilder<TStreamType, TEvents, TViews & Record<TViewName, EvDbView<TState>>>;
   }
 
   /**

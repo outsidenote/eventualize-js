@@ -2,7 +2,7 @@ import type IEvDbStorageSnapshotAdapter from "@eventualize/types/adapters/IEvDbS
 import type IEvDbStorageStreamAdapter from "@eventualize/types/adapters/IEvDbStorageStreamAdapter";
 import type IEvDbEventPayload from "@eventualize/types/events/IEvDbEventPayload";
 import type { EvDbView } from "../view/EvDbView";
-import { StreamWithEventMethods } from "./EvDbStreamFactory";
+import type { StreamWithEventMethods } from "./EvDbStreamFactory";
 
 /**
  * General interface for an EvDbStreamFactory implementation.
@@ -11,7 +11,7 @@ import { StreamWithEventMethods } from "./EvDbStreamFactory";
 export interface IEvDbStreamFactory<
   TEvents extends IEvDbEventPayload,
   TStreamType extends string,
-  TViews extends Record<string, EvDbView<any>> = {}
+  TViews extends Record<string, EvDbView<unknown>> = {}
 > {
   create(
     streamId: string,

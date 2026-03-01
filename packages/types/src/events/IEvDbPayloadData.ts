@@ -1,3 +1,3 @@
 export interface IEvDbPayloadData {
-  [key: string]: any;
+  [key: string]: unknown;
 }

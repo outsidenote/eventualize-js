@@ -17,7 +17,7 @@ export default class OCCException extends Error {
       super(arg1.toString());
       if (arg2) {
         // Attach inner exception as a property (TypeScript does not have built-in inner exceptions)
-        (this as any).innerException = arg2;
+        this.innerException = arg2;
       }
     } else {
       super(); // parameterless constructor
