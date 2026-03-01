@@ -84,7 +84,9 @@ export class StreamFactoryBuilder<
   /**
    * Build the stream factory using event types registered via `withEventType`.
    */
-  public build() {
+  public build(): EvDbStreamFactory<TEvents, TStreamType, TViews> & {
+    StreamType: StreamWithEventMethods<TEvents, TViews>;
+  } {
     const factory = new EvDbStreamFactory({
       streamType: this.streamType,
       viewFactories: this.viewFactories,
