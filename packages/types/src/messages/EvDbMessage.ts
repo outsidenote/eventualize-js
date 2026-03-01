@@ -27,7 +27,7 @@ export default class EvDbMessage {
     public readonly capturedAt: Date,
     public readonly capturedBy: string,
     public readonly streamCursor: EvDbStreamCursor,
-    public readonly payload: IEvDbPayloadData,
+    public readonly payload: IEvDbPayloadData | undefined,
     public readonly storedAt?: Date,
   ) {}
 

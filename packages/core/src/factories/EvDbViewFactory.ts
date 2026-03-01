@@ -72,7 +72,12 @@ export class ViewFactory<TState, TEvents extends IEvDbEventPayload> {
     const streamAddress = new EvDbStreamAddress(this.config.streamType, streamId);
     const viewAddress = new EvDbViewAddress(streamAddress, this.config.viewName);
 
-    const snapshot = await storageAdapter.getSnapshotAsync(viewAddress);
+    const rawSnapshot = await storageAdapter.getSnapshotAsync(viewAddress);
+    const snapshot = new EvDbStoredSnapshotResult<TState>(
+      rawSnapshot.offset,
+      rawSnapshot.storedAt,
+      rawSnapshot.state as TState,
+    );
 
     return new GenericView<TState, TEvents>(viewAddress, storageAdapter, snapshot, this.config);
   }

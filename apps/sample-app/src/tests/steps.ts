@@ -132,7 +132,7 @@ export default class Steps {
     switch (storeType) {
       case EVENT_STORE_TYPE.POSTGRES:
       case EVENT_STORE_TYPE.MYSQL:
-        admin = new EvDbPrismaStorageAdmin(storeClient);
+        admin = new EvDbPrismaStorageAdmin(storeClient!);
         break;
       case EVENT_STORE_TYPE.DYNAMODB:
         admin = new EvDbDynamoDbAdmin(dynamoDbOptions);

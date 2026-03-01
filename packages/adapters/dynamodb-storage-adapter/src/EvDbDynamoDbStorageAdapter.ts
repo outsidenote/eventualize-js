@@ -118,7 +118,7 @@ export default class EvDbDynamoDbStorageAdapter
           event_type: message.eventType,
           captured_by: message.capturedBy,
           captured_at: message.capturedAt,
-          payload: message.payload,
+          payload: message.payload ?? {},
         };
       });
 

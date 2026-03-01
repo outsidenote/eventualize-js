@@ -25,7 +25,7 @@ export class StreamFactoryBuilder<
    * Register event type for dynamic method generation - infers the event name from class name
    */
   withEventType<TEvent extends IEvDbEventPayload>(
-    eventClass: new (...args: unknown[]) => TEvent,
+    eventClass: new (...args: never[]) => TEvent,
     eventMessagesProducer?: EVDbMessagesProducer,
   ): StreamFactoryBuilder<TStreamType, TEvents | TEvent, TViews> {
     // Use the class name as the event name
@@ -56,7 +56,7 @@ export class StreamFactoryBuilder<
       handlers,
     });
 
-    this.viewFactories.push(viewFactory);
+    this.viewFactories.push(viewFactory as unknown as ViewFactory<unknown, TEvents>);
     this.viewNames.push(viewName);
     return this as unknown as StreamFactoryBuilder<
       TStreamType,
@@ -72,7 +72,7 @@ export class StreamFactoryBuilder<
     viewName: TViewName,
     viewFactory: ViewFactory<TState, TEvents>,
   ): StreamFactoryBuilder<TStreamType, TEvents, TViews & Record<TViewName, EvDbView<TState>>> {
-    this.viewFactories.push(viewFactory);
+    this.viewFactories.push(viewFactory as unknown as ViewFactory<unknown, TEvents>);
     this.viewNames.push(viewName);
     return this as unknown as StreamFactoryBuilder<
       TStreamType,
@@ -90,7 +90,7 @@ export class StreamFactoryBuilder<
     const factory = new EvDbStreamFactory({
       streamType: this.streamType,
       viewFactories: this.viewFactories,
-      eventTypes: this.eventTypes,
+      eventTypes: this.eventTypes as EventTypeConfig<TEvents>[],
       viewNames: this.viewNames,
     }) as EvDbStreamFactory<TEvents, TStreamType, TViews>;
 

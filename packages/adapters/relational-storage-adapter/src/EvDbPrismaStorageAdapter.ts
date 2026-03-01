@@ -18,9 +18,9 @@ import { PrismaQueryProvider } from "./EvDbRelationalStorageAdapterQueries.js";
 
 const deserializePayload = (payload: unknown): IEvDbPayloadData => {
   if (!!payload && typeof payload == "object") {
-    return payload;
+    return payload as IEvDbPayloadData;
   }
-  return {};
+  return {} as IEvDbPayloadData;
 };
 
 /**
@@ -107,7 +107,7 @@ export class EvDbPrismaStorageAdapter
           event_type: event.eventType,
           captured_by: event.capturedBy,
           captured_at: event.capturedAt,
-          payload: event.payload,
+          payload: event.payload as unknown as Prisma.JsonNullValueInput,
         };
       });
 
@@ -124,7 +124,7 @@ export class EvDbPrismaStorageAdapter
           captured_by: message.capturedBy,
           captured_at: message.capturedAt,
           stored_at: message.storedAt,
-          payload: message.payload,
+          payload: message.payload as unknown as Prisma.JsonNullValueInput,
           serialize_type: "json",
         };
       });
@@ -248,7 +248,7 @@ export class EvDbPrismaStorageAdapter
       stream_id: record.streamId,
       view_name: record.viewName,
       offset: record.offset,
-      state: record.state,
+      state: record.state as unknown as Prisma.JsonNullValueInput,
       stored_at: new Date(),
     });
   }
