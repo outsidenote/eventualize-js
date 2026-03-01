@@ -33,7 +33,11 @@ class GenericView<TState, TEvents extends IEvDbEventPayload> extends EvDbView<TS
       return oldState;
     }
 
-    return handler(oldState, event as Extract<TEvents, { payloadType: typeof payloadType }>, metadata);
+    return handler(
+      oldState,
+      event as Extract<TEvents, { payloadType: typeof payloadType }>,
+      metadata,
+    );
   }
 }
 

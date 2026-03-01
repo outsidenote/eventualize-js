@@ -58,7 +58,11 @@ export class StreamFactoryBuilder<
 
     this.viewFactories.push(viewFactory);
     this.viewNames.push(viewName);
-    return this as unknown as StreamFactoryBuilder<TStreamType, TEvents, TViews & Record<TViewName, EvDbView<TState>>>;
+    return this as unknown as StreamFactoryBuilder<
+      TStreamType,
+      TEvents,
+      TViews & Record<TViewName, EvDbView<TState>>
+    >;
   }
 
   /**
@@ -70,7 +74,11 @@ export class StreamFactoryBuilder<
   ): StreamFactoryBuilder<TStreamType, TEvents, TViews & Record<TViewName, EvDbView<TState>>> {
     this.viewFactories.push(viewFactory);
     this.viewNames.push(viewName);
-    return this as unknown as StreamFactoryBuilder<TStreamType, TEvents, TViews & Record<TViewName, EvDbView<TState>>>;
+    return this as unknown as StreamFactoryBuilder<
+      TStreamType,
+      TEvents,
+      TViews & Record<TViewName, EvDbView<TState>>
+    >;
   }
 
   /**

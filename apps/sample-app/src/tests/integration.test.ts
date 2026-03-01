@@ -4,6 +4,19 @@ import Steps from "./steps.js";
 import { EVENT_STORE_TYPE } from "./EVENT_STORE_TYPE.js";
 import { TestManager } from "./TestContainerManager/TestManager.js";
 import PointsStreamFactory from "../eventstore/PointsStream/PointsStreamFactory.js";
+import type { IEvDbStorageAdapter } from "@eventualize/core/adapters/IEvDbStorageAdapter";
+import type { PointsStreamType } from "../eventstore/PointsStream/PointsStreamFactory.js";
+
+interface IntegrationTestData {
+  storeClient: ReturnType<typeof Steps.createStoreClient>;
+  storageAdapter: IEvDbStorageAdapter;
+  streamId: string;
+  pointsStream: PointsStreamType;
+  fetchedStream: PointsStreamType;
+  fetchedStream1: PointsStreamType;
+  fetchedStream2: PointsStreamType;
+  dupPointsStream: PointsStreamType;
+}
 
 // Start containers before all tests
 describe("Database Integration Tests", () => {
@@ -22,7 +35,7 @@ describe("Database Integration Tests", () => {
     const databasesToTest = testManager.supportedDatabases;
     for (const storeType of databasesToTest) {
       await test(`${storeType} execution`, async (t) => {
-        const testData: any = {};
+        const testData = {} as IntegrationTestData;
 
         await t.before(async () => {
           const connectionConfig = testManager.getConnection(storeType);
@@ -43,7 +56,10 @@ describe("Database Integration Tests", () => {
 
         await t.test("Given: local stream with events", () => {
           testData.streamId = "pointsStream1";
-          testData.pointsStream = Steps.createPointsStream(testData.streamId, testData.storageAdapter);
+          testData.pointsStream = Steps.createPointsStream(
+            testData.streamId,
+            testData.storageAdapter,
+          );
           Steps.addPointsEventsToStream(testData.pointsStream);
           Steps.assertStreamStateIsCorrect(testData.pointsStream);
         });

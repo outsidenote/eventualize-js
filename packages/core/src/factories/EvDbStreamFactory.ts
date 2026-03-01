@@ -42,7 +42,8 @@ export class EvDbStreamFactory<
   TEvents extends IEvDbEventPayload,
   TStreamType extends string,
   TViews extends Record<string, EvDbView<unknown>> = {},
-> implements IEvDbStreamFactory<TEvents, TStreamType, TViews> {
+> implements IEvDbStreamFactory<TEvents, TStreamType, TViews>
+{
   private DynamicStreamClass: new (
     streamType: string,
     views: EvDbView<unknown>[],

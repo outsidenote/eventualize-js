@@ -33,7 +33,7 @@ export class EvDbPrismaStorageAdapter
   private readonly queryProvider: PrismaQueryProvider;
   protected readonly databaseType: string = "prisma";
 
-constructor(private readonly prisma: PrismaClient) {
+  constructor(private readonly prisma: PrismaClient) {
     this.queryProvider = new PrismaQueryProvider(prisma);
   }
   getFromOutbox(

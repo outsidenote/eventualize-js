@@ -68,11 +68,11 @@ export class PrismaQueryProvider {
     };
 
     if (channels && channels.length > 0) {
-      _whereClause['channel'] = { in: channels };
+      _whereClause["channel"] = { in: channels };
     }
 
     if (message_types && message_types.length > 0) {
-      _whereClause['messageType'] = { in: message_types };
+      _whereClause["messageType"] = { in: message_types };
     }
 
     // This would need to be adapted based on your actual Prisma schema

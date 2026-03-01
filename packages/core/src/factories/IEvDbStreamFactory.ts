@@ -11,19 +11,19 @@ import type { StreamWithEventMethods } from "./EvDbStreamFactory";
 export interface IEvDbStreamFactory<
   TEvents extends IEvDbEventPayload,
   TStreamType extends string,
-  TViews extends Record<string, EvDbView<unknown>> = {}
+  TViews extends Record<string, EvDbView<unknown>> = {},
 > {
   create(
     streamId: string,
     streamStorageAdapter: IEvDbStorageStreamAdapter,
     snapshotStorageAdapter?: IEvDbStorageSnapshotAdapter,
-    lastStreamOffset?: number
+    lastStreamOffset?: number,
   ): StreamWithEventMethods<TEvents, TViews>;
 
   get(
     streamId: string,
     streamStorageAdapter: IEvDbStorageStreamAdapter,
-    snapshotStorageAdapter?: IEvDbStorageSnapshotAdapter
+    snapshotStorageAdapter?: IEvDbStorageSnapshotAdapter,
   ): Promise<StreamWithEventMethods<TEvents, TViews>>;
 
   getStreamType(): TStreamType;
