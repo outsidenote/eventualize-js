@@ -21,7 +21,7 @@ import QueryProvider, {
   deserializeStreamAddress,
   EventRecord,
 } from "./EvDbDynamoDbStorageAdapterQueries.js";
-import type { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import type { AttributeValue, DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { TransactionCanceledException, TransactWriteItemsCommand } from "@aws-sdk/client-dynamodb";
 
 /**
@@ -173,7 +173,7 @@ export default class EvDbDynamoDbStorageAdapter
     streamCursor: EvDbStreamCursor,
     _pageSize: number = 100,
   ): AsyncGenerator<EvDbEvent, void, undefined> {
-    let queryCursor: Record<string, any> | undefined = undefined;
+    let queryCursor: Record<string, AttributeValue> | undefined = undefined;
 
     do {
       const getEventsCommand = QueryProvider.getEvents(streamCursor);

@@ -259,7 +259,7 @@ constructor(private readonly prisma: PrismaClient) {
   private isOccException(error: unknown): boolean {
     // P2002 = Unique constraint violation
     // P2034 = Transaction conflict
-    const anyError = error as any;
+    const anyError = error as { code?: unknown };
     return !!error && (anyError?.code === "P2002" || anyError?.code === "P2034");
   }
 
