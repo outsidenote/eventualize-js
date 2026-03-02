@@ -40,7 +40,27 @@ export class StreamFactoryBuilder<
   private eventTypes: EventTypeConfig[] = [];
   private viewNames: string[] = [];
 
-  constructor(private streamType: TStreamType) {}
+  constructor(private streamType: TStreamType) { }
+
+
+  /**
+   * Register a POCO event type by explicit name. T is the event's data shape (a plain type alias).
+   * TEventName captures the string literal so downstream types remain fully typed.
+   */
+  withEvent<T extends object>(
+    payloadType: string
+  ): StreamFactoryBuilder<
+    TStreamType,
+    T & { readonly payloadType: string },
+    TViews
+  > {
+    this.eventTypes.push({ eventName: payloadType });
+    return this as unknown as StreamFactoryBuilder<
+      TStreamType,
+      TEvents | (T & { readonly payloadType: string }),
+      TViews
+    >;
+  }
 
   /**
    * Register a POCO event type by explicit name. T is the event's data shape (a plain type alias).

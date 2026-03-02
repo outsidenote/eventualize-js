@@ -6,13 +6,14 @@ import type { FundsDenied } from "./FundsEvents/FundsDenied.js";
 import type { FundsDeposited } from "./FundsEvents/FundsDeposited.js";
 import type { FundsRefunded } from "./FundsEvents/FundsRefunded.js";
 import type { FundsWithdrawal } from "./FundsEvents/FundsWithdrawal.js";
+import { FundsEventNames } from "./FundsEventNames.js";
 
 const FundsPureEventsStreamFactory = new StreamFactoryBuilder("funds-stream")
-  .withEventType<FundsCaptured, "FundsCaptured">("FundsCaptured")
-  .withEventType<FundsDenied, "FundsDenied">("FundsDenied")
-  .withEventType<FundsDeposited, "FundsDeposited">("FundsDeposited")
-  .withEventType<FundsRefunded, "FundsRefunded">("FundsRefunded")
-  .withEventType<FundsWithdrawal, "FundsWithdrawal">("FundsWithdrawal")
+  .withEvent<FundsCaptured>(FundsEventNames.FundsCaptured)
+  .withEvent<FundsDenied>(FundsEventNames.FundsDenied)
+  .withEvent<FundsDeposited>(FundsEventNames.FundsDeposited)
+  .withEvent<FundsRefunded>(FundsEventNames.FundsRefunded)
+  .withEvent<FundsWithdrawal>(FundsEventNames.FundsWithdrawal)
   .build();
 
 export default FundsPureEventsStreamFactory;
