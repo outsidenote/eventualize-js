@@ -8,9 +8,6 @@ import type { PointsStreamType } from "../eventstore/PointsStream/PointsStreamFa
 import PointsStreamFactory from "../eventstore/PointsStream/PointsStreamFactory.js";
 import type { SumViewState } from "../eventstore/PointsStream/PointsViews/SumViewState.js";
 import type { CountViewState } from "../eventstore/PointsStream/PointsViews/CountViewState.js";
-import { PointsAdded } from "../eventstore/PointsStream/PointsEvents/PointsAdded.js";
-import { PointsMultiplied } from "../eventstore/PointsStream/PointsEvents/PointsMultiplied.js";
-import { PointsSubtracted } from "../eventstore/PointsStream/PointsEvents/PointsSubtracted.js";
 
 import type { EvDbView } from "@eventualize/core/view/EvDbView";
 import { EvDbPrismaStorageAdapter } from "@eventualize/relational-storage-adapter/EvDbPrismaStorageAdapter.js";
@@ -83,17 +80,17 @@ export default class Steps {
   }
 
   public static addPointsEventsToStream(stream: PointsStreamType) {
-    stream.appendEventPointsAdded(new PointsAdded(50));
-    stream.appendEventPointsSubtracted(new PointsSubtracted(20));
-    stream.appendEventPointsAdded(new PointsAdded(50));
-    stream.appendEventPointsSubtracted(new PointsSubtracted(20));
-    stream.appendEventPointsMultiplied(new PointsMultiplied(2));
-    stream.appendEventPointsAdded(new PointsAdded(50));
-    stream.appendEventPointsSubtracted(new PointsSubtracted(20));
-    stream.appendEventPointsAdded(new PointsAdded(50));
-    stream.appendEventPointsSubtracted(new PointsSubtracted(20));
-    stream.appendEventPointsAdded(new PointsAdded(50));
-    stream.appendEventPointsSubtracted(new PointsSubtracted(20));
+    stream.appendEventPointsAdded({ points: 50 });
+    stream.appendEventPointsSubtracted({ points: 20 });
+    stream.appendEventPointsAdded({ points: 50 });
+    stream.appendEventPointsSubtracted({ points: 20 });
+    stream.appendEventPointsMultiplied({ multiplier: 2 });
+    stream.appendEventPointsAdded({ points: 50 });
+    stream.appendEventPointsSubtracted({ points: 20 });
+    stream.appendEventPointsAdded({ points: 50 });
+    stream.appendEventPointsSubtracted({ points: 20 });
+    stream.appendEventPointsAdded({ points: 50 });
+    stream.appendEventPointsSubtracted({ points: 20 });
   }
   public static assertStreamStateIsCorrect(stream: PointsStreamType) {
     const sumView = stream.views.Sum;

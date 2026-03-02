@@ -16,27 +16,29 @@ export class StreamFactoryBuilder<
   TViews extends Record<string, EvDbView<unknown>> = {},
 > {
   private viewFactories: ViewFactory<unknown, TEvents>[] = [];
-  private eventTypes: EventTypeConfig<IEvDbEventPayload>[] = [];
+  private eventTypes: EventTypeConfig[] = [];
   private viewNames: string[] = [];
 
   constructor(private streamType: TStreamType) {}
 
   /**
-   * Register event type for dynamic method generation - infers the event name from class name
+   * Register a POCO event type by explicit name. T is the event's data shape (a plain type alias).
+   * TEventName captures the string literal so downstream types remain fully typed.
    */
-  withEventType<TEvent extends IEvDbEventPayload>(
-    eventClass: new (...args: never[]) => TEvent,
+  withEventType<T extends object, TEventName extends string>(
+    payloadType: TEventName,
     eventMessagesProducer?: EVDbMessagesProducer,
-  ): StreamFactoryBuilder<TStreamType, TEvents | TEvent, TViews> {
-    // Use the class name as the event name
-    const eventName = eventClass.name;
-
-    this.eventTypes.push({
-      eventClass,
-      eventName,
-      eventMessagesProducer,
-    } as EventTypeConfig<TEvent>);
-    return this as unknown as StreamFactoryBuilder<TStreamType, TEvents | TEvent, TViews>;
+  ): StreamFactoryBuilder<
+    TStreamType,
+    TEvents | (T & { readonly payloadType: TEventName }),
+    TViews
+  > {
+    this.eventTypes.push({ eventName: payloadType, eventMessagesProducer });
+    return this as unknown as StreamFactoryBuilder<
+      TStreamType,
+      TEvents | (T & { readonly payloadType: TEventName }),
+      TViews
+    >;
   }
 
   /**
@@ -90,7 +92,7 @@ export class StreamFactoryBuilder<
     const factory = new EvDbStreamFactory({
       streamType: this.streamType,
       viewFactories: this.viewFactories,
-      eventTypes: this.eventTypes as EventTypeConfig<TEvents>[],
+      eventTypes: this.eventTypes,
       viewNames: this.viewNames,
     }) as EvDbStreamFactory<TEvents, TStreamType, TViews>;
 

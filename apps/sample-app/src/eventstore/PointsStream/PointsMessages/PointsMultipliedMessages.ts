@@ -8,6 +8,6 @@ export const pointsMultipliedMessages = (
 ) => [
   EvDbMessage.createFromEvent(event, {
     payloadType: "Points Multiplied",
-    multiplier: (event.payload as PointsMultiplied).multiplier,
+    multiplier: (event.payload as unknown as PointsMultiplied).multiplier,
   }),
 ];
