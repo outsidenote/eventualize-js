@@ -12,12 +12,13 @@ import type { EvDbStreamFactoryConfig } from "./EvDbStreamFactoryTypes.js";
 import type { IEvDbStreamFactory } from "./IEvDbStreamFactory.js";
 
 /**
- * Type helper to extract event methods
+ * Type helper to extract event methods.
+ * The parameter type is inlined (not aliased) so intellisense shows the resolved POCO shape.
  */
 type EventMethods<TEvents extends IEvDbEventPayload> = {
-  [K in TEvents as `appendEvent${K["payloadType"]}`]: (
-    event: Omit<K, "payloadType">,
-  ) => Promise<void>;
+  [K in TEvents as `appendEvent${K["payloadType"]}`]: (event: {
+    [P in keyof K as P extends "payloadType" ? never : P]: K[P];
+  }) => Promise<void>;
 };
 
 /**
@@ -104,7 +105,7 @@ export class EvDbStreamFactory<
     // Add dynamic methods for each event type
     eventTypes.forEach(({ eventName }) => {
       const methodName = `appendEvent${eventName}`;
-      (DynamicStream.prototype as unknown as Record<string, unknown>)[methodName] = async function (
+      (DynamicStream.prototype as unknown as Record<string, unknown>)[methodName] = function (
         this: EvDbStream,
         event: object,
       ) {

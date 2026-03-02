@@ -8,6 +8,27 @@ import { createViewFactory } from "./EvDbViewFactory.js";
 import type { EvDbView } from "../view/EvDbView.js";
 
 /**
+ * Opaque token carrying T (event data shape) and TEventName (literal string) at the type level,
+ * with the event name as its runtime string value.
+ */
+export type EvtToken<T extends object, TEventName extends string> = TEventName & {
+  readonly __evtBrand: T;
+};
+
+/**
+ * Creates a typed event token. T is the event data shape; TEventName is inferred from the value.
+ * Both type args can be explicit, or only T — TEventName is always inferred from the name argument.
+ *
+ * Usage: evt<FundsCaptured, FundsEventNames.FundsCaptured>(FundsEventNames.FundsCaptured)
+ *    or: evt<FundsCaptured>(FundsEventNames.FundsCaptured)   ← TEventName inferred
+ */
+export function evt<T extends object, TEventName extends string>(
+  name: TEventName,
+): EvtToken<T, TEventName> {
+  return name as EvtToken<T, TEventName>;
+}
+
+/**
  * Fluent builder for creating stream factories with inferred event types
  */
 export class StreamFactoryBuilder<
@@ -22,18 +43,20 @@ export class StreamFactoryBuilder<
   constructor(private streamType: TStreamType) {}
 
   /**
-   * Register a POCO event type by explicit name. T is the event's data shape (a plain type alias).
-   * TEventName captures the string literal so downstream types remain fully typed.
+   * Register a POCO event type. Pass an evt<T>(name) token — T is the event data shape,
+   * name is the runtime payloadType string (inferred as a literal).
+   *
+   * Usage: .withEventType(evt<FundsCaptured>(FundsEventNames.FundsCaptured))
    */
   withEventType<T extends object, TEventName extends string>(
-    payloadType: TEventName,
+    token: EvtToken<T, TEventName>,
     eventMessagesProducer?: EVDbMessagesProducer,
   ): StreamFactoryBuilder<
     TStreamType,
     TEvents | (T & { readonly payloadType: TEventName }),
     TViews
   > {
-    this.eventTypes.push({ eventName: payloadType, eventMessagesProducer });
+    this.eventTypes.push({ eventName: token, eventMessagesProducer });
     return this as unknown as StreamFactoryBuilder<
       TStreamType,
       TEvents | (T & { readonly payloadType: TEventName }),

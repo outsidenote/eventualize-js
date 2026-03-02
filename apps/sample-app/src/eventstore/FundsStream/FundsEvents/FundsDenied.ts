@@ -1,5 +1,5 @@
 export type FundsDenied = {
   readonly amount: number;
-  readonly Currency: string;
+  readonly currency: string;
   readonly reason: string;
 };

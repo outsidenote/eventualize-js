@@ -56,8 +56,8 @@ describe("Database Integration Tests", () => {
             "Stream offset should be 2 after storing events",
           );
 
-          await stream.appendEventFundsDeposited({ amount: 100, Currency: "USD" });
-          await stream.appendEventFundsCaptured({ amount: 20, Currency: "USD" });
+          await stream.appendEventFundsDeposited({ amount: 100, currency: "USD" });
+          await stream.appendEventFundsCaptured({ amount: 20, currency: "USD" });
           const affected = await stream.store();
           assert.strictEqual(affected.numEvents, 2, "Two events should have been stored");
 

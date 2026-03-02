@@ -1,1 +1,1 @@
-export type FundsCaptured = { readonly amount: number; readonly Currency: string };
+export type FundsCaptured = { readonly amount: number; readonly currency: string };
