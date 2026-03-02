@@ -43,20 +43,18 @@ export class StreamFactoryBuilder<
   constructor(private streamType: TStreamType) {}
 
   /**
-   * Register a POCO event type. Pass an evt<T>(name) token — T is the event data shape,
-   * name is the runtime payloadType string (inferred as a literal).
-   *
-   * Usage: .withEventType(evt<FundsCaptured>(FundsEventNames.FundsCaptured))
+   * Register a POCO event type by explicit name. T is the event's data shape (a plain type alias).
+   * TEventName captures the string literal so downstream types remain fully typed.
    */
   withEventType<T extends object, TEventName extends string>(
-    token: EvtToken<T, TEventName>,
+    payloadType: TEventName,
     eventMessagesProducer?: EVDbMessagesProducer,
   ): StreamFactoryBuilder<
     TStreamType,
     TEvents | (T & { readonly payloadType: TEventName }),
     TViews
   > {
-    this.eventTypes.push({ eventName: token, eventMessagesProducer });
+    this.eventTypes.push({ eventName: payloadType, eventMessagesProducer });
     return this as unknown as StreamFactoryBuilder<
       TStreamType,
       TEvents | (T & { readonly payloadType: TEventName }),
