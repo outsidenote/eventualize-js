@@ -1,4 +1,3 @@
-import type IEvDbEventPayload from "@eventualize/types/events/IEvDbEventPayload";
 import type EVDbMessagesProducer from "@eventualize/types/messages/EvDbMessagesProducer";
 import { EvDbStreamFactory } from "./EvDbStreamFactory.js";
 import type { StreamWithEventMethods } from "./EvDbStreamFactory.js";
@@ -33,7 +32,7 @@ export function evt<T extends object, TEventName extends string>(
  */
 export class StreamFactoryBuilder<
   TStreamType extends string,
-  TEvents extends IEvDbEventPayload = never,
+  TEvents extends { readonly eventType: string } = never,
   TViews extends Record<string, EvDbView<unknown>> = {},
 > {
   private viewFactories: ViewFactory<unknown, TEvents>[] = [];
@@ -42,22 +41,17 @@ export class StreamFactoryBuilder<
 
   constructor(private streamType: TStreamType) { }
 
-
   /**
    * Register a POCO event type by explicit name. T is the event's data shape (a plain type alias).
    * TEventName captures the string literal so downstream types remain fully typed.
    */
   withEvent<T extends object>(
-    payloadType: string
-  ): StreamFactoryBuilder<
-    TStreamType,
-    T & { readonly payloadType: string },
-    TViews
-  > {
-    this.eventTypes.push({ eventName: payloadType });
+    eventType: string,
+  ): StreamFactoryBuilder<TStreamType, T & { readonly eventType: string }, TViews> {
+    this.eventTypes.push({ eventName: eventType });
     return this as unknown as StreamFactoryBuilder<
       TStreamType,
-      TEvents | (T & { readonly payloadType: string }),
+      TEvents | (T & { readonly eventType: string }),
       TViews
     >;
   }
@@ -65,19 +59,16 @@ export class StreamFactoryBuilder<
   /**
    * Register a POCO event type by explicit name. T is the event's data shape (a plain type alias).
    * TEventName captures the string literal so downstream types remain fully typed.
+   * @deprecated Use `withEvent` instead.
    */
   withEventType<T extends object, TEventName extends string>(
-    payloadType: TEventName,
+    eventType: TEventName,
     eventMessagesProducer?: EVDbMessagesProducer,
-  ): StreamFactoryBuilder<
-    TStreamType,
-    TEvents | (T & { readonly payloadType: TEventName }),
-    TViews
-  > {
-    this.eventTypes.push({ eventName: payloadType, eventMessagesProducer });
+  ): StreamFactoryBuilder<TStreamType, TEvents | (T & { readonly eventType: TEventName }), TViews> {
+    this.eventTypes.push({ eventName: eventType, eventMessagesProducer });
     return this as unknown as StreamFactoryBuilder<
       TStreamType,
-      TEvents | (T & { readonly payloadType: TEventName }),
+      TEvents | (T & { readonly eventType: TEventName }),
       TViews
     >;
   }

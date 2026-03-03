@@ -3,8 +3,6 @@ import type EvDbViewAddress from "@eventualize/types/view/EvDbViewAddress";
 import type IEvDbStorageSnapshotAdapter from "@eventualize/types/adapters/IEvDbStorageSnapshotAdapter";
 import { EvDbStoredSnapshotData } from "@eventualize/types/snapshots/EvDbStoredSnapshotData";
 import type { EvDbStoredSnapshotResult } from "@eventualize/types/snapshots/EvDbStoredSnapshotResult";
-import type IEvDbEventMetadata from "@eventualize/types/events/IEvDbEventMetadata";
-import type IEvDbEventPayload from "@eventualize/types/events/IEvDbEventPayload";
 import type EvDbEvent from "@eventualize/types/events/EvDbEvent";
 import { EvDbViewRaw } from "./EvDbViewRaw.js";
 
@@ -40,13 +38,9 @@ export abstract class EvDbView<TState>
     );
   }
 
-  public abstract handleOnApply(
-    oldState: TState,
-    event: IEvDbEventPayload,
-    metadata: IEvDbEventMetadata,
-  ): TState;
+  public abstract handleOnApply(oldState: TState, event: EvDbEvent): TState;
 
   protected onApplyEvent(e: EvDbEvent): void {
-    this._state = this.handleOnApply(this._state, e.payload, e);
+    this._state = this.handleOnApply(this._state, e);
   }
 }

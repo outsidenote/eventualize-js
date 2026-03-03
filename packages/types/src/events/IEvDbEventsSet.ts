@@ -1,13 +1,12 @@
-import type IEvDbEventPayload from "./IEvDbEventPayload.js";
-import type IEvDbEventMetadata from "./IEvDbEventMetadata.js";
+import type IEvDbEvent from "./IEvDbEvent.js";
 
 type EvDbStreamEventHandler = (
-  event: IEvDbEventPayload,
+  event: { readonly eventType: string },
   capturedBy?: string,
-) => Promise<IEvDbEventMetadata>;
+) => Promise<IEvDbEvent>;
 
-type EvDbStreamEventHandlersMap<TEvents extends IEvDbEventPayload> = Partial<{
-  [E in TEvents as `apply${E["payloadType"]}`]: EvDbStreamEventHandler;
+type EvDbStreamEventHandlersMap<TEvents extends { readonly eventType: string }> = Partial<{
+  [E in TEvents as `apply${E["eventType"]}`]: EvDbStreamEventHandler;
 }>;
 
 export default EvDbStreamEventHandlersMap;

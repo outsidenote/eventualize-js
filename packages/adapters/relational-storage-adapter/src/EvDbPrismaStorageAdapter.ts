@@ -187,7 +187,7 @@ export class EvDbPrismaStorageAdapter
         yield new EvDbEvent(
           event.event_type,
           new EvDbStreamCursor(event.stream_type, event.stream_id, Number(event.offset)),
-          { payloadType: event.event_type, payload: deserializePayload(event.payload) },
+          deserializePayload(event.payload),
           event.captured_at,
           event.captured_by,
           event.stored_at,

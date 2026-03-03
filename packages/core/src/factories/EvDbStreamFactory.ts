@@ -1,6 +1,5 @@
 import type IEvDbStorageSnapshotAdapter from "@eventualize/types/adapters/IEvDbStorageSnapshotAdapter";
 import type IEvDbStorageStreamAdapter from "@eventualize/types/adapters/IEvDbStorageStreamAdapter";
-import type IEvDbEventPayload from "@eventualize/types/events/IEvDbEventPayload";
 import EvDbStreamCursor from "@eventualize/types/stream/EvDbStreamCursor";
 import EvDbStreamAddress from "@eventualize/types/stream/EvDbStreamAddress";
 import type EVDbMessagesProducer from "@eventualize/types/messages/EvDbMessagesProducer";
@@ -15,9 +14,9 @@ import type { IEvDbStreamFactory } from "./IEvDbStreamFactory.js";
  * Type helper to extract event methods.
  * The parameter type is inlined (not aliased) so intellisense shows the resolved POCO shape.
  */
-type EventMethods<TEvents extends IEvDbEventPayload> = {
-  [K in TEvents as `appendEvent${K["payloadType"]}`]: (event: {
-    [P in keyof K as P extends "payloadType" ? never : P]: K[P];
+type EventMethods<TEvents extends { readonly eventType: string }> = {
+  [K in TEvents as `appendEvent${K["eventType"]}`]: (event: {
+    [P in keyof K as P extends "eventType" ? never : P]: K[P];
   }) => Promise<void>;
 };
 
@@ -32,7 +31,7 @@ type ViewAccessors<TViews extends Record<string, EvDbView<unknown>>> = {
  * Combined stream type with event methods and view accessors
  */
 export type StreamWithEventMethods<
-  TEvents extends IEvDbEventPayload,
+  TEvents extends { readonly eventType: string },
   TViews extends Record<string, EvDbView<unknown>> = {},
 > = EvDbStream & EventMethods<TEvents> & ViewAccessors<TViews>;
 
@@ -40,7 +39,7 @@ export type StreamWithEventMethods<
  * Stream Factory - creates stream instances with configured views and dynamic event methods
  */
 export class EvDbStreamFactory<
-  TEvents extends IEvDbEventPayload,
+  TEvents extends { readonly eventType: string },
   TStreamType extends string,
   TViews extends Record<string, EvDbView<unknown>> = {},
 > implements IEvDbStreamFactory<TEvents, TStreamType, TViews>
@@ -109,7 +108,7 @@ export class EvDbStreamFactory<
         this: EvDbStream,
         event: object,
       ) {
-        return this.appendEvent({ ...event, payloadType: eventName } as IEvDbEventPayload);
+        return this.appendEvent(eventName, event);
       };
     });
 
@@ -228,7 +227,7 @@ export class EvDbStreamFactory<
  * Factory function to create a StreamFactory
  */
 export function createEvDbStreamFactory<
-  TEvents extends IEvDbEventPayload,
+  TEvents extends { readonly eventType: string },
   TStreamType extends string,
   TViews extends Record<string, EvDbView<unknown>> = {},
 >(

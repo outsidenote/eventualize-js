@@ -1,4 +1,3 @@
-import type IEvDbEventPayload from "@eventualize/types/events/IEvDbEventPayload";
 import type EVDbMessagesProducer from "@eventualize/types/messages/EvDbMessagesProducer";
 import type { ViewFactory } from "./EvDbViewFactory.js";
 
@@ -6,7 +5,7 @@ import type { ViewFactory } from "./EvDbViewFactory.js";
  * Configuration for creating a stream factory
  */
 export interface EvDbStreamFactoryConfig<
-  TEvents extends IEvDbEventPayload,
+  TEvents extends { readonly eventType: string },
   TStreamType extends string,
 > {
   streamType: TStreamType;

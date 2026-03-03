@@ -6,8 +6,7 @@ export const pointsMultipliedMessages = (
   event: EvDbEvent,
   _viewStates: Readonly<Record<string, unknown>>,
 ) => [
-  EvDbMessage.createFromEvent(event, {
-    payloadType: "Points Multiplied",
+  EvDbMessage.createFromEvent(event, "Points Multiplied", {
     multiplier: (event.payload as unknown as PointsMultiplied).multiplier,
   }),
 ];

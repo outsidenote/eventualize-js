@@ -1,27 +1,32 @@
-import type IEvDbEventPayload from "@eventualize/types/events/IEvDbEventPayload";
-import type IEvDbEventMetadata from "@eventualize/types/events/IEvDbEventMetadata";
+import type EvDbEvent from "@eventualize/types/events/EvDbEvent";
 
 /**
- * Handler function type for applying an event to state
+ * Handler function type for applying an event to state.
+ * TPayload is the raw event payload POCO (no eventType required).
+ * The optional metadata (full EvDbEvent) is available as the third argument.
  */
-export type EvDbViewEventHandler<TState, TEvent extends IEvDbEventPayload> = (
+export type EvDbViewEventHandler<TState, TPayload> = (
   oldState: TState,
-  event: TEvent,
-  metadata: IEvDbEventMetadata,
+  event: TPayload,
+  metadata: EvDbEvent,
 ) => TState;
 
 /**
- * Map of event handlers - one handler per event type in the union
- * Key is the payloadType string, value is the handler function
+ * Map of event handlers keyed by eventType string.
+ * TEvents is a union of `{ readonly eventType: K } & payload` shapes.
+ * Each handler receives the raw payload (without eventType) plus the full EvDbEvent as metadata.
  */
-export type EvDbStreamEventHandlersMap<TState, TEvents extends IEvDbEventPayload> = {
-  [K in TEvents["payloadType"]]: EvDbViewEventHandler<TState, Extract<TEvents, { payloadType: K }>>;
+export type EvDbStreamEventHandlersMap<TState, TEvents extends { readonly eventType: string }> = {
+  [K in TEvents["eventType"]]: EvDbViewEventHandler<
+    TState,
+    Omit<Extract<TEvents, { eventType: K }>, "eventType">
+  >;
 };
 
 /**
  * Configuration for creating a view
  */
-export interface ViewConfig<TState, TEvents extends IEvDbEventPayload> {
+export interface ViewConfig<TState, TEvents extends { readonly eventType: string }> {
   viewName: string;
   streamType: string;
   defaultState: TState;
