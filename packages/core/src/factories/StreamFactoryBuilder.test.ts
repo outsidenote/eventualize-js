@@ -103,32 +103,22 @@ function makeFactory() {
         PointsAdded: (state: CountState): CountState => ({ count: state.count + 1 }),
         PointsMultiplied: (state: CountState): CountState => ({ count: state.count + 1 }),
       })
+      .withMessageFactories()
       // Two factories for PointsAdded
-      .withMessageFactory<PointsAdded>(
-        "PointsAddedSumNotification",
-        "PointsAdded",
-        (event, views) => ({
-          pointsAdded: event.payload.points,
-          currentSum: views.Sum.sum,
-        }),
-      )
-      .withMessageFactory<PointsAdded>(
-        "PointsAddedCountNotification",
-        "PointsAdded",
-        (event, views) =>
-          views.Count.count > 0
-            ? { pointsAdded: event.payload.points, currentCount: views.Count.count }
-            : undefined,
+      .withPointsAdded<PointsAdded>("PointsAddedSumNotification", (event, views) => ({
+        pointsAdded: event.payload.points,
+        currentSum: views.Sum.sum,
+      }))
+      .withPointsAdded<PointsAdded>("PointsAddedCountNotification", (event, views) =>
+        views.Count.count > 0
+          ? { pointsAdded: event.payload.points, currentCount: views.Count.count }
+          : undefined,
       )
       // One factory for PointsMultiplied
-      .withMessageFactory<PointsMultiplied>(
-        "PointsMultipliedNotification",
-        "PointsMultiplied",
-        (event, views) => ({
-          multiplier: event.payload.multiplier,
-          currentSum: views.Sum.sum,
-        }),
-      )
+      .withPointsMultiplied<PointsMultiplied>("PointsMultipliedNotification", (event, views) => ({
+        multiplier: event.payload.multiplier,
+        currentSum: views.Sum.sum,
+      }))
       .build()
   );
 }
@@ -144,7 +134,7 @@ function createStream() {
 // Tests
 // ---------------------------------------------------------------------------
 
-describe("StreamFactoryBuilder.withMessageFactory", () => {
+describe("StreamFactoryBuilder.withMessageFactories", () => {
   test("factory returns a payload — one message emitted per factory", () => {
     const stream = createStream();
     stream.appendEventPointsAdded({ points: 10 });
