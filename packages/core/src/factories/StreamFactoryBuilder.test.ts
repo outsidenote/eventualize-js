@@ -94,10 +94,9 @@ function makeFactory() {
       .withEvent<PointsAdded>("PointsAdded")
       .withEvent<PointsMultiplied>("PointsMultiplied")
       .withViews()
-      .addView("Sum", { sum: 0 } satisfies SumState, (state: SumState, payload: unknown) => {
-        const p = payload as PointsAdded & PointsMultiplied;
-        if (p.points !== undefined) return { sum: state.sum + p.points };
-        if (p.multiplier !== undefined) return { sum: state.sum * p.multiplier };
+      .addView("Sum", { sum: 0 } satisfies SumState, (state: SumState, payload) => {
+        if ("points" in payload) return { sum: state.sum + payload.points };
+        if ("multiplier" in payload) return { sum: state.sum * payload.multiplier };
         return state;
       })
       .addView("Count", { count: 0 } satisfies CountState, (state: CountState) => ({
@@ -227,8 +226,8 @@ describe("StreamFactoryBuilder — build() without withMessages()", () => {
     const factory = new StreamFactoryBuilder("MinimalStream")
       .withEvent<PointsAdded>("PointsAdded")
       .withViews()
-      .addView("Sum", { sum: 0 }, (state: SumState, payload: unknown) => ({
-        sum: state.sum + (payload as PointsAdded).points,
+      .addView("Sum", { sum: 0 }, (state: SumState, payload) => ({
+        sum: state.sum + payload.points,
       }))
       .build();
 

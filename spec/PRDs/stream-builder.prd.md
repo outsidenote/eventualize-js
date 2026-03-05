@@ -40,10 +40,6 @@ const PointsStreamFactory = new StreamFactoryBuilder("PointsStream")
   .build();
 ```
 
-IMPORTANT:
-
-- `withEvent` signature must be frozen do not change it
-
 ### API Changes Summary
 
 | Aspect | Current | Target |
@@ -141,6 +137,43 @@ where typing would require Milestone 2 work.
 
 **Acceptance**: Handler payload is inferred — no manual cast needed in tests.
 
+#### API changes
+
+While dealing with the type safety:
+
+Challenge the following changes are allowed
+
+- `withEvent` signature must be frozen do not change it
+
+It is OK to nest `addView` inside `withViews` and `addXxx` inside `withMessages` in the following format:
+
+```ts
+const PointsStreamFactory = new StreamFactoryBuilder("PointsStream")
+  .withEvent<PointsAdded>("PointsAdded")
+  .withEvent<PointsSubtracted>("PointsSubtracted")
+  .withEvent<PointsMultiplied>("PointsMultiplied")
+
+  .withViews(builder => builder
+    .addView("Sum", { sum: 0 }, (state, payload, meta) => state)
+    .addView("Count", { count: 0 }, countViewHandler))
+
+  .withMessages(builder => builder
+    .addPointsAdded("Points Added With Sum Notification", (payload, views, meta) => ({
+      pointsAdded: payload.points,
+      PointsSum: views.Sum.sum,
+    }))
+    .addPointsAdded("Points Added With Count Notification", (payload, views, meta) => ({
+      pointsAdded: payload.points,
+      PointsCount: views.Count.count,
+    }))
+    .addPointsMultiplied("Points Multiplied", (payload, views, meta) => ({
+      multiplier: payload.multiplier,
+    })))
+
+  .build();
+  ```
+
+
 ---
 
 ### Milestone 3 — Type Safety: Message Factory Payload & Views
@@ -202,6 +235,6 @@ OR a single catch-all handler (new behavior). Make both ergonomic.
 # Process
 
 - [x] Milestone 1
-- [ ] Milestone 2
+- [x] Milestone 2
 - [ ] Milestone 3
 - [ ] Milestone 4

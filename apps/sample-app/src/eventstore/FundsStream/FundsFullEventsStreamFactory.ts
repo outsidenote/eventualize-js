@@ -7,6 +7,7 @@ import type { FundsDeposited } from "./FundsEvents/FundsDeposited.js";
 import type { FundsRefunded } from "./FundsEvents/FundsRefunded.js";
 import type { FundsWithdrawal } from "./FundsEvents/FundsWithdrawal.js";
 import { FundsEventNames } from "./FundsEventNames.js";
+import IEvDbEventMetadata from "@eventualize/types/events/IEvDbEventMetadata";
 
 const FundsFullEventsStreamFactory = new StreamFactoryBuilder("funds-stream")
   .withEvent<FundsCaptured>(FundsEventNames.FundsCaptured)
@@ -14,6 +15,18 @@ const FundsFullEventsStreamFactory = new StreamFactoryBuilder("funds-stream")
   .withEvent<FundsDeposited>(FundsEventNames.FundsDeposited)
   .withEvent<FundsRefunded>(FundsEventNames.FundsRefunded)
   .withEvent<FundsWithdrawal>(FundsEventNames.FundsWithdrawal)
+  .withViews()
+  .addView("balance", 0, {
+    [FundsEventNames.FundsDeposited]: (oldState: number, event: FundsDeposited) =>
+      oldState + event.amount,
+    [FundsEventNames.FundsWithdrawal]: (oldState: number, event: FundsWithdrawal) =>
+      oldState - event.amount,
+    [FundsEventNames.FundsRefunded]: (oldState: number, event: FundsRefunded) =>
+      oldState + event.amount,
+  })
+  .addView("lastTransaction", [], (_oldState: string[], event: FundsDeposited, meta: IEvDbEventMetadata) => _oldState.length < 10
+    ? [..._oldState, meta.eventType]
+    : [..._oldState.slice(1), meta.eventType])
   .withMessages()
 
   .build();
