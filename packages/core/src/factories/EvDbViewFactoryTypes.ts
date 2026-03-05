@@ -34,4 +34,6 @@ export interface ViewConfig<TState, TEvents extends { readonly eventType: string
   streamType: string;
   defaultState: TState;
   handlers: EvDbStreamEventHandlersMap<TState, TEvents>;
+  /** Optional single catch-all handler — called for every event when present, overrides handlers map. */
+  singleHandler?: (state: TState, payload: unknown, meta: IEvDbEventMetadata) => TState;
 }

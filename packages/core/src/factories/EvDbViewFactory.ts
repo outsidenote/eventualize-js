@@ -25,6 +25,10 @@ class GenericView<TState, TEvents extends { readonly eventType: string }> extend
    * Dispatches by eventType; passes event.payload as the typed event data to the handler.
    */
   public handleOnApply(oldState: TState, event: EvDbEvent): TState {
+    if (this.config.singleHandler) {
+      return this.config.singleHandler(oldState, event.payload, event);
+    }
+
     const eventType = event.eventType as keyof typeof this.config.handlers;
     const handler = this.config.handlers[eventType];
 

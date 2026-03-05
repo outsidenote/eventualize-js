@@ -85,7 +85,7 @@ type SumState = { sum: number };
 type CountState = { count: number };
 
 // ---------------------------------------------------------------------------
-// Factory under test
+// Factory using the new withViews().addView() API
 // ---------------------------------------------------------------------------
 
 function makeFactory() {
@@ -93,30 +93,30 @@ function makeFactory() {
     new StreamFactoryBuilder("TestStream")
       .withEvent<PointsAdded>("PointsAdded")
       .withEvent<PointsMultiplied>("PointsMultiplied")
-      .withView("Sum", { sum: 0 } satisfies SumState, {
-        PointsAdded: (state: SumState, e: PointsAdded): SumState => ({ sum: state.sum + e.points }),
-        PointsMultiplied: (state: SumState, e: PointsMultiplied): SumState => ({
-          sum: state.sum * e.multiplier,
-        }),
+      .withViews()
+      .addView("Sum", { sum: 0 } satisfies SumState, (state: SumState, payload: unknown) => {
+        const p = payload as PointsAdded & PointsMultiplied;
+        if (p.points !== undefined) return { sum: state.sum + p.points };
+        if (p.multiplier !== undefined) return { sum: state.sum * p.multiplier };
+        return state;
       })
-      .withView("Count", { count: 0 } satisfies CountState, {
-        PointsAdded: (state: CountState): CountState => ({ count: state.count + 1 }),
-        PointsMultiplied: (state: CountState): CountState => ({ count: state.count + 1 }),
-      })
+      .addView("Count", { count: 0 } satisfies CountState, (state: CountState) => ({
+        count: state.count + 1,
+      }))
       .withMessages()
       // Two factories for PointsAdded
-      .withPointsAdded("PointsAddedSumNotification", (event, views) => ({
-        pointsAdded: (event.payload as PointsAdded).points,
+      .addPointsAdded("PointsAddedSumNotification", (payload, views) => ({
+        pointsAdded: (payload as PointsAdded).points,
         currentSum: views.Sum.sum,
       }))
-      .withPointsAdded("PointsAddedCountNotification", (event, views) =>
+      .addPointsAdded("PointsAddedCountNotification", (payload, views) =>
         views.Count.count > 0
-          ? { pointsAdded: (event.payload as PointsAdded).points, currentCount: views.Count.count }
+          ? { pointsAdded: (payload as PointsAdded).points, currentCount: views.Count.count }
           : undefined,
       )
       // One factory for PointsMultiplied
-      .withPointsMultiplied("PointsMultipliedNotification", (event, views) => ({
-        multiplier: (event.payload as PointsMultiplied).multiplier,
+      .addPointsMultiplied("PointsMultipliedNotification", (payload, views) => ({
+        multiplier: (payload as PointsMultiplied).multiplier,
         currentSum: views.Sum.sum,
       }))
       .build()
@@ -131,10 +131,10 @@ function createStream() {
 }
 
 // ---------------------------------------------------------------------------
-// Tests
+// Tests — new API (withViews / addView / addXxx)
 // ---------------------------------------------------------------------------
 
-describe("StreamFactoryBuilder.withMessageFactories", () => {
+describe("StreamFactoryBuilder.withViews + withMessages (new API)", () => {
   test("factory returns a payload — one message emitted per factory", () => {
     const stream = createStream();
     stream.appendEventPointsAdded({ points: 10 });
@@ -154,13 +154,6 @@ describe("StreamFactoryBuilder.withMessageFactories", () => {
 
   test("factory returns undefined — message suppressed", () => {
     const stream = createStream();
-    // First PointsAdded: count goes from 0 → 1 *after* the event is applied,
-    // but the producer sees state *after* the event — count=1, so NOT suppressed.
-    // To test suppression we need count=0 at time of first append.
-    // The Count view increments on PointsAdded, so we need a fresh stream where
-    // the count factory fires when count is still 0 — that's not possible here
-    // because applyEvent runs before the producer. So instead verify that a
-    // PointsMultiplied event only emits its own message, not PointsAdded messages.
     stream.appendEventPointsMultiplied({ multiplier: 3 });
 
     const messages = stream.getMessages();
@@ -186,17 +179,9 @@ describe("StreamFactoryBuilder.withMessageFactories", () => {
     const messages = stream.getMessages();
     const sumMsgs = messages.filter((m) => m.messageType === "PointsAddedSumNotification");
     const multMsgs = messages.filter((m) => m.messageType === "PointsMultipliedNotification");
-    // PointsAdded fires sum+count; PointsMultiplied fires multiplied
     assert.strictEqual(sumMsgs.length, 1);
     assert.strictEqual(multMsgs.length, 1);
-    // Multiplied notification should reflect post-append state (sum=7*2=14 after multiply)
     assert.deepStrictEqual(multMsgs[0]!.payload, { multiplier: 2, currentSum: 14 });
-  });
-
-  test("view states are typed — payload fields accessible without cast", () => {
-    // This test is a compile-time proof embedded in the factory definition above.
-    // If event.payload.points or views.Sum.sum required a cast, this file would not compile.
-    assert.ok(true, "type safety verified at compile time");
   });
 
   test("messages are accumulated across multiple appendEvent calls", () => {
@@ -207,5 +192,49 @@ describe("StreamFactoryBuilder.withMessageFactories", () => {
     const messages = stream.getMessages();
     // Each PointsAdded produces 2 messages → total 4
     assert.strictEqual(messages.length, 4);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Tests — withMessages() called directly from EventBuilder (no views)
+// ---------------------------------------------------------------------------
+
+describe("StreamFactoryBuilder — withMessages() without views", () => {
+  test("messages fire without any views registered", () => {
+    const factory = new StreamFactoryBuilder("NoViewStream")
+      .withEvent<PointsAdded>("PointsAdded")
+      .withMessages()
+      .addPointsAdded("SimpleNotification", (payload) => ({
+        pts: (payload as PointsAdded).points,
+      }))
+      .build();
+
+    const stream = factory.create("s1", new StreamAdapterStub(), new SnapshotAdapterStub(), 0);
+    stream.appendEventPointsAdded({ points: 42 });
+
+    const messages = stream.getMessages();
+    assert.strictEqual(messages.length, 1);
+    assert.deepStrictEqual(messages[0]!.payload, { pts: 42 });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Tests — build() directly without messages
+// ---------------------------------------------------------------------------
+
+describe("StreamFactoryBuilder — build() without withMessages()", () => {
+  test("stream works with no outbox factories", () => {
+    const factory = new StreamFactoryBuilder("MinimalStream")
+      .withEvent<PointsAdded>("PointsAdded")
+      .withViews()
+      .addView("Sum", { sum: 0 }, (state: SumState, payload: unknown) => ({
+        sum: state.sum + (payload as PointsAdded).points,
+      }))
+      .build();
+
+    const stream = factory.create("s1", new StreamAdapterStub(), new SnapshotAdapterStub(), 0);
+    stream.appendEventPointsAdded({ points: 5 });
+
+    assert.strictEqual(stream.getMessages().length, 0);
   });
 });
