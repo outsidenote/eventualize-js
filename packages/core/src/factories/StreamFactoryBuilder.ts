@@ -109,7 +109,7 @@ export class StreamFactoryBuilder<
   /**
    * Add a pre-created view factory (legacy support).
    */
-  public withViewFactory<TViewName extends string, TState>(
+  private withViewFactory<TViewName extends string, TState>(
     viewName: TViewName,
     viewFactory: ViewFactory<TState, TEvents>,
   ): StreamFactoryBuilder<TStreamType, TEvents, TViews & Record<TViewName, EvDbView<TState>>> {

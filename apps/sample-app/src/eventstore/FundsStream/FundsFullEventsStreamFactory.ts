@@ -14,6 +14,7 @@ const FundsFullEventsStreamFactory = new StreamFactoryBuilder("funds-stream")
   .withEvent<FundsDeposited>(FundsEventNames.FundsDeposited)
   .withEvent<FundsRefunded>(FundsEventNames.FundsRefunded)
   .withEvent<FundsWithdrawal>(FundsEventNames.FundsWithdrawal)
+  .withMessages()
   .build();
 
 export default FundsFullEventsStreamFactory;
