@@ -19,18 +19,19 @@ type TypedViewStates<TViews extends Record<string, EvDbView<unknown>>> = {
 
 /**
  * The per-event factory methods on MessageFactoryBuilder.
- * Each `with${EventName}` method takes one explicit type arg for the payload type,
- * ensuring event.payload is precisely typed at each call site.
+ * One `with${EventName}(messageType, factory)` method per registered event.
+ * Mirrors the `appendEvent${string}` pattern — visible in IntelliSense as a
+ * template-literal index signature without requiring an explicit type argument.
  */
 type MessageFactoryMethods<
   TStreamType extends string,
   TEvents extends { readonly eventType: string },
   TViews extends Record<string, EvDbView<unknown>>,
 > = {
-  readonly [K: `with${string}`]: <T extends object>(
+  readonly [K: `with${string}`]: (
     messageType: string,
     factory: (
-      event: EvDbEvent & { readonly payload: T },
+      event: EvDbEvent & { readonly payload: object },
       views: TypedViewStates<TViews>,
     ) => unknown,
   ) => FullMessageFactoryBuilder<TStreamType, TEvents, TViews>;
@@ -64,7 +65,7 @@ export class StreamFactoryBuilder<
   private eventTypes: EventTypeConfig[] = [];
   private viewNames: string[] = [];
 
-  constructor(private streamType: TStreamType) { }
+  constructor(private streamType: TStreamType) {}
 
   /**
    * Register a POCO event type by explicit name.
@@ -124,11 +125,10 @@ export class StreamFactoryBuilder<
 
   /**
    * Seals TEvents + TViews and returns a MessageFactoryBuilder whose instance
-   * carries one typed method per registered event: with<EventName><T>(messageType, factory).
-   * Each method takes one explicit type arg T for the event payload type.
+   * carries one method per registered event: with<EventName>(messageType, factory).
    *
    * Must be called after all withView() calls so TViews is fully resolved.
-   * withMessageFactories() is optional — call build() directly to skip outbox registration.
+   * withMessages() is optional — call build() directly to skip outbox registration.
    */
   public withMessages(): FullMessageFactoryBuilder<TStreamType, TEvents, TViews> {
     const builder = new MessageFactoryBuilder<TStreamType, TEvents, TViews>(
@@ -191,10 +191,10 @@ export class StreamFactoryBuilder<
 // ---------------------------------------------------------------------------
 
 /**
- * Builder returned by StreamFactoryBuilder.withMessageFactories().
+ * Builder returned by StreamFactoryBuilder.withMessages().
  * Holds shared mutable state from the parent builder and exposes build().
- * Per-event methods (withPointsAdded<T>, etc.) are injected onto each instance
- * by withMessageFactories() at runtime.
+ * Per-event methods (withPointsAdded, etc.) are injected onto each instance
+ * by withMessages() at runtime.
  */
 class MessageFactoryBuilder<
   TStreamType extends string,
@@ -206,7 +206,7 @@ class MessageFactoryBuilder<
     private readonly viewFactories: ViewFactory<unknown, TEvents>[],
     readonly eventTypes: EventTypeConfig[],
     private readonly viewNames: string[],
-  ) { }
+  ) {}
 
   /**
    * Build the stream factory.

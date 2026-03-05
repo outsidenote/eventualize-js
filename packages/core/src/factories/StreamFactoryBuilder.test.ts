@@ -23,8 +23,8 @@ class SnapshotAdapterStub implements IEvDbStorageSnapshotAdapter {
   async getSnapshotAsync(_viewAddress: EvDbViewAddress): Promise<EvDbStoredSnapshotResultRaw> {
     return EvDbStoredSnapshotResultRaw.Empty;
   }
-  async storeSnapshotAsync(_data: EvDbStoredSnapshotData): Promise<void> { }
-  async close(): Promise<void> { }
+  async storeSnapshotAsync(_data: EvDbStoredSnapshotData): Promise<void> {}
+  async close(): Promise<void> {}
 }
 
 class StreamAdapterStub implements IEvDbStorageStreamAdapter {
@@ -70,7 +70,7 @@ class StreamAdapterStub implements IEvDbStorageStreamAdapter {
   ): Promise<void> {
     throw new Error("not implemented");
   }
-  async close(): Promise<void> { }
+  async close(): Promise<void> {}
 }
 
 // ---------------------------------------------------------------------------
@@ -105,18 +105,18 @@ function makeFactory() {
       })
       .withMessages()
       // Two factories for PointsAdded
-      .withPointsAdded<PointsAdded>("PointsAddedSumNotification", (event, views) => ({
-        pointsAdded: event.payload.points,
+      .withPointsAdded("PointsAddedSumNotification", (event, views) => ({
+        pointsAdded: (event.payload as PointsAdded).points,
         currentSum: views.Sum.sum,
       }))
-      .withPointsAdded<PointsAdded>("PointsAddedCountNotification", (event, views) =>
+      .withPointsAdded("PointsAddedCountNotification", (event, views) =>
         views.Count.count > 0
-          ? { pointsAdded: event.payload.points, currentCount: views.Count.count }
+          ? { pointsAdded: (event.payload as PointsAdded).points, currentCount: views.Count.count }
           : undefined,
       )
       // One factory for PointsMultiplied
-      .withPointsMultiplied<PointsMultiplied>("PointsMultipliedNotification", (event, views) => ({
-        multiplier: event.payload.multiplier,
+      .withPointsMultiplied("PointsMultipliedNotification", (event, views) => ({
+        multiplier: (event.payload as PointsMultiplied).multiplier,
         currentSum: views.Sum.sum,
       }))
       .build()

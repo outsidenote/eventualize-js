@@ -12,16 +12,16 @@ const PointsStreamFactory = new StreamFactoryBuilder("PointsStream")
   .withView("Sum", { sum: 0 }, sumViewHandlers)
   .withView("Count", { count: 0 }, countViewHandlers)
   .withMessages()
-  .withPointsAdded<PointsAdded>("Points Added With Sum Notification", (event, views) => ({
-    pointsAdded: event.payload.points,
+  .withPointsAdded("Points Added With Sum Notification", (event, views) => ({
+    pointsAdded: (event.payload as PointsAdded).points,
     PointsSum: views.Sum.sum,
   }))
-  .withPointsAdded<PointsAdded>("Points Added With Count Notification", (event, views) => ({
-    pointsAdded: event.payload.points,
+  .withPointsAdded("Points Added With Count Notification", (event, views) => ({
+    pointsAdded: (event.payload as PointsAdded).points,
     PointsCount: views.Count.count,
   }))
-  .withPointsMultiplied<PointsMultiplied>("Points Multiplied", (event) => ({
-    multiplier: event.payload.multiplier,
+  .withPointsMultiplied("Points Multiplied", (event) => ({
+    multiplier: (event.payload as PointsMultiplied).multiplier,
   }))
   .build();
 
