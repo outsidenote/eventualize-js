@@ -32,11 +32,7 @@ class GenericView<TState, TEvents extends { readonly eventType: string }> extend
       return oldState;
     }
 
-    return handler(
-      oldState,
-      event.payload as Extract<TEvents, { eventType: typeof eventType }>,
-      event,
-    );
+    return handler(oldState, event.payload as never, event);
   }
 }
 

@@ -13,15 +13,18 @@ export type EvDbViewEventHandler<TState, TPayload> = (
 
 /**
  * Map of event handlers keyed by eventType string.
- * TEvents is a union of `{ readonly eventType: K } & payload` shapes.
- * Each handler receives the raw payload (without eventType) plus the full EvDbEvent as metadata.
+ * Handler authors declare their own specific payload types per handler function.
+ * The map is Partial so views only need handlers for events they care about.
+ *
+ * The event parameter is typed as `never` in the stored function signature to allow
+ * any specific payload type to be assigned here (since function parameters are
+ * contravariant — a handler accepting a specific type is assignable when the
+ * stored signature accepts `never`, because `never` is the bottom type).
+ * At runtime, `GenericView.handleOnApply` casts the payload appropriately.
  */
-export type EvDbStreamEventHandlersMap<TState, TEvents extends { readonly eventType: string }> = {
-  [K in TEvents["eventType"]]: EvDbViewEventHandler<
-    TState,
-    Omit<Extract<TEvents, { eventType: K }>, "eventType">
-  >;
-};
+export type EvDbStreamEventHandlersMap<TState, _TEvents = never> = Partial<
+  Record<string, EvDbViewEventHandler<TState, never>>
+>;
 
 /**
  * Configuration for creating a view
@@ -30,5 +33,5 @@ export interface ViewConfig<TState, TEvents extends { readonly eventType: string
   viewName: string;
   streamType: string;
   defaultState: TState;
-  handlers: Partial<EvDbStreamEventHandlersMap<TState, TEvents>>;
+  handlers: EvDbStreamEventHandlersMap<TState, TEvents>;
 }

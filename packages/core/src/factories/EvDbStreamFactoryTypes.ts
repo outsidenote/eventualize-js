@@ -19,5 +19,5 @@ export interface EvDbStreamFactoryConfig<
  */
 export interface EventTypeConfig {
   eventName: string;
-  eventMessagesProducer?: EVDbMessagesProducer;
+  eventMessagesProducers: EVDbMessagesProducer[];
 }

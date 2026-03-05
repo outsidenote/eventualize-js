@@ -6,9 +6,7 @@ import type { StreamWithEventMethods } from "./EvDbStreamFactory";
 /**
  * General interface for an EvDbStreamFactory implementation.
  */
-
 export interface IEvDbStreamFactory<
-  TEvents extends { readonly eventType: string },
   TStreamType extends string,
   TViews extends Record<string, EvDbView<unknown>> = {},
 > {
@@ -17,13 +15,13 @@ export interface IEvDbStreamFactory<
     streamStorageAdapter: IEvDbStorageStreamAdapter,
     snapshotStorageAdapter?: IEvDbStorageSnapshotAdapter,
     lastStreamOffset?: number,
-  ): StreamWithEventMethods<TEvents, TViews>;
+  ): StreamWithEventMethods<TViews>;
 
   get(
     streamId: string,
     streamStorageAdapter: IEvDbStorageStreamAdapter,
     snapshotStorageAdapter?: IEvDbStorageSnapshotAdapter,
-  ): Promise<StreamWithEventMethods<TEvents, TViews>>;
+  ): Promise<StreamWithEventMethods<TViews>>;
 
   getStreamType(): TStreamType;
 }

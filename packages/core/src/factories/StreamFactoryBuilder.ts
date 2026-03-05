@@ -1,34 +1,32 @@
 import type EVDbMessagesProducer from "@eventualize/types/messages/EvDbMessagesProducer";
+import EvDbMessage from "@eventualize/types/messages/EvDbMessage";
+import type EvDbEvent from "@eventualize/types/events/EvDbEvent";
 import { EvDbStreamFactory } from "./EvDbStreamFactory.js";
 import type { StreamWithEventMethods } from "./EvDbStreamFactory.js";
-import type { EventTypeConfig } from "./EvDbStreamFactoryTypes.js"; // used by withEventType
+import type { EventTypeConfig } from "./EvDbStreamFactoryTypes.js";
 import type { ViewFactory, EvDbStreamEventHandlersMap } from "./EvDbViewFactory.js";
 import { createViewFactory } from "./EvDbViewFactory.js";
 import type { EvDbView } from "../view/EvDbView.js";
 
-/**
- * Opaque token carrying T (event data shape) and TEventName (literal string) at the type level,
- * with the event name as its runtime string value.
- */
-export type EvtToken<T extends object, TEventName extends string> = TEventName & {
-  readonly __evtBrand: T;
+// ---------------------------------------------------------------------------
+// Type helpers
+// ---------------------------------------------------------------------------
+
+/** Maps view names to their state types (not view objects). */
+type TypedViewStates<TViews extends Record<string, EvDbView<unknown>>> = {
+  [K in keyof TViews]: TViews[K] extends EvDbView<infer S> ? S : never;
 };
 
-/**
- * Creates a typed event token. T is the event data shape; TEventName is inferred from the value.
- * Both type args can be explicit, or only T — TEventName is always inferred from the name argument.
- *
- * Usage: evt<FundsCaptured, FundsEventNames.FundsCaptured>(FundsEventNames.FundsCaptured)
- *    or: evt<FundsCaptured>(FundsEventNames.FundsCaptured)   ← TEventName inferred
- */
-export function evt<T extends object, TEventName extends string>(
-  name: TEventName,
-): EvtToken<T, TEventName> {
-  return name as EvtToken<T, TEventName>;
-}
+// ---------------------------------------------------------------------------
+// Builder
+// ---------------------------------------------------------------------------
 
 /**
- * Fluent builder for creating stream factories with inferred event types
+ * Fluent builder for creating stream factories with inferred event types.
+ *
+ * TStreamType — string literal type of the stream name
+ * TEvents     — union of registered event shapes for view handlers and factory internals
+ * TViews      — record of registered view name → EvDbView instances
  */
 export class StreamFactoryBuilder<
   TStreamType extends string,
@@ -42,13 +40,13 @@ export class StreamFactoryBuilder<
   constructor(private streamType: TStreamType) { }
 
   /**
-   * Register a POCO event type by explicit name. T is the event's data shape (a plain type alias).
-   * TEventName captures the string literal so downstream types remain fully typed.
+   * Register a POCO event type by explicit name.
+   * Callers supply one explicit type arg: `withEvent<MyPayload>("MyEventName")`.
    */
   withEvent<T extends object>(
     eventType: string,
-  ): StreamFactoryBuilder<TStreamType, T & { readonly eventType: string }, TViews> {
-    this.eventTypes.push({ eventName: eventType });
+  ): StreamFactoryBuilder<TStreamType, TEvents | (T & { readonly eventType: string }), TViews> {
+    this.eventTypes.push({ eventName: eventType, eventMessagesProducers: [] });
     return this as unknown as StreamFactoryBuilder<
       TStreamType,
       TEvents | (T & { readonly eventType: string }),
@@ -57,32 +55,14 @@ export class StreamFactoryBuilder<
   }
 
   /**
-   * Register a POCO event type by explicit name. T is the event's data shape (a plain type alias).
-   * TEventName captures the string literal so downstream types remain fully typed.
-   * @deprecated Use `withEvent` instead.
-   */
-  withEventType<T extends object, TEventName extends string>(
-    eventType: TEventName,
-    eventMessagesProducer?: EVDbMessagesProducer,
-  ): StreamFactoryBuilder<TStreamType, TEvents | (T & { readonly eventType: TEventName }), TViews> {
-    this.eventTypes.push({ eventName: eventType, eventMessagesProducer });
-    return this as unknown as StreamFactoryBuilder<
-      TStreamType,
-      TEvents | (T & { readonly eventType: TEventName }),
-      TViews
-    >;
-  }
-
-  /**
-   * Add a view with inline handler definition
-   * This can only be called AFTER withEventType calls to ensure type safety
+   * Add a view with inline handler definition.
+   * Must be called after all withEvent calls to ensure type safety.
    */
   public withView<TViewName extends string, TState>(
     viewName: TViewName,
     defaultState: TState,
     handlers: EvDbStreamEventHandlersMap<TState, TEvents>,
   ): StreamFactoryBuilder<TStreamType, TEvents, TViews & Record<TViewName, EvDbView<TState>>> {
-    // Create the view factory
     const viewFactory = createViewFactory<TState, TEvents>({
       viewName,
       streamType: this.streamType,
@@ -100,7 +80,7 @@ export class StreamFactoryBuilder<
   }
 
   /**
-   * Add a pre-created view factory (legacy support)
+   * Add a pre-created view factory (legacy support).
    */
   public withViewFactory<TViewName extends string, TState>(
     viewName: TViewName,
@@ -116,10 +96,49 @@ export class StreamFactoryBuilder<
   }
 
   /**
-   * Build the stream factory using event types registered via `withEventType`.
+   * Register a typed outbox message factory for a specific event type.
+   *
+   * T is the event payload type (one explicit type arg).
+   * The factory receives fully-typed event payload and view states; returning undefined
+   * suppresses message emission. Multiple calls for the same eventType all fire independently.
+   *
+   * Must be called after withView so TViews is fully populated.
+   */
+  public withMessageFactory<T extends object>(
+    messageType: string,
+    eventType: string,
+    factory: (
+      event: EvDbEvent & { readonly payload: T },
+      views: TypedViewStates<TViews>,
+    ) => unknown,
+  ): this {
+    const producer: EVDbMessagesProducer = (event, viewStates) => {
+      if (event.eventType !== eventType) return [];
+      const payload = factory(
+        event as EvDbEvent & { readonly payload: T },
+        viewStates as unknown as TypedViewStates<TViews>,
+      );
+      if (payload === undefined) return [];
+      return [EvDbMessage.createFromEvent(event, messageType, payload)];
+    };
+
+    const config = this.eventTypes.find((e) => e.eventName === eventType);
+    if (config) {
+      config.eventMessagesProducers.push(producer);
+    } else {
+      this.eventTypes.push({ eventName: eventType, eventMessagesProducers: [producer] });
+    }
+
+    return this;
+  }
+
+  /**
+   * Build the stream factory.
+   * The returned factory's `StreamType` property is a type helper for extracting the stream type,
+   * which includes dynamic `appendEvent${EventName}` methods and typed view accessors.
    */
   public build(): EvDbStreamFactory<TEvents, TStreamType, TViews> & {
-    StreamType: StreamWithEventMethods<TEvents, TViews>;
+    StreamType: StreamWithEventMethods<TViews>;
   } {
     const factory = new EvDbStreamFactory({
       streamType: this.streamType,
@@ -128,10 +147,11 @@ export class StreamFactoryBuilder<
       viewNames: this.viewNames,
     }) as EvDbStreamFactory<TEvents, TStreamType, TViews>;
 
-    // Return factory with type helper for stream type extraction
     return Object.assign(factory, {
-      // This is a type-only property for extracting the stream type
-      StreamType: null as unknown as StreamWithEventMethods<TEvents, TViews>,
+      StreamType: null as unknown as StreamWithEventMethods<TViews>,
     });
   }
 }
+
+// Re-export StreamWithEventMethods for consumers
+export type { StreamWithEventMethods } from "./EvDbStreamFactory.js";
