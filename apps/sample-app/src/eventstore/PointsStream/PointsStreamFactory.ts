@@ -11,7 +11,7 @@ const PointsStreamFactory = new StreamFactoryBuilder("PointsStream")
   .withEvent<PointsMultiplied>("PointsMultiplied")
   .withView("Sum", { sum: 0 }, sumViewHandlers)
   .withView("Count", { count: 0 }, countViewHandlers)
-  .withMessageFactories()
+  .withMessages()
   .withPointsAdded<PointsAdded>("Points Added With Sum Notification", (event, views) => ({
     pointsAdded: event.payload.points,
     PointsSum: views.Sum.sum,

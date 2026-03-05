@@ -23,8 +23,8 @@ class SnapshotAdapterStub implements IEvDbStorageSnapshotAdapter {
   async getSnapshotAsync(_viewAddress: EvDbViewAddress): Promise<EvDbStoredSnapshotResultRaw> {
     return EvDbStoredSnapshotResultRaw.Empty;
   }
-  async storeSnapshotAsync(_data: EvDbStoredSnapshotData): Promise<void> {}
-  async close(): Promise<void> {}
+  async storeSnapshotAsync(_data: EvDbStoredSnapshotData): Promise<void> { }
+  async close(): Promise<void> { }
 }
 
 class StreamAdapterStub implements IEvDbStorageStreamAdapter {
@@ -70,7 +70,7 @@ class StreamAdapterStub implements IEvDbStorageStreamAdapter {
   ): Promise<void> {
     throw new Error("not implemented");
   }
-  async close(): Promise<void> {}
+  async close(): Promise<void> { }
 }
 
 // ---------------------------------------------------------------------------
@@ -103,7 +103,7 @@ function makeFactory() {
         PointsAdded: (state: CountState): CountState => ({ count: state.count + 1 }),
         PointsMultiplied: (state: CountState): CountState => ({ count: state.count + 1 }),
       })
-      .withMessageFactories()
+      .withMessages()
       // Two factories for PointsAdded
       .withPointsAdded<PointsAdded>("PointsAddedSumNotification", (event, views) => ({
         pointsAdded: event.payload.points,

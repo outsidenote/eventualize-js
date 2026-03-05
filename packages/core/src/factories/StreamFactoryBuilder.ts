@@ -64,7 +64,7 @@ export class StreamFactoryBuilder<
   private eventTypes: EventTypeConfig[] = [];
   private viewNames: string[] = [];
 
-  constructor(private streamType: TStreamType) {}
+  constructor(private streamType: TStreamType) { }
 
   /**
    * Register a POCO event type by explicit name.
@@ -130,7 +130,7 @@ export class StreamFactoryBuilder<
    * Must be called after all withView() calls so TViews is fully resolved.
    * withMessageFactories() is optional — call build() directly to skip outbox registration.
    */
-  public withMessageFactories(): FullMessageFactoryBuilder<TStreamType, TEvents, TViews> {
+  public withMessages(): FullMessageFactoryBuilder<TStreamType, TEvents, TViews> {
     const builder = new MessageFactoryBuilder<TStreamType, TEvents, TViews>(
       this.streamType,
       this.viewFactories,
@@ -206,7 +206,7 @@ class MessageFactoryBuilder<
     private readonly viewFactories: ViewFactory<unknown, TEvents>[],
     readonly eventTypes: EventTypeConfig[],
     private readonly viewNames: string[],
-  ) {}
+  ) { }
 
   /**
    * Build the stream factory.
