@@ -1,14 +1,14 @@
-import type EvDbEvent from "@eventualize/types/events/EvDbEvent";
+import type IEvDbEventMetadata from "@eventualize/types/events/IEvDbEventMetadata";
 
 /**
  * Handler function type for applying an event to state.
  * TPayload is the raw event payload POCO (no eventType required).
- * The optional metadata (full EvDbEvent) is available as the third argument.
+ * The optional metadata (event metadata without payload) is available as the third argument.
  */
 export type EvDbViewEventHandler<TState, TPayload> = (
   oldState: TState,
   event: TPayload,
-  metadata: EvDbEvent,
+  metadata: IEvDbEventMetadata,
 ) => TState;
 
 /**
