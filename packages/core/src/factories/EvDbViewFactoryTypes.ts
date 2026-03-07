@@ -23,8 +23,8 @@ export type EvDbViewEventHandler<TState, TPayload> = (
  * stored signature accepts `never`, because `never` is the bottom type).
  * At runtime, `GenericView.handleOnApply` casts the payload appropriately.
  */
-export type EvDbStreamEventHandlersMap<TState, _TEvents = never> = Partial<
-  Record<string, EvDbViewEventHandler<TState, never>>
+export type EvDbStreamEventHandlersMap<TState, TEvents extends IEvDbEventType = never> = Partial<
+  Record<TEvents["eventType"], EvDbViewEventHandler<TState, never>>
 >;
 
 /**

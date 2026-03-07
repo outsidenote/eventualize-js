@@ -106,23 +106,25 @@ function buildMessageBuilder<
  * Type surface for the per-event `from<EventName>` methods injected at runtime.
  * One method per registered event; each accepts a handler (state, payload, meta) => state.
  * Payload is typed `never` here — callers annotate the payload type explicitly.
+ * Keys are derived from TEvents["eventType"] so only registered event names are valid.
  */
-type FromEventMethods<TState> = {
-  readonly [K: `from${string}`]: (
+type FromEventMethods<TState, TEvents extends IEvDbEventType> = {
+  readonly [E in TEvents as `from${E["eventType"]}`]: (
     handler: (state: TState, payload: never, meta: IEvDbEventMetadata) => TState,
-  ) => FullViewHandlerBuilder<TState>;
+  ) => FullViewHandlerBuilder<TState, TEvents>;
 };
 
 /** ViewHandlerBuilder augmented with the per-event `from<EventName>` typed methods. */
-type FullViewHandlerBuilder<TState> = ViewHandlerBuilder<TState> & FromEventMethods<TState>;
+type FullViewHandlerBuilder<TState, TEvents extends IEvDbEventType> =
+  ViewHandlerBuilder<TState, TEvents> & FromEventMethods<TState, TEvents>;
 
 /**
  * Fluent builder for per-event view handlers.
  * Used inside the builder-callback overload of addViewPattern().
  * Per-event methods (fromPointsAdded, etc.) are injected onto each instance at construction time.
  */
-class ViewHandlerBuilder<TState> {
-  readonly handlers: EvDbStreamEventHandlersMap<TState, never> = {};
+class ViewHandlerBuilder<TState, TEvents extends IEvDbEventType> {
+  readonly handlers: EvDbStreamEventHandlersMap<TState, TEvents> = {};
 }
 
 /**
@@ -130,9 +132,9 @@ class ViewHandlerBuilder<TState> {
  * from a plain single catch-all handler without probing the function itself.
  * Use the `fromEvents()` helper to create one.
  */
-class ViewHandlerBuilderCallback<TState> {
+class ViewHandlerBuilderCallback<TState, TEvents extends IEvDbEventType> {
   constructor(
-    readonly fn: (builder: FullViewHandlerBuilder<TState>) => FullViewHandlerBuilder<TState>,
+    readonly fn: (builder: FullViewHandlerBuilder<TState, TEvents>) => FullViewHandlerBuilder<TState, TEvents>,
   ) { }
 }
 
@@ -144,32 +146,32 @@ class ViewHandlerBuilderCallback<TState> {
  *     .fromWithdrawn((s, e: Withdrawn) => s - e.amount)
  *   ))
  */
-export function fromEvents<TState>(
-  fn: (builder: FullViewHandlerBuilder<TState>) => FullViewHandlerBuilder<TState>,
-): ViewHandlerBuilderCallback<TState> {
+export function fromEvents<TState, TEvents extends IEvDbEventType>(
+  fn: (builder: FullViewHandlerBuilder<TState, TEvents>) => FullViewHandlerBuilder<TState, TEvents>,
+): ViewHandlerBuilderCallback<TState, TEvents> {
   return new ViewHandlerBuilderCallback(fn);
 }
 
 /**
  * Constructs a FullViewHandlerBuilder with `from<EventName>` methods injected per registered event.
  */
-function buildViewHandlerBuilder<TState>(
+function buildViewHandlerBuilder<TState, TEvents extends IEvDbEventType>(
   eventTypes: EventTypeConfig[],
-): FullViewHandlerBuilder<TState> {
-  const builder = new ViewHandlerBuilder<TState>();
+): FullViewHandlerBuilder<TState, TEvents> {
+  const builder = new ViewHandlerBuilder<TState, TEvents>();
   const instance = builder as unknown as Record<string, unknown>;
 
   for (const { eventName } of eventTypes) {
     const capturedName = eventName;
     instance[`from${capturedName}`] = function (
       handler: (state: TState, payload: never, meta: IEvDbEventMetadata) => TState,
-    ): FullViewHandlerBuilder<TState> {
+    ): FullViewHandlerBuilder<TState, TEvents> {
       (builder.handlers as Record<string, unknown>)[capturedName] = handler;
-      return builder as unknown as FullViewHandlerBuilder<TState>;
+      return builder as unknown as FullViewHandlerBuilder<TState, TEvents>;
     };
   }
 
-  return builder as unknown as FullViewHandlerBuilder<TState>;
+  return builder as unknown as FullViewHandlerBuilder<TState, TEvents>;
 }
 
 // ---------------------------------------------------------------------------
@@ -202,7 +204,7 @@ class ViewBuilder<
   public addView<TViewName extends string, TState>(
     viewName: TViewName,
     defaultState: TState,
-    builderCallback: ViewHandlerBuilderCallback<TState>,
+    builderCallback: ViewHandlerBuilderCallback<TState, TEvents>,
   ): ViewBuilder<TStreamType, TEvents, TViews & Record<TViewName, TState>>;
 
   /**
@@ -214,7 +216,7 @@ class ViewBuilder<
     viewName: TViewName,
     defaultState: TState,
     handlers: Partial<
-      Record<string, (state: TState, payload: never, meta: IEvDbEventMetadata) => TState>
+      Record<TEvents["eventType"], (state: TState, payload: never, meta: IEvDbEventMetadata) => TState>
     >,
   ): ViewBuilder<TStreamType, TEvents, TViews & Record<TViewName, TState>>;
 
@@ -233,7 +235,7 @@ class ViewBuilder<
     viewName: TViewName,
     defaultState: TState,
     handlerOrMapOrCallback:
-      | ViewHandlerBuilderCallback<TState>
+      | ViewHandlerBuilderCallback<TState, TEvents>
       | Partial<Record<string, (state: TState, payload: never, meta: IEvDbEventMetadata) => TState>>
       | ((state: TState, payload: ExtractPayload<TEvents>, meta: IEvDbEventMetadata) => TState),
   ): ViewBuilder<TStreamType, TEvents, TViews & Record<TViewName, TState>> {
@@ -243,7 +245,7 @@ class ViewBuilder<
       | undefined;
 
     if (handlerOrMapOrCallback instanceof ViewHandlerBuilderCallback) {
-      const vhb = buildViewHandlerBuilder<TState>(this.eventTypes);
+      const vhb = buildViewHandlerBuilder<TState, TEvents>(this.eventTypes);
       const result = handlerOrMapOrCallback.fn(vhb);
       handlers = result.handlers as EvDbStreamEventHandlersMap<TState, TEvents>;
     } else if (typeof handlerOrMapOrCallback === "function") {
