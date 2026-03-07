@@ -10,6 +10,13 @@ import type { EvDbView } from "../view/EvDbView.js";
 import type { EvDbStreamFactoryConfig } from "./EvDbStreamFactoryTypes.js";
 import type { IEvDbStreamFactory } from "./IEvDbStreamFactory.js";
 
+/** Returns true if the adapter also implements IEvDbStorageSnapshotAdapter. */
+function isSnapshotAdapter(
+  adapter: IEvDbStorageStreamAdapter,
+): adapter is IEvDbStorageStreamAdapter & IEvDbStorageSnapshotAdapter {
+  return typeof (adapter as unknown as IEvDbStorageSnapshotAdapter).getSnapshotAsync === "function";
+}
+
 /**
  * Dynamic append methods: `appendEvent${EventName}(payload) => Promise<void>`.
  * Typed via template literal index signature — all registered event names are valid,
@@ -22,17 +29,19 @@ type AppendEventMethods = {
 
 /**
  * Type helper to create view accessors map.
+ * TViews maps view names to their state values directly (not EvDbView wrappers).
  */
-type ViewAccessors<TViews extends Record<string, EvDbView<unknown>>> = {
+type ViewAccessors<TViews extends Record<string, unknown>> = {
   readonly views: TViews;
 };
 
 /**
  * Combined stream type with dynamic append methods and view accessors.
- * TViews maps view names to EvDbView instances.
+ * TViews maps view names to state values (not EvDbView wrappers).
  */
-export type StreamWithEventMethods<TViews extends Record<string, EvDbView<unknown>> = {}> =
-  EvDbStream & AppendEventMethods & ViewAccessors<TViews>;
+export type StreamWithEventMethods<TViews extends Record<string, unknown> = {}> = EvDbStream &
+  AppendEventMethods &
+  ViewAccessors<TViews>;
 
 /**
  * Stream Factory - creates stream instances with configured views and dynamic event methods.
@@ -40,7 +49,7 @@ export type StreamWithEventMethods<TViews extends Record<string, EvDbView<unknow
 export class EvDbStreamFactory<
   TEvents extends { readonly eventType: string },
   TStreamType extends string,
-  TViews extends Record<string, EvDbView<unknown>> = {},
+  TViews extends Record<string, unknown> = {},
 > implements IEvDbStreamFactory<TStreamType, TViews>
 {
   private DynamicStreamClass: new (
@@ -72,7 +81,7 @@ export class EvDbStreamFactory<
     };
 
     class DynamicStream extends EvDbStream {
-      public readonly views: Record<string, EvDbView<unknown>> = {};
+      public readonly views: Record<string, unknown> = {};
 
       constructor(
         streamType: string,
@@ -90,12 +99,18 @@ export class EvDbStreamFactory<
           messagesProducer,
         );
 
-        // Create view accessors
+        // Expose state values directly (not EvDbView wrappers).
+        // Uses a Proxy so each property access reads view.state live.
+        const viewsByName: Record<string, EvDbView<unknown>> = {};
         views.forEach((view, index) => {
           const viewName = viewNames[index];
-          if (viewName) {
-            this.views[viewName] = view;
-          }
+          if (viewName) viewsByName[viewName] = view;
+        });
+        (this as unknown as Record<string, unknown>).views = new Proxy(viewsByName, {
+          get(target, prop: string) {
+            const view = target[prop];
+            return view ? view.state : undefined;
+          },
         });
       }
     }
@@ -129,8 +144,11 @@ export class EvDbStreamFactory<
     snapshotStorageAdapter: IEvDbStorageSnapshotAdapter | undefined = undefined,
     lastStreamOffset: number = 0,
   ): StreamWithEventMethods<TViews> {
-    const views = snapshotStorageAdapter
-      ? this.createViews(streamId, snapshotStorageAdapter)
+    const effectiveSnapshotAdapter =
+      snapshotStorageAdapter ??
+      (isSnapshotAdapter(streamStorageAdapter) ? streamStorageAdapter : undefined);
+    const views = effectiveSnapshotAdapter
+      ? this.createViews(streamId, effectiveSnapshotAdapter)
       : ([] as EvDbView<never>[]);
 
     return new this.DynamicStreamClass(
@@ -172,8 +190,11 @@ export class EvDbStreamFactory<
   ): Promise<StreamWithEventMethods<TViews>> {
     const streamAddress = new EvDbStreamAddress(this.config.streamType, streamId);
 
-    const views = snapshotStorageAdapter
-      ? await Promise.all(this.getViews(streamId, snapshotStorageAdapter))
+    const effectiveSnapshotAdapter =
+      snapshotStorageAdapter ??
+      (isSnapshotAdapter(streamStorageAdapter) ? streamStorageAdapter : undefined);
+    const views = effectiveSnapshotAdapter
+      ? await Promise.all(this.getViews(streamId, effectiveSnapshotAdapter))
       : [];
 
     if (!views.length) {
@@ -181,7 +202,7 @@ export class EvDbStreamFactory<
       const stream = this.create(
         streamId,
         streamStorageAdapter,
-        snapshotStorageAdapter,
+        effectiveSnapshotAdapter,
         lastStreamOffset,
       );
       return stream;
@@ -194,18 +215,27 @@ export class EvDbStreamFactory<
     );
 
     let streamOffset: number = -1;
-    if (snapshotStorageAdapter) {
+    if (effectiveSnapshotAdapter) {
       const streamCursor = new EvDbStreamCursor(streamAddress, lowestViewOffset + 1);
       const events = await streamStorageAdapter.getEventsAsync(streamCursor);
 
-      streamOffset = lowestViewOffset;
+      let eventsConsumed = false;
       for await (const event of events) {
         views.forEach((view) => view.applyEvent(event));
         streamOffset = event.streamCursor.offset;
+        eventsConsumed = true;
+      }
+
+      if (!eventsConsumed) {
+        // No events found — lowestViewOffset may be 0 from the Empty sentinel (no real snapshot).
+        // Fall back to the authoritative last offset from the stream store.
+        streamOffset =
+          lowestViewOffset > 0
+            ? lowestViewOffset
+            : await streamStorageAdapter.getLastOffsetAsync(streamAddress);
       }
     } else {
-      streamOffset = // TODO: get last offset from stream storage adapter if no snapshot adapter is provided
-        streamOffset = await streamStorageAdapter.getLastOffsetAsync(streamAddress);
+      streamOffset = await streamStorageAdapter.getLastOffsetAsync(streamAddress);
     }
 
     return new this.DynamicStreamClass(

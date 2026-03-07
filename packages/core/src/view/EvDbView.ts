@@ -25,7 +25,7 @@ export abstract class EvDbView<TState>
     public readonly defaultState: TState,
   ) {
     super(storageAdapter, address, snapshot);
-    if (snapshot.offset === 0) this._state = this.getDefaultState();
+    if (snapshot.offset < 0) this._state = this.getDefaultState();
     else this._state = snapshot.state;
   }
 

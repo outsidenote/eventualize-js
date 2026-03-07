@@ -1,6 +1,6 @@
 import { test, describe } from "node:test";
 import * as assert from "node:assert";
-import { StreamFactoryBuilder } from "./StreamFactoryBuilder.js";
+import { StreamFactoryBuilder, fromEvents } from "./StreamFactoryBuilder.js";
 import { EvDbStoredSnapshotResultRaw } from "@eventualize/types/snapshots/EvDbStoredSnapshotResultRaw";
 import type IEvDbStorageSnapshotAdapter from "@eventualize/types/adapters/IEvDbStorageSnapshotAdapter";
 import type IEvDbStorageStreamAdapter from "@eventualize/types/adapters/IEvDbStorageStreamAdapter";
@@ -23,8 +23,8 @@ class SnapshotAdapterStub implements IEvDbStorageSnapshotAdapter {
   async getSnapshotAsync(_viewAddress: EvDbViewAddress): Promise<EvDbStoredSnapshotResultRaw> {
     return EvDbStoredSnapshotResultRaw.Empty;
   }
-  async storeSnapshotAsync(_data: EvDbStoredSnapshotData): Promise<void> {}
-  async close(): Promise<void> {}
+  async storeSnapshotAsync(_data: EvDbStoredSnapshotData): Promise<void> { }
+  async close(): Promise<void> { }
 }
 
 class StreamAdapterStub implements IEvDbStorageStreamAdapter {
@@ -70,7 +70,7 @@ class StreamAdapterStub implements IEvDbStorageStreamAdapter {
   ): Promise<void> {
     throw new Error("not implemented");
   }
-  async close(): Promise<void> {}
+  async close(): Promise<void> { }
 }
 
 // ---------------------------------------------------------------------------
@@ -94,11 +94,15 @@ function makeFactory() {
       .withEvent<PointsAdded>("PointsAdded")
       .withEvent<PointsMultiplied>("PointsMultiplied")
       .withViews()
-      .addView("Sum", { sum: 0 } satisfies SumState, (state: SumState, payload) => {
-        if ("points" in payload) return { sum: state.sum + payload.points };
-        if ("multiplier" in payload) return { sum: state.sum * payload.multiplier };
-        return state;
-      })
+      .addView(
+        "Sum",
+        { sum: 0 } satisfies SumState,
+        (state: SumState, payload: PointsAdded | PointsMultiplied) => {
+          if ("points" in payload) return { sum: state.sum + payload.points };
+          if ("multiplier" in payload) return { sum: state.sum * payload.multiplier };
+          return state;
+        },
+      )
       .addView("Count", { count: 0 } satisfies CountState, (state: CountState) => ({
         count: state.count + 1,
       }))
@@ -226,7 +230,7 @@ describe("StreamFactoryBuilder — build() without withMessages()", () => {
     const factory = new StreamFactoryBuilder("MinimalStream")
       .withEvent<PointsAdded>("PointsAdded")
       .withViews()
-      .addView("Sum", { sum: 0 }, (state: SumState, payload) => ({
+      .addView("Sum", { sum: 0 }, (state: SumState, payload: PointsAdded) => ({
         sum: state.sum + payload.points,
       }))
       .build();
@@ -235,5 +239,61 @@ describe("StreamFactoryBuilder — build() without withMessages()", () => {
     stream.appendEventPointsAdded({ points: 5 });
 
     assert.strictEqual(stream.getMessages().length, 0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Tests — addView with builder-callback (per-event fluent API)
+// ---------------------------------------------------------------------------
+
+describe("StreamFactoryBuilder — addView with builder callback", () => {
+  test("per-event handlers fire for their event and ignore others", () => {
+    const factory = new StreamFactoryBuilder("TestStream")
+      .withEvent<PointsAdded>("PointsAdded")
+      .withEvent<PointsMultiplied>("PointsMultiplied")
+      .withViews()
+      .addView(
+        "Sum",
+        { sum: 0 } satisfies SumState,
+        fromEvents((b) =>
+          b
+            .fromPointsAdded((state: SumState, payload: PointsAdded) => ({
+              sum: state.sum + payload.points,
+            }))
+            .fromPointsMultiplied((state: SumState, payload: PointsMultiplied) => ({
+              sum: state.sum * payload.multiplier,
+            })),
+        ),
+      )
+      .build();
+
+    const stream = factory.create("s1", new StreamAdapterStub(), new SnapshotAdapterStub(), 0);
+    stream.appendEventPointsAdded({ points: 10 });
+    stream.appendEventPointsMultiplied({ multiplier: 3 });
+
+    assert.deepStrictEqual(stream.views.Sum, { sum: 30 });
+  });
+
+  test("unregistered events leave state unchanged", () => {
+    const factory = new StreamFactoryBuilder("TestStream")
+      .withEvent<PointsAdded>("PointsAdded")
+      .withEvent<PointsMultiplied>("PointsMultiplied")
+      .withViews()
+      .addView(
+        "Sum",
+        { sum: 0 } satisfies SumState,
+        fromEvents((b) =>
+          b.fromPointsAdded((state: SumState, payload: PointsAdded) => ({
+            sum: state.sum + payload.points,
+          })),
+        ),
+      )
+      .build();
+
+    const stream = factory.create("s1", new StreamAdapterStub(), new SnapshotAdapterStub(), 0);
+    stream.appendEventPointsAdded({ points: 5 });
+    stream.appendEventPointsMultiplied({ multiplier: 100 }); // no handler — state unchanged
+
+    assert.deepStrictEqual(stream.views.Sum, { sum: 5 });
   });
 });

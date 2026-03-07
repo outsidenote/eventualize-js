@@ -8,5 +8,5 @@ export class EvDbStoredSnapshotResultRaw extends EvDbStoredSnapshotResultBase {
     this.state = state;
   }
 
-  static readonly Empty = new EvDbStoredSnapshotResultRaw(0, undefined, undefined);
+  static readonly Empty = new EvDbStoredSnapshotResultRaw(-1, undefined, undefined);
 }

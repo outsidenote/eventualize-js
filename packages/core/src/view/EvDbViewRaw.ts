@@ -15,7 +15,7 @@ export abstract class EvDbViewRaw implements IEvDbViewStore {
     public readonly address: EvDbViewAddress,
     snapshot: EvDbStoredSnapshotResult<unknown>,
   ) {
-    const storeOffset = snapshot.offset ?? 0;
+    const storeOffset = snapshot.offset ?? -1;
     this._memoryOffset = storeOffset;
     this._storeOffset = storeOffset;
 

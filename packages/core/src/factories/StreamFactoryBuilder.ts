@@ -7,16 +7,10 @@ import type { StreamWithEventMethods } from "./EvDbStreamFactory.js";
 import type { EventTypeConfig } from "./EvDbStreamFactoryTypes.js";
 import type { ViewFactory, EvDbStreamEventHandlersMap } from "./EvDbViewFactory.js";
 import { createViewFactory } from "./EvDbViewFactory.js";
-import type { EvDbView } from "../view/EvDbView.js";
 
 // ---------------------------------------------------------------------------
 // Type helpers
 // ---------------------------------------------------------------------------
-
-/** Maps view names to their state types (not view objects). */
-type TypedViewStates<TViews extends Record<string, EvDbView<unknown>>> = {
-  [K in keyof TViews]: TViews[K] extends EvDbView<infer S> ? S : never;
-};
 
 /**
  * Strips the { eventType: string } sentinel from each union member of TEvents,
@@ -30,19 +24,16 @@ type ExtractPayload<T> = T extends { readonly eventType: string } ? Omit<T, "eve
 /**
  * The per-event factory methods on MessageFactoryBuilder.
  * One `add${EventName}(messageType, factory)` method per registered event.
+ * TViews maps view names to their state values directly.
  */
 type MessageFactoryMethods<
   TStreamType extends string,
   TEvents extends { readonly eventType: string },
-  TViews extends Record<string, EvDbView<unknown>>,
+  TViews extends Record<string, unknown>,
 > = {
   readonly [K: `add${string}`]: (
     messageType: string,
-    factory: (
-      payload: IEvDbPayloadData,
-      views: TypedViewStates<TViews>,
-      meta: IEvDbEventMetadata,
-    ) => unknown,
+    factory: (payload: IEvDbPayloadData, views: TViews, meta: IEvDbEventMetadata) => unknown,
   ) => FullMessageFactoryBuilder<TStreamType, TEvents, TViews>;
 };
 
@@ -50,7 +41,7 @@ type MessageFactoryMethods<
 type FullMessageFactoryBuilder<
   TStreamType extends string,
   TEvents extends { readonly eventType: string },
-  TViews extends Record<string, EvDbView<unknown>>,
+  TViews extends Record<string, unknown>,
 > = MessageFactoryBuilder<TStreamType, TEvents, TViews> &
   MessageFactoryMethods<TStreamType, TEvents, TViews>;
 
@@ -61,7 +52,7 @@ type FullMessageFactoryBuilder<
 function buildMessageBuilder<
   TStreamType extends string,
   TEvents extends { readonly eventType: string },
-  TViews extends Record<string, EvDbView<unknown>>,
+  TViews extends Record<string, unknown>,
 >(
   streamType: TStreamType,
   viewFactories: ViewFactory<unknown, TEvents>[],
@@ -107,36 +98,111 @@ function buildMessageBuilder<
 }
 
 // ---------------------------------------------------------------------------
+// ViewHandlerBuilder — fluent per-event handler registration
+// ---------------------------------------------------------------------------
+
+/**
+ * Type surface for the per-event `from<EventName>` methods injected at runtime.
+ * One method per registered event; each accepts a handler (state, payload, meta) => state.
+ * Payload is typed `never` here — callers annotate the payload type explicitly.
+ */
+type FromEventMethods<TState> = {
+  readonly [K: `from${string}`]: (
+    handler: (state: TState, payload: never, meta: IEvDbEventMetadata) => TState,
+  ) => FullViewHandlerBuilder<TState>;
+};
+
+/** ViewHandlerBuilder augmented with the per-event `from<EventName>` typed methods. */
+type FullViewHandlerBuilder<TState> = ViewHandlerBuilder<TState> & FromEventMethods<TState>;
+
+/**
+ * Fluent builder for per-event view handlers.
+ * Used inside the builder-callback overload of addViewPattern().
+ * Per-event methods (fromPointsAdded, etc.) are injected onto each instance at construction time.
+ */
+class ViewHandlerBuilder<TState> {
+  readonly handlers: EvDbStreamEventHandlersMap<TState, never> = {};
+}
+
+/**
+ * Tagged wrapper so the addViewPattern implementation can distinguish a builder callback
+ * from a plain single catch-all handler without probing the function itself.
+ * Use the `fromEvents()` helper to create one.
+ */
+class ViewHandlerBuilderCallback<TState> {
+  constructor(
+    readonly fn: (builder: FullViewHandlerBuilder<TState>) => FullViewHandlerBuilder<TState>,
+  ) { }
+}
+
+/**
+ * Wraps a per-event builder callback for use with addViewPattern().
+ * @example
+ *   .addViewPattern("balance", 0, fromEvents(b => b
+ *     .fromDeposited((s, e: Deposited) => s + e.amount)
+ *     .fromWithdrawn((s, e: Withdrawn) => s - e.amount)
+ *   ))
+ */
+export function fromEvents<TState>(
+  fn: (builder: FullViewHandlerBuilder<TState>) => FullViewHandlerBuilder<TState>,
+): ViewHandlerBuilderCallback<TState> {
+  return new ViewHandlerBuilderCallback(fn);
+}
+
+/**
+ * Constructs a FullViewHandlerBuilder with `from<EventName>` methods injected per registered event.
+ */
+function buildViewHandlerBuilder<TState>(
+  eventTypes: EventTypeConfig[],
+): FullViewHandlerBuilder<TState> {
+  const builder = new ViewHandlerBuilder<TState>();
+  const instance = builder as unknown as Record<string, unknown>;
+
+  for (const { eventName } of eventTypes) {
+    const capturedName = eventName;
+    instance[`from${capturedName}`] = function (
+      handler: (state: TState, payload: never, meta: IEvDbEventMetadata) => TState,
+    ): FullViewHandlerBuilder<TState> {
+      (builder.handlers as Record<string, unknown>)[capturedName] = handler;
+      return builder as unknown as FullViewHandlerBuilder<TState>;
+    };
+  }
+
+  return builder as unknown as FullViewHandlerBuilder<TState>;
+}
+
+// ---------------------------------------------------------------------------
 // ViewBuilder
 // ---------------------------------------------------------------------------
 
 /**
  * Builder returned by StreamFactoryBuilder.withViews().
- * Exposes addView() (repeatable) then withMessages() or build().
+ * Exposes addViewPattern() (repeatable) then withMessages() or build().
  * Does NOT expose withEvent().
+ * TViews accumulates Record<viewName, stateType> — state values, not EvDbView wrappers.
  */
 class ViewBuilder<
   TStreamType extends string,
   TEvents extends { readonly eventType: string },
-  TViews extends Record<string, EvDbView<unknown>>,
+  TViews extends Record<string, unknown>,
 > {
   constructor(
     private readonly streamType: TStreamType,
     private readonly viewFactories: ViewFactory<unknown, TEvents>[],
     private readonly eventTypes: EventTypeConfig[],
     private readonly viewNames: string[],
-  ) {}
+  ) { }
 
   /**
-   * Add a view with a single catch-all handler.
-   * Handler signature: (state, payload, meta) => state
-   * Returns this for chaining.
+   * Add a view with a fluent per-event builder callback.
+   * The callback receives a builder with one `from<EventName>(handler)` method per registered event.
+   * Chain as many as needed; unhandled events return state unchanged.
    */
   public addView<TViewName extends string, TState>(
     viewName: TViewName,
     defaultState: TState,
-    handler: (state: TState, payload: ExtractPayload<TEvents>, meta: IEvDbEventMetadata) => TState,
-  ): ViewBuilder<TStreamType, TEvents, TViews & Record<TViewName, EvDbView<TState>>>;
+    builderCallback: ViewHandlerBuilderCallback<TState>,
+  ): ViewBuilder<TStreamType, TEvents, TViews & Record<TViewName, TState>>;
 
   /**
    * Add a view with a per-event handlers map (pattern-matching style).
@@ -149,38 +215,57 @@ class ViewBuilder<
     handlers: Partial<
       Record<string, (state: TState, payload: never, meta: IEvDbEventMetadata) => TState>
     >,
-  ): ViewBuilder<TStreamType, TEvents, TViews & Record<TViewName, EvDbView<TState>>>;
+  ): ViewBuilder<TStreamType, TEvents, TViews & Record<TViewName, TState>>;
+
+  /**
+   * Add a view with a single catch-all handler.
+   * Handler signature: (state, payload, meta) => state
+   * Returns this for chaining.
+   */
+  public addView<TViewName extends string, TState>(
+    viewName: TViewName,
+    defaultState: TState,
+    handler: (state: TState, payload: ExtractPayload<TEvents>, meta: IEvDbEventMetadata) => TState,
+  ): ViewBuilder<TStreamType, TEvents, TViews & Record<TViewName, TState>>;
 
   public addView<TViewName extends string, TState>(
     viewName: TViewName,
     defaultState: TState,
-    handlerOrMap:
-      | ((state: TState, payload: ExtractPayload<TEvents>, meta: IEvDbEventMetadata) => TState)
-      | Partial<
-          Record<string, (state: TState, payload: never, meta: IEvDbEventMetadata) => TState>
-        >,
-  ): ViewBuilder<TStreamType, TEvents, TViews & Record<TViewName, EvDbView<TState>>> {
+    handlerOrMapOrCallback:
+      | ViewHandlerBuilderCallback<TState>
+      | Partial<Record<string, (state: TState, payload: never, meta: IEvDbEventMetadata) => TState>>
+      | ((state: TState, payload: ExtractPayload<TEvents>, meta: IEvDbEventMetadata) => TState),
+  ): ViewBuilder<TStreamType, TEvents, TViews & Record<TViewName, TState>> {
+    let handlers: EvDbStreamEventHandlersMap<TState, TEvents> = {};
+    let singleHandler:
+      | ((state: TState, payload: unknown, meta: IEvDbEventMetadata) => TState)
+      | undefined;
+
+    if (handlerOrMapOrCallback instanceof ViewHandlerBuilderCallback) {
+      const vhb = buildViewHandlerBuilder<TState>(this.eventTypes);
+      const result = handlerOrMapOrCallback.fn(vhb);
+      handlers = result.handlers as EvDbStreamEventHandlersMap<TState, TEvents>;
+    } else if (typeof handlerOrMapOrCallback === "function") {
+      singleHandler = handlerOrMapOrCallback as (
+        state: TState,
+        payload: unknown,
+        meta: IEvDbEventMetadata,
+      ) => TState;
+    } else {
+      handlers = handlerOrMapOrCallback as EvDbStreamEventHandlersMap<TState, TEvents>;
+    }
+
     const viewFactory = createViewFactory<TState, TEvents>({
       viewName,
       streamType: this.streamType,
       defaultState,
-      handlers:
-        typeof handlerOrMap === "function"
-          ? {}
-          : (handlerOrMap as EvDbStreamEventHandlersMap<TState, TEvents>),
-      singleHandler:
-        typeof handlerOrMap === "function"
-          ? (handlerOrMap as (state: TState, payload: unknown, meta: IEvDbEventMetadata) => TState)
-          : undefined,
+      handlers,
+      singleHandler,
     });
 
     this.viewFactories.push(viewFactory as unknown as ViewFactory<unknown, TEvents>);
     this.viewNames.push(viewName);
-    return this as unknown as ViewBuilder<
-      TStreamType,
-      TEvents,
-      TViews & Record<TViewName, EvDbView<TState>>
-    >;
+    return this as unknown as ViewBuilder<TStreamType, TEvents, TViews & Record<TViewName, TState>>;
   }
 
   /**
@@ -223,18 +308,18 @@ class ViewBuilder<
  *
  * TStreamType — string literal type of the stream name
  * TEvents     — union of registered event shapes for view handlers and factory internals
- * TViews      — record of registered view name → EvDbView instances
+ * TViews      — record of registered view name → state type (values exposed directly on stream.views)
  */
 export class StreamFactoryBuilder<
   TStreamType extends string,
   TEvents extends { readonly eventType: string } = never,
-  TViews extends Record<string, EvDbView<unknown>> = {},
+  TViews extends Record<string, unknown> = {},
 > {
   private viewFactories: ViewFactory<unknown, TEvents>[] = [];
   private eventTypes: EventTypeConfig[] = [];
   private viewNames: string[] = [];
 
-  constructor(private streamType: TStreamType) {}
+  constructor(private streamType: TStreamType) { }
 
   /**
    * Register a POCO event type by explicit name.
@@ -252,7 +337,7 @@ export class StreamFactoryBuilder<
   }
 
   /**
-   * Enter the views phase. Returns a ViewBuilder that exposes addView().
+   * Enter the views phase. Returns a ViewBuilder that exposes addViewPattern().
    * ViewBuilder does NOT expose withEvent().
    */
   public withViews(): ViewBuilder<TStreamType, TEvents, TViews> {
@@ -268,7 +353,7 @@ export class StreamFactoryBuilder<
    * Seals TEvents + TViews and returns a MessageFactoryBuilder whose instance
    * carries one method per registered event: add<EventName>(messageType, factory).
    *
-   * Must be called after all withView()/withViews() calls so TViews is fully resolved.
+   * Must be called after all withViews() calls so TViews is fully resolved.
    * withMessages() is optional — call build() directly to skip outbox registration.
    */
   public withMessages(): FullMessageFactoryBuilder<TStreamType, TEvents, TViews> {
@@ -314,14 +399,14 @@ export class StreamFactoryBuilder<
 class MessageFactoryBuilder<
   TStreamType extends string,
   TEvents extends { readonly eventType: string },
-  TViews extends Record<string, EvDbView<unknown>>,
+  TViews extends Record<string, unknown>,
 > {
   constructor(
     private readonly streamType: TStreamType,
     private readonly viewFactories: ViewFactory<unknown, TEvents>[],
     readonly eventTypes: EventTypeConfig[],
     private readonly viewNames: string[],
-  ) {}
+  ) { }
 
   /**
    * Build the stream factory.
