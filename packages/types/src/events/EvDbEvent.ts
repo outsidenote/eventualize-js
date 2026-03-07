@@ -1,5 +1,5 @@
 import type EvDbStreamCursor from "../stream/EvDbStreamCursor.js";
-import type IEvDbEvent from "./IEvDbEvent.js";
+import type IEvDbEvent from "./IEvDbEventType.js";
 
 export default class EvDbEvent implements IEvDbEvent {
   constructor(
@@ -9,5 +9,5 @@ export default class EvDbEvent implements IEvDbEvent {
     public readonly capturedAt: Date = new Date(Date.now()),
     public readonly capturedBy: string = "N/A",
     public readonly storedAt?: Date,
-  ) {}
+  ) { }
 }

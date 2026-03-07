@@ -7,6 +7,7 @@ import type { StreamWithEventMethods } from "./EvDbStreamFactory.js";
 import type { EventTypeConfig } from "./EvDbStreamFactoryTypes.js";
 import type { ViewFactory, EvDbStreamEventHandlersMap } from "./EvDbViewFactory.js";
 import { createViewFactory } from "./EvDbViewFactory.js";
+import type IEvDbEventType from "@eventualize/types/events/IEvDbEventType.js";
 
 // ---------------------------------------------------------------------------
 // Type helpers
@@ -19,7 +20,7 @@ import { createViewFactory } from "./EvDbViewFactory.js";
  * TEvents = (PointsAdded & { eventType: string }) | (PointsMultiplied & { eventType: string })
  * ExtractPayload<TEvents> = PointsAdded | PointsMultiplied
  */
-type ExtractPayload<T> = T extends { readonly eventType: string } ? Omit<T, "eventType"> : never;
+type ExtractPayload<T> = T extends IEvDbEventType ? Omit<T, "eventType"> : never;
 
 /**
  * The per-event factory methods on MessageFactoryBuilder.
@@ -28,7 +29,7 @@ type ExtractPayload<T> = T extends { readonly eventType: string } ? Omit<T, "eve
  */
 type MessageFactoryMethods<
   TStreamType extends string,
-  TEvents extends { readonly eventType: string },
+  TEvents extends IEvDbEventType,
   TViews extends Record<string, unknown>,
 > = {
   readonly [K: `add${string}`]: (
@@ -40,7 +41,7 @@ type MessageFactoryMethods<
 /** MessageFactoryBuilder augmented with the per-event typed methods. */
 type FullMessageFactoryBuilder<
   TStreamType extends string,
-  TEvents extends { readonly eventType: string },
+  TEvents extends IEvDbEventType,
   TViews extends Record<string, unknown>,
 > = MessageFactoryBuilder<TStreamType, TEvents, TViews> &
   MessageFactoryMethods<TStreamType, TEvents, TViews>;
@@ -51,7 +52,7 @@ type FullMessageFactoryBuilder<
 
 function buildMessageBuilder<
   TStreamType extends string,
-  TEvents extends { readonly eventType: string },
+  TEvents extends IEvDbEventType,
   TViews extends Record<string, unknown>,
 >(
   streamType: TStreamType,
@@ -183,7 +184,7 @@ function buildViewHandlerBuilder<TState>(
  */
 class ViewBuilder<
   TStreamType extends string,
-  TEvents extends { readonly eventType: string },
+  TEvents extends IEvDbEventType,
   TViews extends Record<string, unknown>,
 > {
   constructor(
@@ -312,7 +313,7 @@ class ViewBuilder<
  */
 export class StreamFactoryBuilder<
   TStreamType extends string,
-  TEvents extends { readonly eventType: string } = never,
+  TEvents extends IEvDbEventType = never,
   TViews extends Record<string, unknown> = {},
 > {
   private viewFactories: ViewFactory<unknown, TEvents>[] = [];
@@ -327,11 +328,11 @@ export class StreamFactoryBuilder<
    */
   withEvent<T extends object>(
     eventType: string,
-  ): StreamFactoryBuilder<TStreamType, TEvents | (T & { readonly eventType: string }), TViews> {
+  ): StreamFactoryBuilder<TStreamType, TEvents | (T & IEvDbEventType), TViews> {
     this.eventTypes.push({ eventName: eventType, eventMessagesProducers: [] });
     return this as unknown as StreamFactoryBuilder<
       TStreamType,
-      TEvents | (T & { readonly eventType: string }),
+      TEvents | (T & IEvDbEventType),
       TViews
     >;
   }
@@ -398,7 +399,7 @@ export class StreamFactoryBuilder<
  */
 class MessageFactoryBuilder<
   TStreamType extends string,
-  TEvents extends { readonly eventType: string },
+  TEvents extends IEvDbEventType,
   TViews extends Record<string, unknown>,
 > {
   constructor(

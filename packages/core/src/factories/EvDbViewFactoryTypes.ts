@@ -1,4 +1,5 @@
 import type IEvDbEventMetadata from "@eventualize/types/events/IEvDbEventMetadata";
+import type IEvDbEventType from "@eventualize/types/events/IEvDbEventType";
 
 /**
  * Handler function type for applying an event to state.
@@ -29,7 +30,7 @@ export type EvDbStreamEventHandlersMap<TState, _TEvents = never> = Partial<
 /**
  * Configuration for creating a view
  */
-export interface ViewConfig<TState, TEvents extends { readonly eventType: string }> {
+export interface ViewConfig<TState, TEvents extends IEvDbEventType> {
   viewName: string;
   streamType: string;
   defaultState: TState;

@@ -9,6 +9,7 @@ import EvDbStream from "../stream/EvDbStream.js";
 import type { EvDbView } from "../view/EvDbView.js";
 import type { EvDbStreamFactoryConfig } from "./EvDbStreamFactoryTypes.js";
 import type { IEvDbStreamFactory } from "./IEvDbStreamFactory.js";
+import type IEvDbEventType from "@eventualize/types/events/IEvDbEventType.js";
 
 /** Returns true if the adapter also implements IEvDbStorageSnapshotAdapter. */
 function isSnapshotAdapter(
@@ -47,7 +48,7 @@ export type StreamWithEventMethods<TViews extends Record<string, unknown> = {}> 
  * Stream Factory - creates stream instances with configured views and dynamic event methods.
  */
 export class EvDbStreamFactory<
-  TEvents extends { readonly eventType: string },
+  TEvents extends IEvDbEventType,
   TStreamType extends string,
   TViews extends Record<string, unknown> = {},
 > implements IEvDbStreamFactory<TStreamType, TViews> {
@@ -255,7 +256,7 @@ export class EvDbStreamFactory<
  * Factory function to create a StreamFactory.
  */
 export function createEvDbStreamFactory<
-  TEvents extends { readonly eventType: string },
+  TEvents extends IEvDbEventType,
   TStreamType extends string,
   TViews extends Record<string, EvDbView<unknown>> = {},
 >(config: EvDbStreamFactoryConfig<TEvents, TStreamType>): IEvDbStreamFactory<TStreamType, TViews> {

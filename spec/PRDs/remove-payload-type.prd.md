@@ -3,7 +3,7 @@ the type of the event is `eventType` defined in 'IEvDbEvent'
 
 the `payload` on `EvDbEvent` should be `unknown` instead of  `IEvDbEventPayload`.
 
-`T & { readonly payloadType: string }` should be `T & { readonly eventType: string }` or remove if not required
+`T & { readonly payloadType: string }` should be `T & IEvDbEventType` or remove if not required
 
 the appendEvent should be changed from
 

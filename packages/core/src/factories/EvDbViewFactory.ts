@@ -5,11 +5,12 @@ import EvDbViewAddress from "@eventualize/types/view/EvDbViewAddress";
 import EvDbStreamAddress from "@eventualize/types/stream/EvDbStreamAddress";
 import { EvDbStoredSnapshotResult } from "@eventualize/types/snapshots/EvDbStoredSnapshotResult";
 import type { ViewConfig } from "./EvDbViewFactoryTypes.js";
+import type IEvDbEventType from "@eventualize/types/events/IEvDbEventType.js";
 
 /**
  * Generic View class that uses the handlers map
  */
-class GenericView<TState, TEvents extends { readonly eventType: string }> extends EvDbView<TState> {
+class GenericView<TState, TEvents extends IEvDbEventType> extends EvDbView<TState> {
   constructor(
     viewAddress: EvDbViewAddress,
     storageAdapter: IEvDbStorageSnapshotAdapter,
@@ -43,7 +44,7 @@ class GenericView<TState, TEvents extends { readonly eventType: string }> extend
 /**
  * View Factory - creates view instances with the handlers map
  */
-export class ViewFactory<TState, TEvents extends { readonly eventType: string }> {
+export class ViewFactory<TState, TEvents extends IEvDbEventType> {
   constructor(private readonly config: ViewConfig<TState, TEvents>) {}
 
   /**
@@ -85,7 +86,7 @@ export class ViewFactory<TState, TEvents extends { readonly eventType: string }>
 /**
  * Factory function to create a ViewFactory
  */
-export function createViewFactory<TState, TEvents extends { readonly eventType: string }>(
+export function createViewFactory<TState, TEvents extends IEvDbEventType>(
   config: ViewConfig<TState, TEvents>,
 ): ViewFactory<TState, TEvents> {
   return new ViewFactory(config);

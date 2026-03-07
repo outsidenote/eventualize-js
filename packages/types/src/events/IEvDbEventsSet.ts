@@ -1,11 +1,12 @@
-import type IEvDbEvent from "./IEvDbEvent.js";
+import type IEvDbEvent from "./IEvDbEventType.js";
+import type IEvDbEventType from "./IEvDbEventType.js";
 
 type EvDbStreamEventHandler = (
-  event: { readonly eventType: string },
+  event: IEvDbEventType,
   capturedBy?: string,
 ) => Promise<IEvDbEvent>;
 
-type EvDbStreamEventHandlersMap<TEvents extends { readonly eventType: string }> = Partial<{
+type EvDbStreamEventHandlersMap<TEvents extends IEvDbEventType> = Partial<{
   [E in TEvents as `apply${E["eventType"]}`]: EvDbStreamEventHandler;
 }>;
 
