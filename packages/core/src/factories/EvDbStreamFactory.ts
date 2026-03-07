@@ -5,7 +5,7 @@ import EvDbStreamAddress from "@eventualize/types/stream/EvDbStreamAddress";
 import type EVDbMessagesProducer from "@eventualize/types/messages/EvDbMessagesProducer";
 import type EvDbEvent from "@eventualize/types/events/EvDbEvent";
 
-import EvDbStream from "../store/EvDbStream.js";
+import EvDbStream from "../stream/EvDbStream.js";
 import type { EvDbView } from "../view/EvDbView.js";
 import type { EvDbStreamFactoryConfig } from "./EvDbStreamFactoryTypes.js";
 import type { IEvDbStreamFactory } from "./IEvDbStreamFactory.js";
@@ -50,8 +50,7 @@ export class EvDbStreamFactory<
   TEvents extends { readonly eventType: string },
   TStreamType extends string,
   TViews extends Record<string, unknown> = {},
-> implements IEvDbStreamFactory<TStreamType, TViews>
-{
+> implements IEvDbStreamFactory<TStreamType, TViews> {
   private DynamicStreamClass: new (
     streamType: string,
     views: EvDbView<unknown>[],
