@@ -1,4 +1,7 @@
 
 export default interface IEvDbEventType {
-    readonly payload: unknown;
+    /**
+     * The type of the event
+     */
+    readonly eventType: string;
 }
