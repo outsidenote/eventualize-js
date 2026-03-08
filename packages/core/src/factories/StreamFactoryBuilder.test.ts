@@ -1,6 +1,6 @@
 import { test, describe } from "node:test";
 import * as assert from "node:assert";
-import { StreamFactoryBuilder, fromEvents } from "./StreamFactoryBuilder.js";
+import { StreamFactoryBuilder } from "./StreamFactoryBuilder.js";
 import { EvDbStoredSnapshotResultRaw } from "@eventualize/types/snapshots/EvDbStoredSnapshotResultRaw";
 import type IEvDbStorageSnapshotAdapter from "@eventualize/types/adapters/IEvDbStorageSnapshotAdapter";
 import type IEvDbStorageStreamAdapter from "@eventualize/types/adapters/IEvDbStorageStreamAdapter";
@@ -253,18 +253,14 @@ describe("StreamFactoryBuilder — addView with builder callback", () => {
       .withEvent<PointsAdded>("PointsAdded")
       .withEvent<PointsMultiplied>("PointsMultiplied")
       .withViews()
-      .addView(
-        "Sum",
-        { sum: 0 } satisfies SumState,
-        fromEvents((b) =>
-          b
-            .fromPointsAdded((state: SumState, payload: PointsAdded) => ({
-              sum: state.sum + payload.points,
-            }))
-            .fromPointsMultiplied((state: SumState, payload: PointsMultiplied) => ({
-              sum: state.sum * payload.multiplier,
-            })),
-        ),
+      .addViewBuilder("Sum", { sum: 0 } satisfies SumState, (b) =>
+        b
+          .fromPointsAdded((state: SumState, payload: PointsAdded) => ({
+            sum: state.sum + payload.points,
+          }))
+          .fromPointsMultiplied((state: SumState, payload: PointsMultiplied) => ({
+            sum: state.sum * payload.multiplier,
+          })),
       )
       .build();
 
@@ -280,14 +276,10 @@ describe("StreamFactoryBuilder — addView with builder callback", () => {
       .withEvent<PointsAdded>("PointsAdded")
       .withEvent<PointsMultiplied>("PointsMultiplied")
       .withViews()
-      .addView(
-        "Sum",
-        { sum: 0 } satisfies SumState,
-        fromEvents((b) =>
-          b.fromPointsAdded((state: SumState, payload: PointsAdded) => ({
-            sum: state.sum + payload.points,
-          })),
-        ),
+      .addViewBuilder("Sum", { sum: 0 } satisfies SumState, (b) =>
+        b.fromPointsAdded((state: SumState, payload: PointsAdded) => ({
+          sum: state.sum + payload.points,
+        })),
       )
       .build();
 

@@ -143,7 +143,7 @@ type FullViewHandlerBuilder<TState, TEvents extends IEvDbEventType> = ViewHandle
 
 /**
  * Fluent builder for per-event view handlers.
- * Used inside the builder-callback overload of addViewPattern().
+ * Used inside addViewBuilder().
  * Per-event methods (fromPointsAdded, etc.) are injected onto each instance at construction time.
  */
 class ViewHandlerBuilder<TState, TEvents extends IEvDbEventType> {
@@ -151,8 +151,7 @@ class ViewHandlerBuilder<TState, TEvents extends IEvDbEventType> {
 }
 
 /**
- * Tagged wrapper so the addViewPattern implementation can distinguish a builder callback
- * from a plain single catch-all handler without probing the function itself.
+ * Tagged wrapper for use with addViewBuilder().
  * Use the `fromEvents()` helper to create one.
  */
 class ViewHandlerBuilderCallback<TState, TEvents extends IEvDbEventType> {
@@ -164,9 +163,9 @@ class ViewHandlerBuilderCallback<TState, TEvents extends IEvDbEventType> {
 }
 
 /**
- * Wraps a per-event builder callback for use with addViewPattern().
+ * Wraps a per-event builder callback for use with addViewBuilder().
  * @example
- *   .addViewPattern("balance", 0, fromEvents(b => b
+ *   .addViewBuilder("balance", 0, fromEvents(b => b
  *     .fromDeposited((s, e: Deposited) => s + e.amount)
  *     .fromWithdrawn((s, e: Withdrawn) => s - e.amount)
  *   ))
@@ -205,7 +204,7 @@ function buildViewHandlerBuilder<TState, TEvents extends IEvDbEventType>(
 
 /**
  * Builder returned by StreamFactoryBuilder.withViews().
- * Exposes addViewPattern() (repeatable) then withMessages() or build().
+ * Exposes addView(), addViewPattern(), addViewBuilder() (repeatable) then withMessages() or build().
  * Does NOT expose withEvent().
  * TViews accumulates Record<viewName, stateType> — state values, not EvDbView wrappers.
  */
@@ -223,66 +222,12 @@ class ViewBuilder<
     private readonly viewNames: string[],
   ) {}
 
-  /**
-   * Add a view with a fluent per-event builder callback.
-   * The callback receives a builder with one `from<EventName>(handler)` method per registered event.
-   * Chain as many as needed; unhandled events return state unchanged.
-   */
-  public addView<TViewName extends string, TState>(
+  private _registerView<TViewName extends string, TState>(
     viewName: TViewName,
     defaultState: TState,
-    builderCallback: ViewHandlerBuilderCallback<TState, TEvents>,
-  ): ViewBuilder<TStreamType, TEvents, TViews & Record<TViewName, TState>, TEventMap>;
-
-  /**
-   * Add a view with a per-event handlers map (pattern-matching style).
-   * Keys are event type strings; values are handler functions for that event.
-   * Unhandled events return the state unchanged.
-   */
-  public addView<TViewName extends string, TState>(
-    viewName: TViewName,
-    defaultState: TState,
-    handlers: EventHandlersMap<TEvents, TState>,
-  ): ViewBuilder<TStreamType, TEvents, TViews & Record<TViewName, TState>, TEventMap>;
-
-  /**
-   * Add a view with a single catch-all handler.
-   * Handler signature: (state, payload, meta) => state
-   * Returns this for chaining.
-   */
-  public addView<TViewName extends string, TState>(
-    viewName: TViewName,
-    defaultState: TState,
-    handler: (state: TState, payload: ExtractPayload<TEvents>, meta: IEvDbEventMetadata) => TState,
-  ): ViewBuilder<TStreamType, TEvents, TViews & Record<TViewName, TState>, TEventMap>;
-
-  public addView<TViewName extends string, TState>(
-    viewName: TViewName,
-    defaultState: TState,
-    handlerOrMapOrCallback:
-      | ViewHandlerBuilderCallback<TState, TEvents>
-      | EventHandlersMap<TEvents, TState>
-      | ((state: TState, payload: ExtractPayload<TEvents>, meta: IEvDbEventMetadata) => TState),
-  ): ViewBuilder<TStreamType, TEvents, TViews & Record<TViewName, TState>> {
-    let handlers: EvDbStreamEventHandlersMap<TState, TEvents> = {};
-    let singleHandler:
-      | ((state: TState, payload: unknown, meta: IEvDbEventMetadata) => TState)
-      | undefined;
-
-    if (handlerOrMapOrCallback instanceof ViewHandlerBuilderCallback) {
-      const vhb = buildViewHandlerBuilder<TState, TEvents>(this.eventTypes);
-      const result = handlerOrMapOrCallback.fn(vhb);
-      handlers = result.handlers as EvDbStreamEventHandlersMap<TState, TEvents>;
-    } else if (typeof handlerOrMapOrCallback === "function") {
-      singleHandler = handlerOrMapOrCallback as (
-        state: TState,
-        payload: unknown,
-        meta: IEvDbEventMetadata,
-      ) => TState;
-    } else {
-      handlers = handlerOrMapOrCallback as unknown as EvDbStreamEventHandlersMap<TState, TEvents>;
-    }
-
+    handlers: EvDbStreamEventHandlersMap<TState, TEvents>,
+    singleHandler?: (state: TState, payload: unknown, meta: IEvDbEventMetadata) => TState,
+  ): ViewBuilder<TStreamType, TEvents, TViews & Record<TViewName, TState>, TEventMap> {
     const viewFactory = createViewFactory<TState, TEvents>({
       viewName,
       streamType: this.streamType,
@@ -290,7 +235,6 @@ class ViewBuilder<
       handlers,
       singleHandler,
     });
-
     this.viewFactories.push(viewFactory as unknown as ViewFactory<unknown, TEvents>);
     this.viewNames.push(viewName);
     return this as unknown as ViewBuilder<
@@ -299,6 +243,70 @@ class ViewBuilder<
       TViews & Record<TViewName, TState>,
       TEventMap
     >;
+  }
+
+  /**
+   * Add a view with a single catch-all handler.
+   * Handler signature: (state, payload, meta) => state
+   * All events are passed to this one handler.
+   */
+  public addView<TViewName extends string, TState>(
+    viewName: TViewName,
+    defaultState: TState,
+    handler: (state: TState, payload: ExtractPayload<TEvents>, meta: IEvDbEventMetadata) => TState,
+  ): ViewBuilder<TStreamType, TEvents, TViews & Record<TViewName, TState>, TEventMap> {
+    return this._registerView(
+      viewName,
+      defaultState,
+      {},
+      handler as (state: TState, payload: unknown, meta: IEvDbEventMetadata) => TState,
+    );
+  }
+
+  /**
+   * Add a view with a per-event handlers map (pattern-matching style).
+   * Keys are event type strings; values are handler functions for that event.
+   * Unhandled events return the state unchanged.
+   */
+  public addViewPattern<TViewName extends string, TState>(
+    viewName: TViewName,
+    defaultState: TState,
+    handlers: EventHandlersMap<TEvents, TState>,
+  ): ViewBuilder<TStreamType, TEvents, TViews & Record<TViewName, TState>, TEventMap> {
+    return this._registerView(
+      viewName,
+      defaultState,
+      handlers as unknown as EvDbStreamEventHandlersMap<TState, TEvents>,
+    );
+  }
+
+  /**
+   * Add a view with a fluent per-event builder callback.
+   * The callback receives a builder with one `from<EventName>(handler)` method per registered event.
+   * Chain as many as needed; unhandled events return state unchanged.
+   * Accepts either a raw callback `(b) => b.fromX(...)` or a `fromEvents(...)` wrapped callback.
+   */
+  public addViewBuilder<TViewName extends string, TState>(
+    viewName: TViewName,
+    defaultState: TState,
+    builderCallback:
+      | ViewHandlerBuilderCallback<TState, TEvents>
+      | ((
+          builder: FullViewHandlerBuilder<TState, TEvents>,
+        ) => FullViewHandlerBuilder<TState, TEvents>),
+  ): ViewBuilder<TStreamType, TEvents, TViews & Record<TViewName, TState>, TEventMap> {
+    const vhb = buildViewHandlerBuilder<TState, TEvents>(this.eventTypes);
+    let result: ViewHandlerBuilder<TState, TEvents>;
+    if (builderCallback instanceof ViewHandlerBuilderCallback) {
+      result = builderCallback.fn(vhb);
+    } else {
+      result = builderCallback(vhb);
+    }
+    return this._registerView(
+      viewName,
+      defaultState,
+      result.handlers as EvDbStreamEventHandlersMap<TState, TEvents>,
+    );
   }
 
   /**
