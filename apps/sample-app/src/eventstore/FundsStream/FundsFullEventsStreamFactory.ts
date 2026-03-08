@@ -47,6 +47,10 @@ const FundsFullEventsStreamFactory = new StreamFactoryBuilder("funds-stream")
     amount: payload.amount,
     PointsSum: views.balance,
   }))
+  .addFundsWithdrawal("Funds Withdrawal Notification", (payload, views) => ({
+    amount: payload.amount,
+    PointsSum: views.balance,
+  }))
   .build();
 
 export default FundsFullEventsStreamFactory;

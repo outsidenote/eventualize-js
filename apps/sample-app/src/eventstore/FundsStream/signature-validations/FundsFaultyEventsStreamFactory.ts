@@ -8,7 +8,6 @@ import type { FundsRefunded } from "../FundsEvents/FundsRefunded.js";
 import type { FundsWithdrawal } from "../FundsEvents/FundsWithdrawal.js";
 import { FundsEventNames } from "../FundsEventNames.js";
 import type IEvDbEventMetadata from "@eventualize/types/events/IEvDbEventMetadata";
-import IEvDbEventType from "@eventualize/types/events/IEvDbEventType";
 
 type AllEventTypes = FundsCaptured | FundsDenied | FundsDeposited | FundsRefunded | FundsWithdrawal;
 
@@ -52,6 +51,16 @@ const FundsFullEventsStreamFactory = new StreamFactoryBuilder("funds-stream")
   //       : [..._oldState.slice(1), meta.eventType],
   // )
   .withMessages()
+  // TODO: illegal signature, "addFundsRefunded" should allow FundsRefunded event type, not FundsDeposited
+  .addFundsRefunded("Funds Refunded Notification", (payload: FundsDeposited, views) => ({
+    amount: payload.amount,
+    PointsSum: views.balance,
+  }))
+  // TODO: illegal signature, "addFundsNotExists" is not a valid event type for this stream
+  .addFundsNotExists("Funds Not Exists Notification", (payload, views) => ({
+    amount: payload.amount,
+    PointsSum: views.balance,
+  }))
 
   .build();
 
