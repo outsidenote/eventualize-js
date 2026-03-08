@@ -8,6 +8,7 @@ import type { FundsRefunded } from "../FundsEvents/FundsRefunded.js";
 import type { FundsWithdrawal } from "../FundsEvents/FundsWithdrawal.js";
 import { FundsEventNames } from "../FundsEventNames.js";
 import type IEvDbEventMetadata from "@eventualize/types/events/IEvDbEventMetadata";
+import IEvDbEventType from "@eventualize/types/events/IEvDbEventType";
 
 type AllEventTypes = FundsCaptured | FundsDenied | FundsDeposited | FundsRefunded | FundsWithdrawal;
 
@@ -18,13 +19,20 @@ const FundsFullEventsStreamFactory = new StreamFactoryBuilder("funds-stream")
   .withEvent<FundsRefunded>(FundsEventNames.FundsRefunded)
   .withEvent<FundsWithdrawal>(FundsEventNames.FundsWithdrawal)
   .withViews()
-  // .addView("balance", 0, {
-  //   ["X"]: (oldState: number, event: FundsDeposited) => oldState + event.amount,
-  // })
+  // TODO: illegal signature, "X" is not a valid event type
+  .addViewPattern("balance", 0, {
+    ["X"]: (oldState: number, event: FundsDeposited) => oldState + event.amount,
+  })
   .addViewBuilder("max-deposit", 0, (b) =>
     b.fromFundsDeposited((oldState: number, event: FundsDeposited) =>
       oldState > event.amount ? oldState : event.amount,
-    ),
+    ).fromFundsWithdrawal((oldState: number, event: FundsWithdrawal) =>
+      oldState > event.amount ? oldState : event.amount,
+    )
+      // TODO: illegal signature, "fromIllegal" is not a valid event type
+      .fromIllegal((oldState: number, event: FundsWithdrawal) =>
+        oldState > event.amount ? oldState : event.amount,
+      ),
   )
   .addView(
     "last-activity",
@@ -34,6 +42,15 @@ const FundsFullEventsStreamFactory = new StreamFactoryBuilder("funds-stream")
         ? [..._oldState, meta.eventType]
         : [..._oldState.slice(1), meta.eventType],
   )
+  // NOT TODO: do catch the illegal signature, event type is not in the stream's event types
+  // .addView(
+  //   "last-activity",
+  //   [],
+  //   (_oldState: string[], event: IEvDbEventType, meta: IEvDbEventMetadata) =>
+  //     _oldState.length < 10
+  //       ? [..._oldState, meta.eventType]
+  //       : [..._oldState.slice(1), meta.eventType],
+  // )
   .withMessages()
 
   .build();

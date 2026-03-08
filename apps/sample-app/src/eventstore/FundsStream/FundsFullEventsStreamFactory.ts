@@ -18,35 +18,35 @@ const FundsFullEventsStreamFactory = new StreamFactoryBuilder("funds-stream")
   .withEvent<FundsRefunded>(FundsEventNames.FundsRefunded)
   .withEvent<FundsWithdrawal>(FundsEventNames.FundsWithdrawal)
   .withViews()
-    .addViewPattern("balance", 0, {
-      [FundsEventNames.FundsDeposited]: (oldState: number, event: FundsDeposited) =>
-        oldState + event.amount,
-      [FundsEventNames.FundsWithdrawal]: (oldState: number, event: FundsWithdrawal) =>
-        oldState - event.amount,
-      [FundsEventNames.FundsCaptured]: (oldState: number, event: FundsCaptured) =>
-        oldState - event.amount,
-      [FundsEventNames.FundsRefunded]: (oldState: number, event: FundsRefunded) =>
-        oldState + event.amount,
-    })
-    //.addViewBuilder("max-deposit", 0, (b) =>b.
-    .addViewBuilder("max-deposit", 0, (b) =>
-      b.fromFundsDeposited((oldState: number, event: FundsDeposited) =>
-        oldState > event.amount ? oldState : event.amount,
-      ),
-    )
-    .addView(
-      "last-activity",
-      [],
-      (_oldState: string[], event: AllEventTypes, meta: IEvDbEventMetadata) =>
-        _oldState.length < 10
-          ? [..._oldState, meta.eventType]
-          : [..._oldState.slice(1), meta.eventType],
-    )
+  .addViewPattern("balance", 0, {
+    [FundsEventNames.FundsDeposited]: (oldState: number, event: FundsDeposited) =>
+      oldState + event.amount,
+    [FundsEventNames.FundsWithdrawal]: (oldState: number, event: FundsWithdrawal) =>
+      oldState - event.amount,
+    [FundsEventNames.FundsCaptured]: (oldState: number, event: FundsCaptured) =>
+      oldState - event.amount,
+    [FundsEventNames.FundsRefunded]: (oldState: number, event: FundsRefunded) =>
+      oldState + event.amount,
+  })
+  //.addViewBuilder("max-deposit", 0, (b) =>b.
+  .addViewBuilder("max-deposit", 0, (b) =>
+    b.fromFundsDeposited((oldState: number, event: FundsDeposited) =>
+      oldState > event.amount ? oldState : event.amount,
+    ),
+  )
+  .addView(
+    "last-activity",
+    [],
+    (_oldState: string[], event: AllEventTypes, meta: IEvDbEventMetadata) =>
+      _oldState.length < 10
+        ? [..._oldState, meta.eventType]
+        : [..._oldState.slice(1), meta.eventType],
+  )
   .withMessages()
-    .addFundsDeposited("Funds Deposited Notification", (payload, views) => ({
-      amount: payload.amount,
-      PointsSum: views.balance,
-    }))
+  .addFundsDeposited("Funds Deposited Notification", (payload, views) => ({
+    amount: payload.amount,
+    PointsSum: views.balance,
+  }))
   .build();
 
 export default FundsFullEventsStreamFactory;
