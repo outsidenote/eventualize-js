@@ -22,5 +22,8 @@
     "nodeTestRunner.envFile": ".env.test",
     "[typescript]": {
       "editor.defaultFormatter": "vscode.typescript-language-features"
+    },
+    "chat.tools.terminal.autoApprove": {
+        "pnpm": true
     }
 }  

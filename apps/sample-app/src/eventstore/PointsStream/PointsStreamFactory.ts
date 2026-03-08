@@ -14,15 +14,15 @@ const PointsStreamFactory = new StreamFactoryBuilder("PointsStream")
   .addView("Count", { count: 0 }, countViewHandler)
   .withMessages()
   .addPointsAdded("Points Added With Sum Notification", (payload, views) => ({
-    pointsAdded: (payload as PointsAdded).points,
+    pointsAdded: payload.points,
     PointsSum: views.Sum.sum,
   }))
   .addPointsAdded("Points Added With Count Notification", (payload, views) => ({
-    pointsAdded: (payload as PointsAdded).points,
+    pointsAdded: payload.points,
     PointsCount: views.Count.count,
   }))
   .addPointsMultiplied("Points Multiplied", (payload) => ({
-    multiplier: (payload as PointsMultiplied).multiplier,
+    multiplier: payload.multiplier,
   }))
   .build();
 

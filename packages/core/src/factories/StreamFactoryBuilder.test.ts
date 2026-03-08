@@ -23,8 +23,8 @@ class SnapshotAdapterStub implements IEvDbStorageSnapshotAdapter {
   async getSnapshotAsync(_viewAddress: EvDbViewAddress): Promise<EvDbStoredSnapshotResultRaw> {
     return EvDbStoredSnapshotResultRaw.Empty;
   }
-  async storeSnapshotAsync(_data: EvDbStoredSnapshotData): Promise<void> { }
-  async close(): Promise<void> { }
+  async storeSnapshotAsync(_data: EvDbStoredSnapshotData): Promise<void> {}
+  async close(): Promise<void> {}
 }
 
 class StreamAdapterStub implements IEvDbStorageStreamAdapter {
@@ -70,7 +70,7 @@ class StreamAdapterStub implements IEvDbStorageStreamAdapter {
   ): Promise<void> {
     throw new Error("not implemented");
   }
-  async close(): Promise<void> { }
+  async close(): Promise<void> {}
 }
 
 // ---------------------------------------------------------------------------
@@ -107,19 +107,20 @@ function makeFactory() {
         count: state.count + 1,
       }))
       .withMessages()
+
       // Two factories for PointsAdded
       .addPointsAdded("PointsAddedSumNotification", (payload, views) => ({
-        pointsAdded: (payload as PointsAdded).points,
+        pointsAdded: payload.points,
         currentSum: views.Sum.sum,
       }))
       .addPointsAdded("PointsAddedCountNotification", (payload, views) =>
         views.Count.count > 0
-          ? { pointsAdded: (payload as PointsAdded).points, currentCount: views.Count.count }
+          ? { pointsAdded: payload.points, currentCount: views.Count.count }
           : undefined,
       )
       // One factory for PointsMultiplied
       .addPointsMultiplied("PointsMultipliedNotification", (payload, views) => ({
-        multiplier: (payload as PointsMultiplied).multiplier,
+        multiplier: payload.multiplier,
         currentSum: views.Sum.sum,
       }))
       .build()

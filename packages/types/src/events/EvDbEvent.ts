@@ -9,5 +9,5 @@ export default class EvDbEvent implements IEvDbEvent {
     public readonly capturedAt: Date = new Date(Date.now()),
     public readonly capturedBy: string = "N/A",
     public readonly storedAt?: Date,
-  ) { }
+  ) {}
 }

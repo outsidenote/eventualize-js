@@ -15,6 +15,6 @@ export default interface IEvDbStreamStore {
    * Saves pending events into the injected storage.
    * @param signal Optional AbortSignal to cancel the operation
    * @returns Count of added events
-  */
+   */
   store(signal?: AbortSignal): Promise<StreamStoreAffected>;
 }
