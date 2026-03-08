@@ -49,11 +49,11 @@ type MessageFactoryMethods<
   TViews extends Record<string, unknown>,
   TEventMap extends Record<string, object>,
 > = {
-  readonly [K in string & keyof TEventMap as `add${K}`]: (
-    messageType: string,
-    factory: (payload: TEventMap[K], views: TViews, meta: IEvDbEventMetadata) => unknown,
-  ) => FullMessageFactoryBuilder<TStreamType, TEvents, TViews, TEventMap>;
-};
+    readonly [K in string & keyof TEventMap as `add${K}`]: (
+      messageType: string,
+      factory: (payload: TEventMap[K], views: TViews, meta: IEvDbEventMetadata) => unknown,
+    ) => FullMessageFactoryBuilder<TStreamType, TEvents, TViews, TEventMap>;
+  };
 
 /** MessageFactoryBuilder augmented with the per-event typed methods. */
 type FullMessageFactoryBuilder<
@@ -159,7 +159,7 @@ class ViewHandlerBuilderCallback<TState, TEvents extends IEvDbEventType> {
     readonly fn: (
       builder: FullViewHandlerBuilder<TState, TEvents>,
     ) => FullViewHandlerBuilder<TState, TEvents>,
-  ) {}
+  ) { }
 }
 
 /**
@@ -220,7 +220,7 @@ class ViewBuilder<
     private readonly viewFactories: ViewFactory<unknown, TEvents>[],
     private readonly eventTypes: EventTypeConfig[],
     private readonly viewNames: string[],
-  ) {}
+  ) { }
 
   private _registerView<TViewName extends string, TState>(
     viewName: TViewName,
@@ -292,8 +292,8 @@ class ViewBuilder<
     builderCallback:
       | ViewHandlerBuilderCallback<TState, TEvents>
       | ((
-          builder: FullViewHandlerBuilder<TState, TEvents>,
-        ) => FullViewHandlerBuilder<TState, TEvents>),
+        builder: FullViewHandlerBuilder<TState, TEvents>,
+      ) => FullViewHandlerBuilder<TState, TEvents>),
   ): ViewBuilder<TStreamType, TEvents, TViews & Record<TViewName, TState>, TEventMap> {
     const vhb = buildViewHandlerBuilder<TState, TEvents>(this.eventTypes);
     let result: ViewHandlerBuilder<TState, TEvents>;
@@ -347,7 +347,7 @@ class ViewBuilder<
  */
 export class StreamFactoryBuilder<
   TStreamType extends string,
-  TEvents extends IEvDbEventType = never,
+  TEvents extends IEvDbEventType,
   TViews extends Record<string, unknown> = {},
   TEventMap extends Record<string, object> = Record<never, never>,
 > {
@@ -355,7 +355,7 @@ export class StreamFactoryBuilder<
   private eventTypes: EventTypeConfig[] = [];
   private viewNames: string[] = [];
 
-  constructor(private streamType: TStreamType) {}
+  constructor(private streamType: TStreamType) { }
 
   /**
    * Register a POCO event type by explicit name.
@@ -365,14 +365,14 @@ export class StreamFactoryBuilder<
     eventType: E,
   ): StreamFactoryBuilder<
     TStreamType,
-    TEvents | (T & { readonly eventType: E }),
+    T & { readonly eventType: E },
     TViews,
     Simplify<TEventMap & Record<E, T>>
   > {
     this.eventTypes.push({ eventName: eventType, eventMessagesProducers: [] });
     return this as unknown as StreamFactoryBuilder<
       TStreamType,
-      TEvents | (T & { readonly eventType: E }),
+      T & { readonly eventType: E },
       TViews,
       Simplify<TEventMap & Record<E, T>>
     >;
@@ -472,7 +472,7 @@ class MessageFactoryBuilder<
     private readonly viewFactories: ViewFactory<unknown, TEvents>[],
     readonly eventTypes: EventTypeConfig[],
     private readonly viewNames: string[],
-  ) {}
+  ) { }
 
   /**
    * Build the stream factory.

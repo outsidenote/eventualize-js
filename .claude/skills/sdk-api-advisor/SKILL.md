@@ -155,7 +155,7 @@ new StreamFactoryBuilder("stream-name")
 public withEvent<T extends object, E extends string = string>(eventType: E) {
   return this as unknown as StreamFactoryBuilder<
     TStreamType,
-    TEvents | (T & IEvDbEventType & { readonly eventType: E }),
+    TEvents | (T & IEvDbEventType & IEvDbEventType),
     TEventNames | E,
     TViews
   >;

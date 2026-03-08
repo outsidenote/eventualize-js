@@ -141,7 +141,7 @@ withMessageFactories(): FullMessageFactoryBuilder<TEvents, TViews>
 | Event name not a string literal in type | Tried to infer name from `T` | Iterates runtime `this.eventTypes` array; each method closes over its literal name |
 | `event.payload` not typed per event | Template index signature with `string` | Mapped type over event name union — each method has a distinct overload |
 
-> **Note on `TEvents` shape:** For `Extract<TEvents, { eventType: K }>` to work, `TEvents` must encode the event name as a literal. The current `withEvent<T>` accumulates `TEvents | (T & IEvDbEventType)`, where `eventType` is widened to `string`. This needs to be tightened: `withEvent<T, TName extends string>(eventType: TName)` should accumulate `TEvents | (T & { readonly eventType: TName })` so the literal is preserved in the union. This is the only required change to `withEvent`'s signature.
+> **Note on `TEvents` shape:** For `Extract<TEvents, { eventType: K }>` to work, `TEvents` must encode the event name as a literal. The current `withEvent<T>` accumulates `TEvents`, where `eventType` is widened to `string`. This needs to be tightened: `withEvent<T, TName extends string>(eventType: TName)` should accumulate `TEvents | (T & { readonly eventType: TName })` so the literal is preserved in the union. This is the only required change to `withEvent`'s signature.
 
 ---
 

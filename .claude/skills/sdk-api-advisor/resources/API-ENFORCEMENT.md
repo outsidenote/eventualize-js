@@ -298,7 +298,7 @@ When you need to widen a type (union grows) in a builder, use the double-cast:
 // Correct:
 return this as unknown as StreamFactoryBuilder<
   TStreamType,
-  TEvents | (T & IEvDbEventType & { readonly eventType: E }),
+  TEvents | (T & IEvDbEventType & IEvDbEventType),
   TEventNames | E,
   TViews
 >;

@@ -286,7 +286,7 @@ Because type parameters widen (union grows) with each `withEvent()` call, `this`
 ```typescript
 return this as unknown as StreamFactoryBuilder<
   TStreamType,
-  TEvents | (T & IEvDbEventType & { readonly eventType: E }),
+  TEvents | (T & IEvDbEventType & IEvDbEventType),
   TEventNames | E,
   TViews
 >;
