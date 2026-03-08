@@ -44,9 +44,8 @@ const FundsFullEventsStreamFactory = new StreamFactoryBuilder("funds-stream")
         : [..._oldState.slice(1), meta.eventType],
   )
   .addView(
-    "last-activity-invalid-event",
+    "last-activity-fixed-event",
     [],
-    // TODO: remove `eventType` from event
     (_oldState: string[], event, meta: IEvDbEventMetadata) =>
       _oldState.length < 10
         ? [..._oldState, meta.eventType]
