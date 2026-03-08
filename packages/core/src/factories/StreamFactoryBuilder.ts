@@ -21,15 +21,6 @@ import type IEvDbEventType from "@eventualize/types/events/IEvDbEventType.js";
 type Simplify<T> = { [K in keyof T]: T[K] };
 
 /**
- * Strips the `eventType` discriminant from each union member and flattens the result.
- * The mapped-type form forces TypeScript to eagerly evaluate and display the concrete type
- * (e.g. `FundsCaptured | FundsDenied`) rather than `Omit<FundsCaptured & {...}, "eventType">`.
- */
-type PayloadOf<T> = T extends { eventType: string }
-  ? { [K in keyof T as K extends "eventType" ? never : K]: T[K] }
-  : T;
-
-/**
  * Map of handlers keyed by registered event type literals.
  * Keys are derived from TEvents["eventType"] — only registered event names are valid.
  */
@@ -253,7 +244,7 @@ class ViewBuilder<
   public addView<TViewName extends string, TState>(
     viewName: TViewName,
     defaultState: TState,
-    handler: (state: TState, payload: PayloadOf<TEvents>, meta: IEvDbEventMetadata) => TState,
+    handler: (state: TState, payload: TEventMap[keyof TEventMap], meta: IEvDbEventMetadata) => TState,
   ): ViewBuilder<TStreamType, TEvents, TViews & Record<TViewName, TState>, TEventMap> {
     return this._registerView(
       viewName,
