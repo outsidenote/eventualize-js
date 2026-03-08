@@ -46,7 +46,10 @@ const FundsFullEventsStreamFactory = new StreamFactoryBuilder("funds-stream")
         : [..._oldState.slice(1), meta.eventType],
   )
   .withMessages()
-
+  .addFundsDeposited("Funds Deposited Notification", (payload, views) => ({
+    amount: payload.amount,
+    PointsSum: views.balance,
+  }))
   .build();
 
 export default FundsFullEventsStreamFactory;

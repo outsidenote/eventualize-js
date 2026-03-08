@@ -119,6 +119,18 @@ describe("Database Integration Tests", () => {
             150,
             "Max deposit view should reflect the largest deposit event",
           );
+          assert.strictEqual(
+            stream.getMessages().length,
+            1,
+            "There should be one pending message after storing events",
+          );
+          assert.strictEqual(
+            stream.getMessages()[0].messageType,
+            "Funds Deposited Notification",
+            "The pending message should be the Funds Deposited Notification",
+          );
+
+          await stream.store();
         });
 
         // -----------------------------------------------------------------------
