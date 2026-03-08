@@ -23,11 +23,13 @@ const FundsFullEventsStreamFactory = new StreamFactoryBuilder("funds-stream")
     ["X"]: (oldState: number, event: FundsDeposited) => oldState + event.amount,
   })
   .addViewBuilder("max-deposit", 0, (b) =>
-    b.fromFundsDeposited((oldState: number, event: FundsDeposited) =>
-      oldState > event.amount ? oldState : event.amount,
-    ).fromFundsWithdrawal((oldState: number, event: FundsWithdrawal) =>
-      oldState > event.amount ? oldState : event.amount,
-    )
+    b
+      .fromFundsDeposited((oldState: number, event: FundsDeposited) =>
+        oldState > event.amount ? oldState : event.amount,
+      )
+      .fromFundsWithdrawal((oldState: number, event: FundsWithdrawal) =>
+        oldState > event.amount ? oldState : event.amount,
+      )
       // TODO: illegal signature, "fromIllegal" is not a valid event type
       .fromIllegal((oldState: number, event: FundsWithdrawal) =>
         oldState > event.amount ? oldState : event.amount,
@@ -37,6 +39,15 @@ const FundsFullEventsStreamFactory = new StreamFactoryBuilder("funds-stream")
     "last-activity",
     [],
     (_oldState: string[], event: AllEventTypes, meta: IEvDbEventMetadata) =>
+      _oldState.length < 10
+        ? [..._oldState, meta.eventType]
+        : [..._oldState.slice(1), meta.eventType],
+  )
+  .addView(
+    "last-activity-invalid-event",
+    [],
+    // TODO: remove `eventType` from event
+    (_oldState: string[], event, meta: IEvDbEventMetadata) =>
       _oldState.length < 10
         ? [..._oldState, meta.eventType]
         : [..._oldState.slice(1), meta.eventType],

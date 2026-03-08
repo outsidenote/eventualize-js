@@ -35,10 +35,8 @@ type AppendEventMethods = {
   readonly [K: `appendEvent${string}`]: (event: object) => Promise<void>;
 };
 
-export type StreamWithEventMethods<
-  _TEventMap extends Record<string, object> = Record<never, never>,
-  TViews extends Record<string, unknown> = {},
-> = EvDbStream & AppendEventMethods & { readonly views: TViews };
+export type StreamWithEventMethods<TViews extends Record<string, unknown> = {}> = EvDbStream &
+  AppendEventMethods & { readonly views: TViews };
 
 /**
  * Stream Factory - creates stream instances with configured views and dynamic event methods.
@@ -50,8 +48,7 @@ export class EvDbStreamFactory<
   TEvents extends IEvDbEventType,
   TStreamType extends string,
   TViews extends Record<string, unknown> = {},
-  TEventMap extends Record<string, object> = Record<never, never>,
-> implements IEvDbStreamFactory<TStreamType, TViews, TEventMap>
+> implements IEvDbStreamFactory<TStreamType, TViews>
 {
   private DynamicStreamClass: new (
     streamType: string,
@@ -59,7 +56,7 @@ export class EvDbStreamFactory<
     streamStorageAdapter: IEvDbStorageStreamAdapter,
     streamId: string,
     lastStreamOffset: number,
-  ) => StreamWithEventMethods<TEventMap, TViews>;
+  ) => StreamWithEventMethods<TViews>;
 
   constructor(private readonly config: EvDbStreamFactoryConfig<TEvents, TStreamType>) {
     this.DynamicStreamClass = this.createDynamicStreamClass();
@@ -133,7 +130,7 @@ export class EvDbStreamFactory<
       streamStorageAdapter: IEvDbStorageStreamAdapter,
       streamId: string,
       lastStreamOffset: number,
-    ) => StreamWithEventMethods<TEventMap, TViews>;
+    ) => StreamWithEventMethods<TViews>;
   }
 
   /**
@@ -144,7 +141,7 @@ export class EvDbStreamFactory<
     streamStorageAdapter: IEvDbStorageStreamAdapter,
     snapshotStorageAdapter: IEvDbStorageSnapshotAdapter | undefined = undefined,
     lastStreamOffset: number = 0,
-  ): StreamWithEventMethods<TEventMap, TViews> {
+  ): StreamWithEventMethods<TViews> {
     const effectiveSnapshotAdapter =
       snapshotStorageAdapter ??
       (isSnapshotAdapter(streamStorageAdapter) ? streamStorageAdapter : undefined);
@@ -188,7 +185,7 @@ export class EvDbStreamFactory<
     streamId: string,
     streamStorageAdapter: IEvDbStorageStreamAdapter,
     snapshotStorageAdapter: IEvDbStorageSnapshotAdapter | undefined = undefined,
-  ): Promise<StreamWithEventMethods<TEventMap, TViews>> {
+  ): Promise<StreamWithEventMethods<TViews>> {
     const streamAddress = new EvDbStreamAddress(this.config.streamType, streamId);
 
     const effectiveSnapshotAdapter =

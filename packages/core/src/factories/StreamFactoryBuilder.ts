@@ -40,7 +40,7 @@ type EventHandlersMap<TEvents extends IEvDbEventType, TState> = Partial<
 /**
  * The per-event factory methods on MessageFactoryBuilder.
  * One `add${EventName}(messageType, factory)` method per registered event.
- * Payload is typed per-event via the TEvents union — no cast needed at the call site.
+ * Payload is typed per-event via TEventMap — no cast needed at the call site.
  * TViews maps view names to their state values directly.
  */
 type MessageFactoryMethods<
@@ -49,11 +49,11 @@ type MessageFactoryMethods<
   TViews extends Record<string, unknown>,
   TEventMap extends Record<string, object>,
 > = {
-    readonly [K in string & keyof TEventMap as `add${K}`]: (
-      messageType: string,
-      factory: (payload: TEventMap[K], views: TViews, meta: IEvDbEventMetadata) => unknown,
-    ) => FullMessageFactoryBuilder<TStreamType, TEvents, TViews, TEventMap>;
-  };
+  readonly [K in string & keyof TEventMap as `add${K}`]: (
+    messageType: string,
+    factory: (payload: TEventMap[K], views: TViews, meta: IEvDbEventMetadata) => unknown,
+  ) => FullMessageFactoryBuilder<TStreamType, TEvents, TViews, TEventMap>;
+};
 
 /** MessageFactoryBuilder augmented with the per-event typed methods. */
 type FullMessageFactoryBuilder<
@@ -159,7 +159,7 @@ class ViewHandlerBuilderCallback<TState, TEvents extends IEvDbEventType> {
     readonly fn: (
       builder: FullViewHandlerBuilder<TState, TEvents>,
     ) => FullViewHandlerBuilder<TState, TEvents>,
-  ) { }
+  ) {}
 }
 
 /**
@@ -220,7 +220,7 @@ class ViewBuilder<
     private readonly viewFactories: ViewFactory<unknown, TEvents>[],
     private readonly eventTypes: EventTypeConfig[],
     private readonly viewNames: string[],
-  ) { }
+  ) {}
 
   private _registerView<TViewName extends string, TState>(
     viewName: TViewName,
@@ -292,8 +292,8 @@ class ViewBuilder<
     builderCallback:
       | ViewHandlerBuilderCallback<TState, TEvents>
       | ((
-        builder: FullViewHandlerBuilder<TState, TEvents>,
-      ) => FullViewHandlerBuilder<TState, TEvents>),
+          builder: FullViewHandlerBuilder<TState, TEvents>,
+        ) => FullViewHandlerBuilder<TState, TEvents>),
   ): ViewBuilder<TStreamType, TEvents, TViews & Record<TViewName, TState>, TEventMap> {
     const vhb = buildViewHandlerBuilder<TState, TEvents>(this.eventTypes);
     let result: ViewHandlerBuilder<TState, TEvents>;
@@ -325,7 +325,7 @@ class ViewBuilder<
    * Build the stream factory.
    */
   public build() {
-    return buildFactory<TEvents, TStreamType, TViews, TEventMap>(
+    return buildFactory<TEvents, TStreamType, TViews>(
       this.streamType,
       this.viewFactories,
       this.eventTypes,
@@ -344,10 +344,11 @@ class ViewBuilder<
  * TStreamType — string literal type of the stream name
  * TEvents     — union of registered event shapes for view handlers and factory internals
  * TViews      — record of registered view name → state type (values exposed directly on stream.views)
+ * TEventMap   — map of event name literals to raw payload types (for per-event message factories)
  */
 export class StreamFactoryBuilder<
   TStreamType extends string,
-  TEvents extends IEvDbEventType,
+  TEvents extends IEvDbEventType = never,
   TViews extends Record<string, unknown> = {},
   TEventMap extends Record<string, object> = Record<never, never>,
 > {
@@ -355,7 +356,7 @@ export class StreamFactoryBuilder<
   private eventTypes: EventTypeConfig[] = [];
   private viewNames: string[] = [];
 
-  constructor(private streamType: TStreamType) { }
+  constructor(private streamType: TStreamType) {}
 
   /**
    * Register a POCO event type by explicit name.
@@ -365,14 +366,14 @@ export class StreamFactoryBuilder<
     eventType: E,
   ): StreamFactoryBuilder<
     TStreamType,
-    T & { readonly eventType: E },
+    TEvents | (T & { readonly eventType: E }),
     TViews,
     Simplify<TEventMap & Record<E, T>>
   > {
     this.eventTypes.push({ eventName: eventType, eventMessagesProducers: [] });
     return this as unknown as StreamFactoryBuilder<
       TStreamType,
-      T & { readonly eventType: E },
+      TEvents | (T & { readonly eventType: E }),
       TViews,
       Simplify<TEventMap & Record<E, T>>
     >;
@@ -413,7 +414,7 @@ export class StreamFactoryBuilder<
    * which includes dynamic `appendEvent${EventName}` methods and typed view accessors.
    */
   public build() {
-    return buildFactory<TEvents, TStreamType, TViews, TEventMap>(
+    return buildFactory<TEvents, TStreamType, TViews>(
       this.streamType,
       this.viewFactories,
       this.eventTypes,
@@ -430,24 +431,23 @@ function buildFactory<
   TEvents extends IEvDbEventType,
   TStreamType extends string,
   TViews extends Record<string, unknown>,
-  TEventMap extends Record<string, object>,
 >(
   streamType: TStreamType,
   viewFactories: ViewFactory<unknown, TEvents>[],
   eventTypes: EventTypeConfig[],
   viewNames: string[],
-): EvDbStreamFactory<TEvents, TStreamType, TViews, TEventMap> & {
-  StreamType: StreamWithEventMethods<TEventMap, TViews>;
+): EvDbStreamFactory<TEvents, TStreamType, TViews> & {
+  StreamType: StreamWithEventMethods<TViews>;
 } {
   const factory = new EvDbStreamFactory({
     streamType,
     viewFactories,
     eventTypes,
     viewNames,
-  }) as EvDbStreamFactory<TEvents, TStreamType, TViews, TEventMap>;
+  }) as EvDbStreamFactory<TEvents, TStreamType, TViews>;
 
   return Object.assign(factory, {
-    StreamType: null as unknown as StreamWithEventMethods<TEventMap, TViews>,
+    StreamType: null as unknown as StreamWithEventMethods<TViews>,
   });
 }
 
@@ -465,20 +465,20 @@ class MessageFactoryBuilder<
   TStreamType extends string,
   TEvents extends IEvDbEventType,
   TViews extends Record<string, unknown>,
-  TEventMap extends Record<string, object>,
+  _TEventMap extends Record<string, object>,
 > {
   constructor(
     private readonly streamType: TStreamType,
     private readonly viewFactories: ViewFactory<unknown, TEvents>[],
     readonly eventTypes: EventTypeConfig[],
     private readonly viewNames: string[],
-  ) { }
+  ) {}
 
   /**
    * Build the stream factory.
    */
   public build() {
-    return buildFactory<TEvents, TStreamType, TViews, TEventMap>(
+    return buildFactory<TEvents, TStreamType, TViews>(
       this.streamType,
       this.viewFactories,
       this.eventTypes,
