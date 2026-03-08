@@ -24,7 +24,7 @@ export type EvDbViewEventHandler<TState, TPayload> = (
  * At runtime, `GenericView.handleOnApply` casts the payload appropriately.
  */
 export type EvDbStreamEventHandlersMap<TState, TEvents extends IEvDbEventType = never> = Partial<
-  Record<TEvents["eventType"], EvDbViewEventHandler<TState, never>>
+  Record<TEvents["eventType"], EvDbViewEventHandler<TState, TEvents>>
 >;
 
 /**
