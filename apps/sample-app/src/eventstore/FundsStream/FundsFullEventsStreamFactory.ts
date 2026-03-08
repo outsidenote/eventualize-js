@@ -28,6 +28,7 @@ const FundsFullEventsStreamFactory = new StreamFactoryBuilder("funds-stream")
     [FundsEventNames.FundsRefunded]: (oldState: number, event: FundsRefunded) =>
       oldState + event.amount,
   })
+  //.addViewBuilder("max-deposit", 0, (b) =>b.
   .addViewBuilder("max-deposit", 0, (b) =>
     b.fromFundsDeposited((oldState: number, event: FundsDeposited) =>
       oldState > event.amount ? oldState : event.amount,
