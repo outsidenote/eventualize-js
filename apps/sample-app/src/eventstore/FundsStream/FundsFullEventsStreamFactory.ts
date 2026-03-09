@@ -6,26 +6,26 @@ import type { FundsDenied } from "./FundsEvents/FundsDenied.js";
 import type { FundsDeposited } from "./FundsEvents/FundsDeposited.js";
 import type { FundsRefunded } from "./FundsEvents/FundsRefunded.js";
 import type { FundsWithdrawal } from "./FundsEvents/FundsWithdrawal.js";
-import { FundsEventNames } from "./FundsEventNames.js";
+
 import type IEvDbEventMetadata from "@eventualize/types/events/IEvDbEventMetadata";
 
 type AllEventTypes = FundsCaptured | FundsDenied | FundsDeposited | FundsRefunded | FundsWithdrawal;
 
 const FundsFullEventsStreamFactory = new StreamFactoryBuilder("funds-stream")
-  .withEvent<FundsCaptured>(FundsEventNames.FundsCaptured)
-  .withEvent<FundsDenied>(FundsEventNames.FundsDenied)
-  .withEvent<FundsDeposited>(FundsEventNames.FundsDeposited)
-  .withEvent<FundsRefunded>(FundsEventNames.FundsRefunded)
-  .withEvent<FundsWithdrawal>(FundsEventNames.FundsWithdrawal)
+  .withEvent<FundsCaptured>("FundsCaptured")
+  .withEvent<FundsDenied>("FundsDenied")
+  .withEvent<FundsDeposited>("FundsDeposited")
+  .withEvent<FundsRefunded>("FundsRefunded")
+  .withEvent<FundsWithdrawal>("FundsWithdrawal")
   .withViews()
   .addViewPattern("balance", 0, {
-    [FundsEventNames.FundsDeposited]: (oldState: number, event: FundsDeposited) =>
+    ["FundsDeposited"]: (oldState: number, event: FundsDeposited) =>
       oldState + event.amount,
-    [FundsEventNames.FundsWithdrawal]: (oldState: number, event: FundsWithdrawal) =>
+    ["FundsWithdrawal"]: (oldState: number, event: FundsWithdrawal) =>
       oldState - event.amount,
-    [FundsEventNames.FundsCaptured]: (oldState: number, event: FundsCaptured) =>
+    ["FundsCaptured"]: (oldState: number, event: FundsCaptured) =>
       oldState - event.amount,
-    [FundsEventNames.FundsRefunded]: (oldState: number, event: FundsRefunded) =>
+    ["FundsRefunded"]: (oldState: number, event: FundsRefunded) =>
       oldState + event.amount,
   })
   //.addViewBuilder("max-deposit", 0, (b) =>b.
