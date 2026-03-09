@@ -9,7 +9,7 @@
 ### Patch Changes
 
 - Updated dependencies [28bdfa3]
-  - @eventualize/relational-storage-adapter@3.0.0
+  - @eventualize/relational-storage-adapter@4.0.0
 
 ## 2.1.0
 
