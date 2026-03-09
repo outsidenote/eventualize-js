@@ -73,7 +73,7 @@ export default class EvDbStream implements IEvDbStreamStore, IEvDbStreamStoreDat
    * list, e.g. for logging, debugging, or framework-level inspection.
    * Strongly-typed subclasses may expose a narrower accessor instead.
    */
-  getEvents(): ReadonlyArray<EvDbEvent> {
+  getPendingEvents(): ReadonlyArray<EvDbEvent> {
     return this._pendingEvents;
   }
 
@@ -259,7 +259,7 @@ export default class EvDbStream implements IEvDbStreamStore, IEvDbStreamStoreDat
    * inspection, testing, or logging — when you do not need message-type
    * discrimination. Persisted alongside events during `store()`.
    */
-  public getMessages(): ReadonlyArray<EvDbMessage> {
+  public getPendingMessages(): ReadonlyArray<EvDbMessage> {
     return this._pendingMessages;
   }
 }

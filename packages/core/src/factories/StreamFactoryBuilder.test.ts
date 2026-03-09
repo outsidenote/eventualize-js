@@ -23,8 +23,8 @@ class SnapshotAdapterStub implements IEvDbStorageSnapshotAdapter {
   async getSnapshotAsync(_viewAddress: EvDbViewAddress): Promise<EvDbStoredSnapshotResultRaw> {
     return EvDbStoredSnapshotResultRaw.Empty;
   }
-  async storeSnapshotAsync(_data: EvDbStoredSnapshotData): Promise<void> {}
-  async close(): Promise<void> {}
+  async storeSnapshotAsync(_data: EvDbStoredSnapshotData): Promise<void> { }
+  async close(): Promise<void> { }
 }
 
 class StreamAdapterStub implements IEvDbStorageStreamAdapter {
@@ -70,7 +70,7 @@ class StreamAdapterStub implements IEvDbStorageStreamAdapter {
   ): Promise<void> {
     throw new Error("not implemented");
   }
-  async close(): Promise<void> {}
+  async close(): Promise<void> { }
 }
 
 // ---------------------------------------------------------------------------
@@ -143,7 +143,7 @@ describe("StreamFactoryBuilder.withViews + withMessages (new API)", () => {
     const stream = createStream();
     stream.appendEventPointsAdded({ points: 10 });
 
-    const messages = stream.getMessages();
+    const messages = stream.getPendingMessages();
     // Two factories for PointsAdded: sum + count (count=1 after first event, not suppressed)
     assert.strictEqual(messages.length, 2);
 
@@ -160,7 +160,7 @@ describe("StreamFactoryBuilder.withViews + withMessages (new API)", () => {
     const stream = createStream();
     stream.appendEventPointsMultiplied({ multiplier: 3 });
 
-    const messages = stream.getMessages();
+    const messages = stream.getPendingMessages();
     assert.strictEqual(messages.length, 1);
     assert.strictEqual(messages[0]!.messageType, "PointsMultipliedNotification");
   });
@@ -169,7 +169,7 @@ describe("StreamFactoryBuilder.withViews + withMessages (new API)", () => {
     const stream = createStream();
     stream.appendEventPointsAdded({ points: 5 });
 
-    const messages = stream.getMessages();
+    const messages = stream.getPendingMessages();
     const types = messages.map((m) => m.messageType);
     assert.ok(types.includes("PointsAddedSumNotification"));
     assert.ok(types.includes("PointsAddedCountNotification"));
@@ -180,7 +180,7 @@ describe("StreamFactoryBuilder.withViews + withMessages (new API)", () => {
     stream.appendEventPointsAdded({ points: 7 });
     stream.appendEventPointsMultiplied({ multiplier: 2 });
 
-    const messages = stream.getMessages();
+    const messages = stream.getPendingMessages();
     const sumMsgs = messages.filter((m) => m.messageType === "PointsAddedSumNotification");
     const multMsgs = messages.filter((m) => m.messageType === "PointsMultipliedNotification");
     assert.strictEqual(sumMsgs.length, 1);
@@ -193,7 +193,7 @@ describe("StreamFactoryBuilder.withViews + withMessages (new API)", () => {
     stream.appendEventPointsAdded({ points: 1 });
     stream.appendEventPointsAdded({ points: 2 });
 
-    const messages = stream.getMessages();
+    const messages = stream.getPendingMessages();
     // Each PointsAdded produces 2 messages → total 4
     assert.strictEqual(messages.length, 4);
   });
@@ -216,7 +216,7 @@ describe("StreamFactoryBuilder — withMessages() without views", () => {
     const stream = factory.create("s1", new StreamAdapterStub(), new SnapshotAdapterStub(), 0);
     stream.appendEventPointsAdded({ points: 42 });
 
-    const messages = stream.getMessages();
+    const messages = stream.getPendingMessages();
     assert.strictEqual(messages.length, 1);
     assert.deepStrictEqual(messages[0]!.payload, { pts: 42 });
   });
@@ -239,7 +239,7 @@ describe("StreamFactoryBuilder — build() without withMessages()", () => {
     const stream = factory.create("s1", new StreamAdapterStub(), new SnapshotAdapterStub(), 0);
     stream.appendEventPointsAdded({ points: 5 });
 
-    assert.strictEqual(stream.getMessages().length, 0);
+    assert.strictEqual(stream.getPendingMessages().length, 0);
   });
 });
 

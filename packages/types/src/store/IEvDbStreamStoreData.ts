@@ -29,13 +29,13 @@ export default interface IEvDbStreamStoreData {
    * Returns all pending events that have not yet been persisted.
    * Events are unspecialized — payload types are not discriminated at this layer.
    */
-  getEvents: () => ReadonlyArray<EvDbEvent>;
+  getPendingEvents: () => ReadonlyArray<EvDbEvent>;
 
   /**
    * Returns all outbox messages (notifications) produced by the pending events.
    * Messages are unspecialized — payload types are not discriminated at this layer.
    */
-  getMessages: () => ReadonlyArray<EvDbMessage>;
+  getPendingMessages: () => ReadonlyArray<EvDbMessage>;
 
   /** The address that uniquely identifies this stream in the store. */
   streamAddress: EvDbStreamAddress;

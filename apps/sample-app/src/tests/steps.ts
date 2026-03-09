@@ -68,8 +68,8 @@ export default class Steps {
     return [EVENT_STORE_TYPE.POSTGRES, EVENT_STORE_TYPE.MYSQL].includes(storeType)
       ? new EvDbPrismaStorageAdapter(storeClient as unknown as RelationalPrismaClient)
       : storeType === EVENT_STORE_TYPE.DYNAMODB
-      ? EvDbDynamoDbStorageAdapter.withOptions(dynamoDbOptions ?? {})
-      : new StorageAdapterStub();
+        ? EvDbDynamoDbStorageAdapter.withOptions(dynamoDbOptions ?? {})
+        : new StorageAdapterStub();
   }
 
   public static createPointsStream(
@@ -99,14 +99,14 @@ export default class Steps {
     if (!countView) assert.fail("CountView not found in stream");
     assert.strictEqual((stream.getViews().Sum as EvDbView<SumViewState>).state.sum, 210);
     assert.strictEqual((stream.getViews().Count as EvDbView<CountViewState>).state.count, 11);
-    assert.strictEqual(stream.getEvents().length, 11);
+    assert.strictEqual(stream.getPendingEvents().length, 11);
   }
 
   public static compareFetchedAndStoredStreams(
     storedStream: PointsStreamType,
     fetchedStream: PointsStreamType,
   ) {
-    assert.strictEqual(fetchedStream.getEvents().length, 0);
+    assert.strictEqual(fetchedStream.getPendingEvents().length, 0);
     assert.strictEqual(fetchedStream.storedOffset, storedStream.storedOffset);
     const fetchedSumView = fetchedStream.getViews().Sum as EvDbView<SumViewState>;
     const storedSumView = storedStream.getViews().Sum as EvDbView<SumViewState>;
