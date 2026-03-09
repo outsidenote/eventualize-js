@@ -96,6 +96,25 @@ describe("Database Integration Tests", () => {
           await stream.appendEventFundsDeposited({ amount: 100, currency: "USD" });
           await stream.appendEventFundsCaptured({ amount: 20, currency: "USD" });
           await stream.appendEventFundsWithdrawal({ amount: 10, currency: "USD" });
+
+          const messages = stream.getMessages();
+          assert.strictEqual(
+            messages.length,
+            2,
+            "There should be two pending messages: one for FundsDeposited and one for FundsWithdrawal",
+          );
+          assert.strictEqual(
+            messages[0].messageType,
+            "Funds Deposited Notification",
+            "The pending message should be the Funds Deposited Notification",
+          );
+          assert.strictEqual(
+            messages[0].getPayload<{ cause: string }>().cause, // TODO: messages[0].payload["cause"] and messages[0].payload.cause should both work, but currently only the former works, need to investigate be valid
+            "FundsDeposited",
+            "The pending message should be the Funds Deposited Notification",
+          );
+
+
           const affected = await stream.store();
           assert.strictEqual(affected.numEvents, 3, "Three events should have been stored");
           assert.strictEqual(
@@ -119,17 +138,6 @@ describe("Database Integration Tests", () => {
             150,
             "Max deposit view should reflect the largest deposit event",
           );
-          assert.strictEqual(
-            stream.getMessages().length,
-            1,
-            "There should be one pending message after storing events",
-          );
-          assert.strictEqual(
-            stream.getMessages()[0].messageType,
-            "Funds Deposited Notification",
-            "The pending message should be the Funds Deposited Notification",
-          );
-
           await stream.store();
         });
 

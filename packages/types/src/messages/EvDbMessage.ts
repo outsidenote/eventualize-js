@@ -39,10 +39,10 @@ export default class EvDbMessage {
     serializeType: string,
     capturedAt: Date,
     capturedBy: string,
-    streamCursor: EvDbStreamCursor,
+  streamCursor: EvDbStreamCursor,
     payload: IEvDbPayloadData | undefined,
   ): EvDbMessage {
-    return new EvDbMessage(
+  return new EvDbMessage(
       id,
       eventType,
       channel,
@@ -79,6 +79,10 @@ export default class EvDbMessage {
       streamCursor,
       payload,
     );
+  }
+
+  public getPayload<T>(): T {
+    return this.payload as unknown as T;
   }
 
   public static createFromEvent(

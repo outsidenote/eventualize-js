@@ -62,12 +62,18 @@ const FundsFullEventsStreamFactory = new StreamFactoryBuilder("funds-stream")
   // )
   .withMessages()
   // TODO: illegal signature, "addFundsRefunded" should allow FundsRefunded event type, not FundsDeposited
-  .addFundsRefunded("Funds Refunded Notification", (payload: FundsDeposited, views) => ({
+  .addFundsDeposited("Funds Refunded Notification", (payload: FundsDeposited, views, meta) => ({
     amount: payload.amount,
     PointsSum: views.balance,
+    cause: meta.eventType,
+  }))
+  .addFundsRefunded("Funds Refunded Notification", (payload: FundsDeposited, views, meta) => ({
+    amount: payload.amount,
+    PointsSum: views.balance,
+    cause: meta.eventType,
   }))
   // TODO: illegal signature, "addFundsNotExists" is not a valid event type for this stream
-  .addFundsNotExists("Funds Not Exists Notification", (payload, views) => ({
+  .addFundsNotExists("Funds Not Exists Notification", (payload, views, _meta: IEvDbEventMetadata) => ({
     amount: payload.amount,
     PointsSum: views.balance,
   }))

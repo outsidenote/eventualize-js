@@ -43,13 +43,15 @@ const FundsFullEventsStreamFactory = new StreamFactoryBuilder("funds-stream")
         : [..._oldState.slice(1), meta.eventType],
   )
   .withMessages()
-  .addFundsDeposited("Funds Deposited Notification", (payload, views) => ({
+  .addFundsDeposited("Funds Deposited Notification", (payload, views, meta) => ({
     amount: payload.amount,
     PointsSum: views.balance,
+    cause: meta.eventType,
   }))
-  .addFundsWithdrawal("Funds Withdrawal Notification", (payload, views) => ({
+  .addFundsWithdrawal("Funds Withdrawal Notification", (payload, views, meta) => ({
     amount: payload.amount,
     PointsSum: views.balance,
+    cause: meta.eventType,
   }))
   .build();
 
