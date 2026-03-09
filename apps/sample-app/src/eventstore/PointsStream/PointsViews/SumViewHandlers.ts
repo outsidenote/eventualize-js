@@ -2,16 +2,21 @@ import type { PointsAdded } from "../PointsEvents/PointsAdded.js";
 import type { PointsSubtracted } from "../PointsEvents/PointsSubtracted.js";
 import type { PointsMultiplied } from "../PointsEvents/PointsMultiplied.js";
 import type { SumViewState } from "./SumViewState.js";
+import type IEvDbEventMetadata from "@eventualize/types/events/IEvDbEventMetadata";
 
-export const sumViewHandlers = {
-  // TypeScript ensures you have a handler for each event type!
-  PointsAdded: (oldState: SumViewState, event: PointsAdded): SumViewState => {
-    return { sum: oldState.sum + event.points };
-  },
-  PointsSubtracted: (oldState: SumViewState, event: PointsSubtracted): SumViewState => {
-    return { sum: oldState.sum - event.points };
-  },
-  PointsMultiplied: function (oldState: SumViewState, event: PointsMultiplied): SumViewState {
-    return { sum: oldState.sum * event.multiplier };
-  },
-};
+export function sumViewHandler(
+  oldState: SumViewState,
+  payload: unknown,
+  meta: IEvDbEventMetadata,
+): SumViewState {
+  if (meta.eventType === "PointsAdded") {
+    return { sum: oldState.sum + (payload as PointsAdded).points };
+  }
+  if (meta.eventType === "PointsSubtracted") {
+    return { sum: oldState.sum - (payload as PointsSubtracted).points };
+  }
+  if (meta.eventType === "PointsMultiplied") {
+    return { sum: oldState.sum * (payload as PointsMultiplied).multiplier };
+  }
+  return oldState;
+}

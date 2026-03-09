@@ -1,8 +1,16 @@
 import type IEvDbStorageAdmin from "@eventualize/types/adapters/IEvDbStorageAdmin";
 
+/** Minimal structural type describing the PrismaClient operations used by the admin. */
+interface PrismaAdminClient {
+  events: { deleteMany(args: object): Promise<unknown> };
+  snapshot: { deleteMany(args: object): Promise<unknown> };
+  outbox: { deleteMany(args: object): Promise<unknown> };
+  $disconnect(): Promise<void>;
+}
+
 export default class EvDbPrismaStorageAdmin implements IEvDbStorageAdmin {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Each DB adapter generates its own PrismaClient type; accepting `any` allows interoperability.
-  constructor(private prisma: any) {}
+  constructor(private prisma: PrismaAdminClient) {}
+
   async clearEnvironmentAsync(): Promise<void> {
     await Promise.all([
       this.prisma.events.deleteMany({}),

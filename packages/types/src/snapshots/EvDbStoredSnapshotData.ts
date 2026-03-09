@@ -4,7 +4,7 @@ import type EvDbViewAddress from "../view/EvDbViewAddress.js";
 import { EvDbStoredSnapshotDataBase } from "./EvDbStoredSnapshotDataBase.js";
 
 export class EvDbStoredSnapshotData extends EvDbStoredSnapshotDataBase {
-  readonly state: any;
+  readonly state: unknown;
 
   // Primary constructor equivalent
   constructor(
@@ -14,7 +14,7 @@ export class EvDbStoredSnapshotData extends EvDbStoredSnapshotDataBase {
     viewName: string,
     offset: number,
     storeOffset: number,
-    state: any,
+    state: unknown,
   ) {
     super(id, streamType, streamId, viewName, offset, storeOffset);
     this.state = state;
@@ -25,7 +25,7 @@ export class EvDbStoredSnapshotData extends EvDbStoredSnapshotDataBase {
     address: EvDbViewAddress,
     offset: number,
     storeOffset: number,
-    state: any,
+    state: unknown,
   ): EvDbStoredSnapshotData {
     return new EvDbStoredSnapshotData(
       crypto.randomUUID(),

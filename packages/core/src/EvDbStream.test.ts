@@ -3,7 +3,7 @@ import * as assert from "node:assert";
 
 describe("EvDbStream", () => {
   test("module can be imported", async () => {
-    const module = await import("./store/EvDbStream.js");
+    const module = await import("./stream/EvDbStream.js");
     assert.ok(module.default, "EvDbStream should be exported as default");
   });
 });

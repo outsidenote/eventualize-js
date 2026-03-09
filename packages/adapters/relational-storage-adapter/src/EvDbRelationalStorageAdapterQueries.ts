@@ -62,16 +62,17 @@ export class PrismaQueryProvider {
 
     // Note: This assumes a dynamic table name approach
     // In Prisma, you'd typically use $queryRawUnsafe for dynamic table names
-    const whereClause: any = {
+    // whereClause is only used as a reference here; the actual query is built with raw SQL below
+    const _whereClause: Record<string, unknown> = {
       stored_at: { gte: since_date, lt: oneSecondAgo },
     };
 
     if (channels && channels.length > 0) {
-      whereClause.channel = { in: channels };
+      _whereClause["channel"] = { in: channels };
     }
 
     if (message_types && message_types.length > 0) {
-      whereClause.messageType = { in: message_types };
+      _whereClause["messageType"] = { in: message_types };
     }
 
     // This would need to be adapted based on your actual Prisma schema

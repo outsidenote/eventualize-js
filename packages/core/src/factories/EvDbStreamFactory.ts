@@ -1,62 +1,69 @@
 import type IEvDbStorageSnapshotAdapter from "@eventualize/types/adapters/IEvDbStorageSnapshotAdapter";
 import type IEvDbStorageStreamAdapter from "@eventualize/types/adapters/IEvDbStorageStreamAdapter";
-import type IEvDbEventPayload from "@eventualize/types/events/IEvDbEventPayload";
 import EvDbStreamCursor from "@eventualize/types/stream/EvDbStreamCursor";
 import EvDbStreamAddress from "@eventualize/types/stream/EvDbStreamAddress";
 import type EVDbMessagesProducer from "@eventualize/types/messages/EvDbMessagesProducer";
 import type EvDbEvent from "@eventualize/types/events/EvDbEvent";
 
-import EvDbStream from "../store/EvDbStream.js";
+import EvDbStream from "../stream/EvDbStream.js";
 import type { EvDbView } from "../view/EvDbView.js";
 import type { EvDbStreamFactoryConfig } from "./EvDbStreamFactoryTypes.js";
-import { IEvDbStreamFactory } from "./IEvDbStreamFactory.js";
+import type { IEvDbStreamFactory } from "./IEvDbStreamFactory.js";
+import type IEvDbEventType from "@eventualize/types/events/IEvDbEventType.js";
+
+/** Returns true if the adapter also implements IEvDbStorageSnapshotAdapter. */
+function isSnapshotAdapter(
+  adapter: IEvDbStorageStreamAdapter,
+): adapter is IEvDbStorageStreamAdapter & IEvDbStorageSnapshotAdapter {
+  return typeof (adapter as unknown as IEvDbStorageSnapshotAdapter).getSnapshotAsync === "function";
+}
 
 /**
- * Type helper to extract event methods
+ * Combined stream type with per-event append methods and view accessors.
+ * TEvents — union of registered event types (each member has `eventType` as a literal string).
+ * TViews  — record of view name → state type (state values, not EvDbView wrappers).
+ *
+ * appendEvent methods are a distributive mapped type over TEvents union members, giving full
+ * IntelliSense and per-event payload typing (e.g. appendEventPointsAdded({ points: number })).
  */
-type EventMethods<TEvents extends IEvDbEventPayload> = {
-  [K in TEvents as `appendEvent${K["payloadType"]}`]: (
-    event: Omit<K, "payloadType">,
-  ) => Promise<void>;
+/**
+ * Dynamic append methods: `appendEvent${EventName}(payload) => Promise<void>`.
+ * Typed via template literal index signature — all registered event names are valid,
+ * but payload types are not narrowed per-event.
+ */
+type AppendEventMethods = {
+  readonly [K: `appendEvent${string}`]: (event: object) => Promise<void>;
 };
 
-/**
- * Type helper to create view accessors map
- */
-type ViewAccessors<TViews extends Record<string, EvDbView<any>>> = {
-  readonly views: TViews;
-};
+export type StreamWithEventMethods<TViews extends Record<string, unknown> = {}> = EvDbStream &
+  AppendEventMethods & { readonly views: TViews };
 
 /**
- * Combined stream type with event methods and view accessors
- */
-export type StreamWithEventMethods<
-  TEvents extends IEvDbEventPayload,
-  TViews extends Record<string, EvDbView<any>> = {},
-> = EvDbStream & EventMethods<TEvents> & ViewAccessors<TViews>;
-
-/**
- * Stream Factory - creates stream instances with configured views and dynamic event methods
+ * Stream Factory - creates stream instances with configured views and dynamic event methods.
+ * TEvents     — union of registered event types (drives both config/view machinery and typed appendEventXxx methods)
+ * TStreamType — string literal type of the stream name
+ * TViews      — record of view name → state type
  */
 export class EvDbStreamFactory<
-  TEvents extends IEvDbEventPayload,
+  TEvents extends IEvDbEventType,
   TStreamType extends string,
-  TViews extends Record<string, EvDbView<any>> = {},
-> implements IEvDbStreamFactory<TEvents, TStreamType, TViews> {
+  TViews extends Record<string, unknown> = {},
+> implements IEvDbStreamFactory<TStreamType, TViews>
+{
   private DynamicStreamClass: new (
     streamType: string,
-    views: EvDbView<any>[],
+    views: EvDbView<unknown>[],
     streamStorageAdapter: IEvDbStorageStreamAdapter,
     streamId: string,
     lastStreamOffset: number,
-  ) => StreamWithEventMethods<TEvents, TViews>;
+  ) => StreamWithEventMethods<TViews>;
 
   constructor(private readonly config: EvDbStreamFactoryConfig<TEvents, TStreamType>) {
     this.DynamicStreamClass = this.createDynamicStreamClass();
   }
 
   /**
-   * Creates a dynamic stream class with event-specific methods and view accessors
+   * Creates a dynamic stream class with event-specific methods and view accessors.
    */
   private createDynamicStreamClass() {
     const eventTypes = this.config.eventTypes;
@@ -67,16 +74,16 @@ export class EvDbStreamFactory<
       viewsState: Readonly<Record<string, unknown>>,
     ) => {
       const eventType = eventTypes.find((e) => e.eventName === event.eventType);
-      if (!eventType || !eventType.eventMessagesProducer) return [];
-      return eventType.eventMessagesProducer(event, viewsState);
+      if (!eventType || !eventType.eventMessagesProducers.length) return [];
+      return eventType.eventMessagesProducers.flatMap((producer) => producer(event, viewsState));
     };
 
     class DynamicStream extends EvDbStream {
-      public readonly views: Record<string, EvDbView<any>> = {};
+      public readonly views: Record<string, unknown> = {};
 
       constructor(
         streamType: string,
-        views: EvDbView<any>[],
+        views: EvDbView<unknown>[],
         streamStorageAdapter: IEvDbStorageStreamAdapter,
         streamId: string,
         lastStreamOffset: number,
@@ -90,40 +97,56 @@ export class EvDbStreamFactory<
           messagesProducer,
         );
 
-        // Create view accessors
+        // Expose state values directly (not EvDbView wrappers).
+        // Uses a Proxy so each property access reads view.state live.
+        const viewsByName: Record<string, EvDbView<unknown>> = {};
         views.forEach((view, index) => {
           const viewName = viewNames[index];
-          if (viewName) {
-            this.views[viewName] = view;
-          }
+          if (viewName) viewsByName[viewName] = view;
+        });
+        (this as unknown as Record<string, unknown>).views = new Proxy(viewsByName, {
+          get(target, prop: string) {
+            const view = target[prop];
+            return view ? view.state : undefined;
+          },
         });
       }
     }
 
     // Add dynamic methods for each event type
-    eventTypes.forEach(({ eventName, eventClass: _eventClass }) => {
+    eventTypes.forEach(({ eventName }) => {
       const methodName = `appendEvent${eventName}`;
-      (DynamicStream.prototype as any)[methodName] = async function (
-        event: any,
+      (DynamicStream.prototype as unknown as Record<string, unknown>)[methodName] = function (
+        this: EvDbStream,
+        event: object,
       ) {
-        return this.appendEvent({ ...event, payloadType: eventName });
+        return this.appendEvent(eventName, event);
       };
     });
 
-    return DynamicStream as any;
+    return DynamicStream as unknown as new (
+      streamType: string,
+      views: EvDbView<unknown>[],
+      streamStorageAdapter: IEvDbStorageStreamAdapter,
+      streamId: string,
+      lastStreamOffset: number,
+    ) => StreamWithEventMethods<TViews>;
   }
 
   /**
-   * Creates a stream instance with all configured views and dynamic event methods
+   * Creates a stream instance with all configured views and dynamic event methods.
    */
   public create(
     streamId: string,
     streamStorageAdapter: IEvDbStorageStreamAdapter,
     snapshotStorageAdapter: IEvDbStorageSnapshotAdapter | undefined = undefined,
     lastStreamOffset: number = 0,
-  ): StreamWithEventMethods<TEvents, TViews> {
-    const views = snapshotStorageAdapter
-      ? this.createViews(streamId, snapshotStorageAdapter)
+  ): StreamWithEventMethods<TViews> {
+    const effectiveSnapshotAdapter =
+      snapshotStorageAdapter ??
+      (isSnapshotAdapter(streamStorageAdapter) ? streamStorageAdapter : undefined);
+    const views = effectiveSnapshotAdapter
+      ? this.createViews(streamId, effectiveSnapshotAdapter)
       : ([] as EvDbView<never>[]);
 
     return new this.DynamicStreamClass(
@@ -138,7 +161,7 @@ export class EvDbStreamFactory<
   private createViews(
     streamId: string,
     snapshotStorageAdapter: IEvDbStorageSnapshotAdapter,
-  ): Array<EvDbView<any>> {
+  ): Array<EvDbView<unknown>> {
     const views = this.config.viewFactories.map((factory) =>
       factory.create(streamId, snapshotStorageAdapter),
     );
@@ -148,7 +171,7 @@ export class EvDbStreamFactory<
   private getViews(
     streamId: string,
     snapshotStorageAdapter: IEvDbStorageSnapshotAdapter,
-  ): Promise<EvDbView<any>>[] {
+  ): Promise<EvDbView<unknown>>[] {
     const getViewPromises = this.config.viewFactories.map((viewFactory) =>
       viewFactory.get(streamId, snapshotStorageAdapter),
     );
@@ -156,17 +179,20 @@ export class EvDbStreamFactory<
   }
 
   /**
-   * Fetches from storage a stream instance with all configured views and dynamic event methods
+   * Fetches from storage a stream instance with all configured views and dynamic event methods.
    */
   public async get(
     streamId: string,
     streamStorageAdapter: IEvDbStorageStreamAdapter,
     snapshotStorageAdapter: IEvDbStorageSnapshotAdapter | undefined = undefined,
-  ): Promise<StreamWithEventMethods<TEvents, TViews>> {
+  ): Promise<StreamWithEventMethods<TViews>> {
     const streamAddress = new EvDbStreamAddress(this.config.streamType, streamId);
 
-    const views = snapshotStorageAdapter
-      ? await Promise.all(this.getViews(streamId, snapshotStorageAdapter))
+    const effectiveSnapshotAdapter =
+      snapshotStorageAdapter ??
+      (isSnapshotAdapter(streamStorageAdapter) ? streamStorageAdapter : undefined);
+    const views = effectiveSnapshotAdapter
+      ? await Promise.all(this.getViews(streamId, effectiveSnapshotAdapter))
       : [];
 
     if (!views.length) {
@@ -174,31 +200,40 @@ export class EvDbStreamFactory<
       const stream = this.create(
         streamId,
         streamStorageAdapter,
-        snapshotStorageAdapter,
+        effectiveSnapshotAdapter,
         lastStreamOffset,
       );
       return stream;
     }
 
     const lowestViewOffset = views.reduce(
-      (lowestOffset: number, currentView: EvDbView<any>) =>
+      (lowestOffset: number, currentView: EvDbView<unknown>) =>
         Math.min(lowestOffset, currentView.storeOffset),
       Number.MAX_VALUE,
     );
 
     let streamOffset: number = -1;
-    if (snapshotStorageAdapter) {
+    if (effectiveSnapshotAdapter) {
       const streamCursor = new EvDbStreamCursor(streamAddress, lowestViewOffset + 1);
       const events = await streamStorageAdapter.getEventsAsync(streamCursor);
 
-      streamOffset = lowestViewOffset;
+      let eventsConsumed = false;
       for await (const event of events) {
         views.forEach((view) => view.applyEvent(event));
         streamOffset = event.streamCursor.offset;
+        eventsConsumed = true;
+      }
+
+      if (!eventsConsumed) {
+        // No events found — lowestViewOffset may be 0 from the Empty sentinel (no real snapshot).
+        // Fall back to the authoritative last offset from the stream store.
+        streamOffset =
+          lowestViewOffset > 0
+            ? lowestViewOffset
+            : await streamStorageAdapter.getLastOffsetAsync(streamAddress);
       }
     } else {
-      streamOffset = // TODO: get last offset from stream storage adapter if no snapshot adapter is provided
-        streamOffset = await streamStorageAdapter.getLastOffsetAsync(streamAddress);
+      streamOffset = await streamStorageAdapter.getLastOffsetAsync(streamAddress);
     }
 
     return new this.DynamicStreamClass(
@@ -216,16 +251,14 @@ export class EvDbStreamFactory<
 }
 
 /**
- * Factory function to create a StreamFactory
+ * Factory function to create a StreamFactory.
  */
 export function createEvDbStreamFactory<
-  TEvents extends IEvDbEventPayload,
+  TEvents extends IEvDbEventType,
   TStreamType extends string,
-  TViews extends Record<string, EvDbView<any>> = {},
->(
-  config: EvDbStreamFactoryConfig<TEvents, TStreamType>,
-): IEvDbStreamFactory<TEvents, TStreamType, TViews> {
-  return new EvDbStreamFactory(config);
+  TViews extends Record<string, unknown> = {},
+>(config: EvDbStreamFactoryConfig<TEvents, TStreamType>): IEvDbStreamFactory<TStreamType, TViews> {
+  return new EvDbStreamFactory(config) as unknown as IEvDbStreamFactory<TStreamType, TViews>;
 }
 
 export type { EvDbStreamFactoryConfig, EventTypeConfig } from "./EvDbStreamFactoryTypes.js";

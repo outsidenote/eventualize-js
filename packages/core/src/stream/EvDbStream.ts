@@ -6,9 +6,7 @@ import EvDbStreamAddress from "@eventualize/types/stream/EvDbStreamAddress";
 import type IEvDbViewStore from "@eventualize/types/view/IEvDbViewStore";
 import type IEvDbStreamStore from "@eventualize/types/store/IEvDbStreamStore";
 import type IEvDbStreamStoreData from "@eventualize/types/store/IEvDbStreamStoreData";
-import type IEvDbEventPayload from "@eventualize/types/events/IEvDbEventPayload";
 import StreamStoreAffected from "@eventualize/types/stream/StreamStoreAffected";
-import type IEvDbEventMetadata from "@eventualize/types/events/IEvDbEventMetadata";
 import EvDbStreamCursor from "@eventualize/types/stream/EvDbStreamCursor";
 import OCCException from "@eventualize/types/primitives/OCCException";
 import type { EvDbStreamType } from "@eventualize/types/primitives/EvDbStreamType";
@@ -75,7 +73,7 @@ export default class EvDbStream implements IEvDbStreamStore, IEvDbStreamStoreDat
    * list, e.g. for logging, debugging, or framework-level inspection.
    * Strongly-typed subclasses may expose a narrower accessor instead.
    */
-  getEvents(): ReadonlyArray<EvDbEvent> {
+  getPendingEvents(): ReadonlyArray<EvDbEvent> {
     return this._pendingEvents;
   }
 
@@ -140,21 +138,21 @@ export default class EvDbStream implements IEvDbStreamStore, IEvDbStreamStoreDat
    * called, so multiple `appendEvent` calls can be batched into a single atomic
    * write.
    *
-   * @param payload    - Typed event payload; `payloadType` must match a type
-   *                     registered on this stream's factory.
+   * @param eventType  - The event type name registered on this stream's factory.
+   * @param payload    - The event payload data (any POCO).
    * @param capturedBy - Optional label identifying who/what produced this event
    *                     (defaults to the core assembly identifier).
-   * @returns The populated event metadata (cursor, timestamp, capturedBy).
+   * @returns The populated event (cursor, timestamp, capturedBy, payload).
    */
   protected appendEvent(
-    payload: IEvDbEventPayload,
+    eventType: string,
+    payload: unknown,
     capturedBy?: string | null,
-  ): IEvDbEventMetadata {
+  ): EvDbEvent {
     capturedBy = capturedBy ?? EvDbStream.DEFAULT_CAPTURE_BY;
-    // const json = JSON.stringify(payload); // Or use custom serializer
 
     const cursor = this.getNextCursor(this._pendingEvents);
-    const e = new EvDbEvent(payload.payloadType, cursor, payload, new Date(), capturedBy);
+    const e = new EvDbEvent(eventType, cursor, payload, new Date(), capturedBy);
     this._pendingEvents = [...this._pendingEvents, e];
 
     // Apply to views
@@ -261,7 +259,7 @@ export default class EvDbStream implements IEvDbStreamStore, IEvDbStreamStoreDat
    * inspection, testing, or logging — when you do not need message-type
    * discrimination. Persisted alongside events during `store()`.
    */
-  public getMessages(): ReadonlyArray<EvDbMessage> {
+  public getPendingMessages(): ReadonlyArray<EvDbMessage> {
     return this._pendingMessages;
   }
 }

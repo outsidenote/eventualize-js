@@ -64,8 +64,10 @@ export async function createMysqlSchema(connectionUri: string): Promise<void> {
       await connection.query(statement);
     }
     console.log("✓ MySQL schema created successfully");
-  } catch (error: any) {
-    console.error(`✗ Failed to create MySQL schema: ${error.message}`);
+  } catch (error: unknown) {
+    console.error(
+      `✗ Failed to create MySQL schema: ${error instanceof Error ? error.message : error}`,
+    );
     throw error;
   } finally {
     await connection.end();

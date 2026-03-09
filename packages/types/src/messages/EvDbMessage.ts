@@ -1,7 +1,6 @@
 import type EvDbEvent from "../events/EvDbEvent.js";
 import type EvDbStreamCursor from "../stream/EvDbStreamCursor.js";
 import type { IEvDbPayloadData } from "../events/IEvDbPayloadData.js";
-import type IEvDbEventPayload from "../events/IEvDbEventPayload.js";
 
 export default class EvDbMessage {
   public static readonly Empty: EvDbMessage = EvDbMessage.createWithId(
@@ -27,7 +26,7 @@ export default class EvDbMessage {
     public readonly capturedAt: Date,
     public readonly capturedBy: string,
     public readonly streamCursor: EvDbStreamCursor,
-    public readonly payload: IEvDbPayloadData,
+    public readonly payload: IEvDbPayloadData | undefined,
     public readonly storedAt?: Date,
   ) {}
 
@@ -40,10 +39,10 @@ export default class EvDbMessage {
     serializeType: string,
     capturedAt: Date,
     capturedBy: string,
-    streamCursor: EvDbStreamCursor,
-    payload: any,
+  streamCursor: EvDbStreamCursor,
+    payload: IEvDbPayloadData | undefined,
   ): EvDbMessage {
-    return new EvDbMessage(
+  return new EvDbMessage(
       id,
       eventType,
       channel,
@@ -66,7 +65,7 @@ export default class EvDbMessage {
     capturedAt: Date,
     capturedBy: string,
     streamCursor: EvDbStreamCursor,
-    payload: any,
+    payload: IEvDbPayloadData | undefined,
   ): EvDbMessage {
     return new EvDbMessage(
       crypto.randomUUID(),
@@ -82,9 +81,14 @@ export default class EvDbMessage {
     );
   }
 
+  public getPayload<T>(): T {
+    return this.payload as unknown as T;
+  }
+
   public static createFromEvent(
     event: EvDbEvent,
-    payload: IEvDbEventPayload,
+    messageType: string,
+    payload: unknown,
     channel: string = "default",
     serializeType: string = "json",
   ): EvDbMessage {
@@ -93,12 +97,12 @@ export default class EvDbMessage {
       event.eventType,
       channel,
       "default",
-      payload.payloadType,
+      messageType,
       serializeType,
       event.capturedAt,
       event.capturedBy,
       event.streamCursor,
-      payload,
+      payload as IEvDbPayloadData | undefined,
     );
   }
 }

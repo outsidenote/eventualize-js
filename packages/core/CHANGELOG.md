@@ -9,7 +9,7 @@
 ### Patch Changes
 
 - Updated dependencies [28bdfa3]
-  - @eventualize/types@3.0.0
+  - @eventualize/types@4.0.0
 
 ## 2.1.0
 

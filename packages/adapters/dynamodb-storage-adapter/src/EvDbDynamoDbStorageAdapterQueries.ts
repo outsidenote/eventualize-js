@@ -1,5 +1,4 @@
 import type { IEvDbPayloadData } from "@eventualize/types/events/IEvDbPayloadData";
-import type IEvDbEventPayload from "@eventualize/types/events/IEvDbEventPayload";
 import type {
   AttributeValue,
   PutItemCommandInput,
@@ -20,7 +19,7 @@ export class EventRecord {
     public readonly event_type: string,
     public readonly captured_by: string,
     public readonly captured_at: Date,
-    public readonly payload: IEvDbEventPayload,
+    public readonly payload: unknown,
     public readonly stored_at?: Date,
   ) {}
 
@@ -149,7 +148,7 @@ export default class EvDbDynamoDbStorageAdapterQueries {
 
   public static getEvents(
     streamCursor: EvDbStreamCursor,
-    queryCursor: Record<string, any> | undefined = undefined,
+    queryCursor: Record<string, AttributeValue> | undefined = undefined,
     pageSize: number = 100,
   ) {
     const queryParams = {
@@ -204,10 +203,13 @@ export default class EvDbDynamoDbStorageAdapterQueries {
         view_address: { S: serializeViewAddress(viewAddress) },
         offset: { N: snapshot.offset.toString() },
         state: {
-          M: marshall(snapshot.state, {
-            convertClassInstanceToMap: true,
-            removeUndefinedValues: true,
-          }),
+          M: marshall(
+            { __value: snapshot.state },
+            {
+              convertClassInstanceToMap: true,
+              removeUndefinedValues: true,
+            },
+          ),
         },
         stored_at: { S: Date.now().toString() },
       },

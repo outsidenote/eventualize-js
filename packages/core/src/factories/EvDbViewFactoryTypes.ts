@@ -1,29 +1,40 @@
-import type IEvDbEventPayload from "@eventualize/types/events/IEvDbEventPayload";
 import type IEvDbEventMetadata from "@eventualize/types/events/IEvDbEventMetadata";
+import type IEvDbEventType from "@eventualize/types/events/IEvDbEventType";
 
 /**
- * Handler function type for applying an event to state
+ * Handler function type for applying an event to state.
+ * TPayload is the raw event payload POCO (no eventType required).
+ * The optional metadata (event metadata without payload) is available as the third argument.
  */
-export type EvDbViewEventHandler<TState, TEvent extends IEvDbEventPayload> = (
+export type EvDbViewEventHandler<TState, TPayload> = (
   oldState: TState,
-  event: TEvent,
+  event: TPayload,
   metadata: IEvDbEventMetadata,
 ) => TState;
 
 /**
- * Map of event handlers - one handler per event type in the union
- * Key is the payloadType string, value is the handler function
+ * Map of event handlers keyed by eventType string.
+ * Handler authors declare their own specific payload types per handler function.
+ * The map is Partial so views only need handlers for events they care about.
+ *
+ * The event parameter is typed as `never` in the stored function signature to allow
+ * any specific payload type to be assigned here (since function parameters are
+ * contravariant — a handler accepting a specific type is assignable when the
+ * stored signature accepts `never`, because `never` is the bottom type).
+ * At runtime, `GenericView.handleOnApply` casts the payload appropriately.
  */
-export type EvDbStreamEventHandlersMap<TState, TEvents extends IEvDbEventPayload> = {
-  [K in TEvents["payloadType"]]: EvDbViewEventHandler<TState, Extract<TEvents, { payloadType: K }>>;
-};
+export type EvDbStreamEventHandlersMap<TState, TEvents extends IEvDbEventType = never> = Partial<
+  Record<TEvents["eventType"], EvDbViewEventHandler<TState, TEvents>>
+>;
 
 /**
  * Configuration for creating a view
  */
-export interface ViewConfig<TState, TEvents extends IEvDbEventPayload> {
+export interface ViewConfig<TState, TEvents extends IEvDbEventType> {
   viewName: string;
   streamType: string;
   defaultState: TState;
-  handlers: Partial<EvDbStreamEventHandlersMap<TState, TEvents>>;
+  handlers: EvDbStreamEventHandlersMap<TState, TEvents>;
+  /** Optional single catch-all handler — called for every event when present, overrides handlers map. */
+  singleHandler?: (state: TState, payload: unknown, meta: IEvDbEventMetadata) => TState;
 }

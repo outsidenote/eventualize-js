@@ -16,11 +16,11 @@ import type { EvDbShardName } from "@eventualize/types/primitives/EvDbShardName"
 import type { Prisma, PrismaClient } from "./generated/prisma/client.js";
 import { PrismaQueryProvider } from "./EvDbRelationalStorageAdapterQueries.js";
 
-const deserializePayload = (payload: any): IEvDbPayloadData => {
+const deserializePayload = (payload: unknown): IEvDbPayloadData => {
   if (!!payload && typeof payload == "object") {
-    return payload;
+    return payload as IEvDbPayloadData;
   }
-  return {};
+  return {} as IEvDbPayloadData;
 };
 
 /**
@@ -33,7 +33,7 @@ export class EvDbPrismaStorageAdapter
   private readonly queryProvider: PrismaQueryProvider;
   protected readonly databaseType: string = "prisma";
 
-constructor(private readonly prisma: PrismaClient) {
+  constructor(private readonly prisma: PrismaClient) {
     this.queryProvider = new PrismaQueryProvider(prisma);
   }
   getFromOutbox(
@@ -107,7 +107,7 @@ constructor(private readonly prisma: PrismaClient) {
           event_type: event.eventType,
           captured_by: event.capturedBy,
           captured_at: event.capturedAt,
-          payload: event.payload,
+          payload: event.payload as unknown as Prisma.JsonNullValueInput,
         };
       });
 
@@ -124,7 +124,7 @@ constructor(private readonly prisma: PrismaClient) {
           captured_by: message.capturedBy,
           captured_at: message.capturedAt,
           stored_at: message.storedAt,
-          payload: message.payload,
+          payload: message.payload as unknown as Prisma.JsonNullValueInput,
           serialize_type: "json",
         };
       });
@@ -187,7 +187,7 @@ constructor(private readonly prisma: PrismaClient) {
         yield new EvDbEvent(
           event.event_type,
           new EvDbStreamCursor(event.stream_type, event.stream_id, Number(event.offset)),
-          { payloadType: event.event_type, payload: deserializePayload(event.payload) },
+          deserializePayload(event.payload),
           event.captured_at,
           event.captured_by,
           event.stored_at,
@@ -248,7 +248,7 @@ constructor(private readonly prisma: PrismaClient) {
       stream_id: record.streamId,
       view_name: record.viewName,
       offset: record.offset,
-      state: record.state,
+      state: record.state as unknown as Prisma.JsonNullValueInput,
       stored_at: new Date(),
     });
   }
@@ -259,7 +259,7 @@ constructor(private readonly prisma: PrismaClient) {
   private isOccException(error: unknown): boolean {
     // P2002 = Unique constraint violation
     // P2034 = Transaction conflict
-    const anyError = error as any;
+    const anyError = error as { code?: unknown };
     return !!error && (anyError?.code === "P2002" || anyError?.code === "P2034");
   }
 

@@ -21,6 +21,12 @@
     ],
     "nodeTestRunner.envFile": ".env.test",
     "[typescript]": {
-      "editor.defaultFormatter": "vscode.typescript-language-features"
+        "editor.defaultFormatter": "vscode.typescript-language-features"
+    },
+    "[jsonc]": {
+        "editor.defaultFormatter": "vscode.json-language-features"
+    },
+    "chat.tools.terminal.autoApprove": {
+        "pnpm": true
     }
-}  
+}

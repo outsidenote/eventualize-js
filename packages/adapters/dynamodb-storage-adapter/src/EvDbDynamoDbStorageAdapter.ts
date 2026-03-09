@@ -21,7 +21,7 @@ import QueryProvider, {
   deserializeStreamAddress,
   EventRecord,
 } from "./EvDbDynamoDbStorageAdapterQueries.js";
-import type { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import type { AttributeValue, DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { TransactionCanceledException, TransactWriteItemsCommand } from "@aws-sdk/client-dynamodb";
 
 /**
@@ -118,7 +118,7 @@ export default class EvDbDynamoDbStorageAdapter
           event_type: message.eventType,
           captured_by: message.capturedBy,
           captured_at: message.capturedAt,
-          payload: message.payload,
+          payload: message.payload ?? {},
         };
       });
 
@@ -173,7 +173,7 @@ export default class EvDbDynamoDbStorageAdapter
     streamCursor: EvDbStreamCursor,
     _pageSize: number = 100,
   ): AsyncGenerator<EvDbEvent, void, undefined> {
-    let queryCursor: Record<string, any> | undefined = undefined;
+    let queryCursor: Record<string, AttributeValue> | undefined = undefined;
 
     do {
       const getEventsCommand = QueryProvider.getEvents(streamCursor);
@@ -207,16 +207,17 @@ export default class EvDbDynamoDbStorageAdapter
     const query = QueryProvider.getSnapshot(viewAddress);
     const response = await this.dynamoDbClient.send(query);
 
-    if (!response.Items) {
+    if (!response.Items || response.Items.length === 0) {
       return EvDbStoredSnapshotResultRaw.Empty;
     }
 
     const snapshot = unmarshall(response.Items[0]);
 
+    const state = (snapshot.state as Record<string, unknown>)?.__value ?? snapshot.state;
     return new EvDbStoredSnapshotResultRaw(
       snapshot.offset,
       new Date(Number(snapshot.stored_at)),
-      snapshot.state,
+      state,
     );
   }
 

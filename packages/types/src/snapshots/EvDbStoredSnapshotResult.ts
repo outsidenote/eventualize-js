@@ -9,6 +9,6 @@ export class EvDbStoredSnapshotResult<TState> extends EvDbStoredSnapshotResultBa
   }
 
   static getEmptyState<TState>(): EvDbStoredSnapshotResult<TState> {
-    return new EvDbStoredSnapshotResult<TState>(0, undefined, undefined as unknown as TState);
+    return new EvDbStoredSnapshotResult<TState>(-1, undefined, undefined as unknown as TState);
   }
 }
