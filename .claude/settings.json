@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(# Test:*)"
+      "Bash(# Test:*)",
+      "WebFetch(domain:code.visualstudio.com)"
     ]
   }
 }
