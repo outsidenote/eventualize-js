@@ -13,13 +13,13 @@ import type { EvDbView } from "../view/EvDbView.js";
 export class StreamFactoryBuilder<
   TStreamType extends string,
   TEvents extends IEvDbEventPayload = never,
-  TViews extends Record<string, EvDbView<any>> = {},
+  TViews extends Record<string, EvDbView<unknown>> = {},
 > {
   private viewFactories: ViewFactory<any, TEvents>[] = [];
   private eventTypes: EventTypeConfig<any>[] = [];
   private viewNames: string[] = [];
 
-  constructor(private streamType: TStreamType) {}
+  constructor(private streamType: TStreamType) { }
 
   /**
    * Register event type for dynamic method generation - infers the event name from class name
@@ -46,7 +46,7 @@ export class StreamFactoryBuilder<
   public withView<TViewName extends string, TState>(
     viewName: TViewName,
     defaultState: TState,
-    handlers: EvDbStreamEventHandlersMap<TState, TEvents>,
+    handlers: Partial<EvDbStreamEventHandlersMap<TState, TEvents>>,
   ): StreamFactoryBuilder<TStreamType, TEvents, TViews & Record<TViewName, EvDbView<TState>>> {
     // Create the view factory
     const viewFactory = createViewFactory<TState, TEvents>({
@@ -64,7 +64,7 @@ export class StreamFactoryBuilder<
   /**
    * Add a pre-created view factory (legacy support)
    */
-  public withViewFactory<TViewName extends string, TState>(
+  private withViewFactory<TViewName extends string, TState>(
     viewName: TViewName,
     viewFactory: ViewFactory<TState, TEvents>,
   ): StreamFactoryBuilder<TStreamType, TEvents, TViews & Record<TViewName, EvDbView<TState>>> {

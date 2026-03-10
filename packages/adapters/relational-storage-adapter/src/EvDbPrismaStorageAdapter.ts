@@ -234,7 +234,7 @@ constructor(private readonly prisma: PrismaClient) {
     return new EvDbStoredSnapshotResultRaw(
       Number(snapshot.offset),
       snapshot.stored_at,
-      deserializePayload(snapshot.state),
+      snapshot.state,
     );
   }
 

@@ -204,7 +204,7 @@ export default class EvDbDynamoDbStorageAdapterQueries {
         view_address: { S: serializeViewAddress(viewAddress) },
         offset: { N: snapshot.offset.toString() },
         state: {
-          M: marshall(snapshot.state, {
+          M: marshall({ __state: snapshot.state }, {
             convertClassInstanceToMap: true,
             removeUndefinedValues: true,
           }),

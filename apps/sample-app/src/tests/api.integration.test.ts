@@ -8,6 +8,7 @@ import FundsPureEventsStreamFactory from "../eventstore/FundsStream/FundsPureEve
 import type { DynamoDBClientOptions } from "./DynamoDBClientOptions.js";
 import type { PrismaClient } from "@prisma/client/extension";
 import * as assert from "node:assert";
+import FundsEventsAndViewsStreamFactory from "../eventstore/FundsStream/FundsEventsAndViewsStreamFactory.js";
 
 // Start containers before all tests
 describe("Database Integration Tests", () => {
@@ -22,7 +23,8 @@ describe("Database Integration Tests", () => {
     await testManager.stop();
   });
 
-  test("start integration tests", async () => {
+
+  test("start api pure events integration tests", async () => {
     const databasesToTest = testManager.supportedDatabases;
     for (const storeType of databasesToTest) {
       await test(`${storeType} execution`, async (t) => {
@@ -58,6 +60,7 @@ describe("Database Integration Tests", () => {
 
           await stream.appendEventFundsDeposited({ amount: 100, Currency: "USD" });
           await stream.appendEventFundsCaptured({ amount: 20, Currency: "USD" });
+          assert.deepStrictEqual(stream.views, {}, "There should be no views in pure events stream");
           const affected = await stream.store();
           assert.strictEqual(affected.numEvents, 2, "Two events should have been stored");
 
@@ -72,54 +75,76 @@ describe("Database Integration Tests", () => {
             [],
             "There should be no pending messages after storing events",
           );
-          assert.deepStrictEqual(
-            stream1.views,
-            {},
-            "There should be no views registered for this stream",
-          );
         });
 
-        // await t.test("When: stream stored and fetched", async () => {
-        //   await assert.doesNotReject(testData.pointsStream.store());
-        //   testData.fetchedStream = await testData.eventStore.getStream(
-        //     "PointsStream",
-        //     testData.streamId,
-        //   );
-        // });
+        t.after(async () => {
+          await Steps.clearEnvironment(
+            testData.storeClient,
+            storeType,
+            testManager.getDynamoDbOptions(),
+          );
+        });
+      });
+    }
+  });
 
-        // await t.test("Then: fetched stream is correct", async () => {
-        //   Steps.compareFetchedAndStoredStreams(testData.pointsStream, testData.fetchedStream);
-        // });
+  test("start api events and views integration tests", async () => {
+    const databasesToTest = testManager.supportedDatabases;
+    for (const storeType of databasesToTest) {
+      await test(`${storeType} execution`, async (t) => {
+        const testData: { storeClient: DynamoDBClientOptions | PrismaClient | undefined } = {
+          storeClient: undefined,
+        };
 
-        // await t.test("AND: Duplicate stream cannot be stored", async () => {
-        //   testData.dupPointsStream = Steps.createPointsStream(
-        //     testData.streamId,
-        //     testData.eventStore,
-        //   );
-        //   Steps.addPointsEventsToStream(testData.dupPointsStream);
-        //   await assert.rejects(testData.dupPointsStream.store(), {
-        //     message: "OPTIMISTIC_CONCURRENCY_VIOLATION",
-        //   });
-        // });
+        await t.before(async () => {
+          const connectionConfig = testManager.getConnection(storeType);
+          const dynamoDbOptions: DynamoDBClientOptions | undefined =
+            testManager.getDynamoDbOptions();
+          if (storeType !== EVENT_STORE_TYPE.DYNAMODB) {
+            testData.storeClient = Steps.createStoreClient(
+              storeType,
+              connectionConfig as string | undefined,
+            );
+          } else {
+            testData.storeClient = dynamoDbOptions;
+          }
+          await Steps.clearEnvironment(testData.storeClient, storeType, dynamoDbOptions);
+        });
 
-        // await t.test("Race condition is handled correctly", async () => {
-        //   testData.fetchedStream1 = await testData.eventStore.getStream(
-        //     "PointsStream",
-        //     testData.streamId,
-        //   );
-        //   testData.fetchedStream2 = await testData.eventStore.getStream(
-        //     "PointsStream",
-        //     testData.streamId,
-        //   );
-        //   Steps.addPointsEventsToStream(testData.fetchedStream1);
-        //   Steps.addPointsEventsToStream(testData.fetchedStream2);
-        //   const results = await Promise.allSettled([
-        //     testData.fetchedStream1.store(),
-        //     testData.fetchedStream2.store(),
-        //   ]);
-        //   assert.strictEqual(results.filter((r) => r.status === "fulfilled").length, 1);
-        //   assert.strictEqual(results.filter((r) => r.status === "rejected").length, 1);
-        // });
+        await t.test("Store Events", async () => {
+          const streamId = "api-points-stream";
+          const storageAdapter = Helpers.createEventStore(storeType, testData.storeClient);
+          const stream = await FundsEventsAndViewsStreamFactory.get(streamId, storageAdapter, storageAdapter);
+
+          assert.strictEqual(
+            stream.storedOffset,
+            -1,
+            "Stream offset should be 2 after storing events",
+          );
+
+          await stream.appendEventFundsDeposited({ amount: 100, Currency: "USD" });
+          await stream.appendEventFundsCaptured({ amount: 20, Currency: "USD" });
+          assert.strictEqual(stream.views.balance, 80, "Balance should be 80 after storing events");
+          const affected = await stream.store();
+          assert.strictEqual(affected.numEvents, 2, "Two events should have been stored");
+
+          const stream1 = await FundsEventsAndViewsStreamFactory.get(streamId, storageAdapter, storageAdapter);
+          assert.strictEqual(
+            stream1.storedOffset,
+            1,
+            "Stream offset should be 2 after storing events",
+          );
+          assert.deepStrictEqual(
+            stream1.getMessages(),
+            [],
+            "There should be no pending messages after storing events",
+          );
+          assert.strictEqual(
+            stream1.views.balance,
+            80,
+            "Balance should be 80 after reloading stream",
+          );
+        });
 
         t.after(async () => {
           await Steps.clearEnvironment(

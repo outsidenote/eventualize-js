@@ -7,5 +7,5 @@ export default class EvDbStoredSnapshotResultBase {
     this.storedAt = storedAt;
   }
 
-  static readonly None = new EvDbStoredSnapshotResultBase(0, undefined);
+  static readonly None = new EvDbStoredSnapshotResultBase(-1, undefined);
 }

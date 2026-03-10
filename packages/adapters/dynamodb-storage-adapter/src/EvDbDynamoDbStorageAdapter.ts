@@ -207,7 +207,7 @@ export default class EvDbDynamoDbStorageAdapter
     const query = QueryProvider.getSnapshot(viewAddress);
     const response = await this.dynamoDbClient.send(query);
 
-    if (!response.Items) {
+    if (!response.Items || response.Items.length === 0) {
       return EvDbStoredSnapshotResultRaw.Empty;
     }
 
@@ -216,7 +216,7 @@ export default class EvDbDynamoDbStorageAdapter
     return new EvDbStoredSnapshotResultRaw(
       snapshot.offset,
       new Date(Number(snapshot.stored_at)),
-      snapshot.state,
+      snapshot.state.__state,
     );
   }
 

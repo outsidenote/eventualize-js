@@ -6,13 +6,9 @@ import { fileURLToPath } from "node:url";
 import StorageAdapterStub from "./StorageAdapterStub.js";
 import type { PointsStreamType } from "../eventstore/PointsStream/PointsStreamFactory.js";
 import PointsStreamFactory from "../eventstore/PointsStream/PointsStreamFactory.js";
-import type { SumViewState } from "../eventstore/PointsStream/PointsViews/SumViewState.js";
-import type { CountViewState } from "../eventstore/PointsStream/PointsViews/CountViewState.js";
 import { PointsAdded } from "../eventstore/PointsStream/PointsEvents/PointsAdded.js";
 import { PointsMultiplied } from "../eventstore/PointsStream/PointsEvents/PointsMultiplied.js";
 import { PointsSubtracted } from "../eventstore/PointsStream/PointsEvents/PointsSubtracted.js";
-
-import type { EvDbView } from "@eventualize/core/view/EvDbView";
 import { EvDbPrismaStorageAdapter } from "@eventualize/relational-storage-adapter/EvDbPrismaStorageAdapter.js";
 import EvDbPrismaStorageAdmin from "@eventualize/relational-storage-adapter/EvDbPrismaStorageAdmin.js";
 import EvDbPostgresPrismaClientFactory from "@eventualize/postgres-storage-adapter/EvDbPostgresPrismaClientFactory.js";
@@ -93,12 +89,10 @@ export default class Steps {
     stream.appendEventPointsSubtracted(new PointsSubtracted(20));
   }
   public static assertStreamStateIsCorrect(stream: PointsStreamType) {
-    const sumView = stream.views.Sum;
-    if (!sumView) assert.fail("SumView not found in stream");
-    const countView = stream.views.Count;
-    if (!countView) assert.fail("CountView not found in stream");
-    assert.strictEqual((stream.views.Sum as EvDbView<SumViewState>).state.sum, 210);
-    assert.strictEqual((stream.views.Count as EvDbView<CountViewState>).state.count, 11);
+    if (!stream.views.Sum) assert.fail("SumView not found in stream");
+    if (!stream.views.Count) assert.fail("CountView not found in stream");
+    assert.strictEqual(stream.views.Sum.sum, 210);
+    assert.strictEqual(stream.views.Count.count, 11);
     assert.strictEqual(stream.getEvents().length, 11);
   }
 
@@ -108,10 +102,7 @@ export default class Steps {
   ) {
     assert.strictEqual(fetchedStream.getEvents().length, 0);
     assert.strictEqual(fetchedStream.storedOffset, storedStream.storedOffset);
-    const fetchedSumView = (fetchedStream as PointsStreamType).views.Sum as EvDbView<SumViewState>;
-    const storedSumView = storedStream.views.Sum as EvDbView<SumViewState>;
-    assert.strictEqual(storedSumView.state.sum, fetchedSumView.state.sum);
-    assert.strictEqual(storedSumView.storeOffset, fetchedSumView.memoryOffset);
+    assert.strictEqual(storedStream.views.Sum.sum, fetchedStream.views.Sum.sum);
   }
 
   /**
