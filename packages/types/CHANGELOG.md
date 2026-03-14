@@ -1,5 +1,11 @@
 # @eventualize/types
 
+## 4.0.0
+
+### Major Changes
+
+- ec6dc7e: refine view api to reflect a typed state
+
 ## 3.0.0
 
 ### Major Changes
