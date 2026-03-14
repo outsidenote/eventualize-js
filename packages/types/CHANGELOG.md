@@ -1,5 +1,11 @@
 # @eventualize/types
 
+## 4.1.0
+
+### Minor Changes
+
+- 96fac8a: structure typesafe view that expose the state direcly
+
 ## 4.0.0
 
 ### Major Changes
