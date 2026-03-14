@@ -200,7 +200,7 @@ export class EvDbStreamFactory<
       Number.MAX_VALUE,
     );
 
-    let streamOffset: number = -1;
+    let streamOffset: number;
     if (snapshotStorageAdapter) {
       // lowestViewOffset < 0 means no real snapshot exists yet (empty sentinel = -1).
       // In that case start the cursor at 0 so event at offset 0 is not skipped.
@@ -209,14 +209,14 @@ export class EvDbStreamFactory<
       const events = await streamStorageAdapter.getEventsAsync(streamCursor);
 
       // Only advance streamOffset from -1 if there is at least one real snapshot.
-      if (lowestViewOffset >= 0) streamOffset = lowestViewOffset;
+      streamOffset = lowestViewOffset;
       for await (const event of events) {
         views.forEach((view) => view.applyEvent(event));
         streamOffset = event.streamCursor.offset;
       }
     } else {
-      streamOffset = // TODO: get last offset from stream storage adapter if no snapshot adapter is provided
-        streamOffset = await streamStorageAdapter.getLastOffsetAsync(streamAddress);
+      // If no snapshot adapter (no views), we can only get the last offset of the events stream
+      streamOffset = await streamStorageAdapter.getLastOffsetAsync(streamAddress);
     }
 
     return new this.DynamicStreamClass(
