@@ -62,18 +62,6 @@ export class StreamFactoryBuilder<
   }
 
   /**
-   * Add a pre-created view factory (legacy support)
-   */
-  private withViewFactory<TViewName extends string, TState>(
-    viewName: TViewName,
-    viewFactory: ViewFactory<TState, TEvents>,
-  ): StreamFactoryBuilder<TStreamType, TEvents, TViews & Record<TViewName, EvDbView<TState>>> {
-    this.viewFactories.push(viewFactory);
-    this.viewNames.push(viewName);
-    return this as any;
-  }
-
-  /**
    * Build the stream factory using event types registered via `withEventType`.
    */
   public build() {
