@@ -1,5 +1,16 @@
 # @eventualize/mysql-storage-adapter
 
+## 4.0.0
+
+### Major Changes
+
+- ec6dc7e: refine view api to reflect a typed state
+
+### Patch Changes
+
+- Updated dependencies [ec6dc7e]
+  - @eventualize/relational-storage-adapter@4.0.0
+
 ## 3.0.0
 
 ### Major Changes
