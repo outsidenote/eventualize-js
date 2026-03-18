@@ -1,5 +1,11 @@
 # @eventualize/types
 
+## 4.2.0
+
+### Minor Changes
+
+- da41352: lint builder factory
+
 ## 4.1.0
 
 ### Minor Changes

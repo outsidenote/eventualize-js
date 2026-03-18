@@ -1,6 +1,6 @@
 {
   "name": "@eventualize/relational-storage-adapter",
-  "version": "4.1.0",
+  "version": "4.2.0",
   "description": "",
   "repository": {
     "type": "git",
@@ -31,7 +31,7 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
-    "@eventualize/types": "^4.1.0",
+    "@eventualize/types": "^4.2.0",
     "@prisma/client": "^7.1.0"
   },
   "devDependencies": {
