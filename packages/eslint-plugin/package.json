@@ -1,0 +1,37 @@
+{
+  "name": "@eventualize/eslint-plugin",
+  "version": "0.1.0",
+  "description": "ESLint plugin enforcing EvDb StreamFactoryBuilder module structure",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "require": "./dist/index.js",
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc --build",
+    "clean": "rimraf dist",
+    "rebuild": "npm run clean && npm run build",
+    "test": "node --import tsx --test 'src/rules/**/*.test.ts'"
+  },
+  "peerDependencies": {
+    "eslint": ">=9.0.0"
+  },
+  "devDependencies": {
+    "@typescript-eslint/parser": "^8.0.0",
+    "@typescript-eslint/utils": "^8.0.0",
+    "eslint": "^9.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0"
+  },
+  "files": [
+    "dist"
+  ],
+  "license": "ISC"
+}
