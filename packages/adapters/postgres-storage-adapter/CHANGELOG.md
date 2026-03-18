@@ -1,5 +1,16 @@
 # @eventualize/postgres-storage-adapter
 
+## 4.2.0
+
+### Minor Changes
+
+- da41352: lint builder factory
+
+### Patch Changes
+
+- Updated dependencies [da41352]
+  - @eventualize/relational-storage-adapter@4.2.0
+
 ## 4.1.0
 
 ### Minor Changes
