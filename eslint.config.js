@@ -1,6 +1,7 @@
 import eslint from "@eslint/js";
 import tseslint from "typescript-eslint";
 import eslintConfigPrettier from "eslint-config-prettier";
+import evdbPlugin from "@eventualize/eslint-plugin";
 
 export default tseslint.config(
   {
@@ -17,6 +18,14 @@ export default tseslint.config(
   eslint.configs.recommended,
   ...tseslint.configs.recommended,
   eslintConfigPrettier,
+  {
+    plugins: {
+      "@eventualize": evdbPlugin,
+    },
+    rules: {
+      "@eventualize/enforce-stream-factory-module": "error",
+    },
+  },
   {
     rules: {
       "@typescript-eslint/no-unused-vars": [

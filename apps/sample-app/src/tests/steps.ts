@@ -20,7 +20,7 @@ import EvDbDynamoDbAdmin from "@eventualize/dynamodb-storage-adapter/EvDBDynamoD
 import type IEvDbStorageAdmin from "@eventualize/types/adapters/IEvDbStorageAdmin";
 import type { DynamoDBClientOptions } from "./DynamoDBClientOptions.js";
 import { EVENT_STORE_TYPE } from "./EVENT_STORE_TYPE.js";
-import { IEvDbStorageAdapter } from "@eventualize/core/adapters/IEvDbStorageAdapter";
+import type { IEvDbStorageAdapter } from "@eventualize/core/adapters/IEvDbStorageAdapter";
 
 const getEnvPath = () => {
   const __filename = fileURLToPath(import.meta.url);
