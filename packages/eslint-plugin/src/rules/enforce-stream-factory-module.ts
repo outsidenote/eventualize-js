@@ -54,15 +54,13 @@ function walkCallChain(node: TSESTree.Expression): string[] | null {
 }
 
 /**
- * Validates that the initializer is a StreamFactoryBuilder chain
- * using only withEventType / withView, terminated by .build().
+ * Validates that the initializer is a StreamFactoryBuilder chain terminated by .build().
+ * Any intermediate method calls are allowed — TypeScript enforces method validity.
  */
 function isValidBuildChain(node: TSESTree.Expression): boolean {
   const chain = walkCallChain(node);
   if (chain === null || chain.length === 0) return false;
-  if (chain[chain.length - 1] !== "build") return false;
-  const middle = chain.slice(0, -1);
-  return middle.every((m) => m === "withEventType" || m === "withView");
+  return chain[chain.length - 1] === "build";
 }
 
 /**
@@ -139,7 +137,7 @@ export const enforceStreamFactoryModule = createRule<[], MessageIds>({
       invalidExportDefault:
         "export default must export the factory const directly (e.g. `export default MyFactory`).",
       invalidBuildChain:
-        "The factory initializer must be a StreamFactoryBuilder chain ending with .build(), using only .withEventType() and .withView() calls.",
+        "The factory initializer must be a StreamFactoryBuilder chain ending with .build().",
     },
     schema: [],
   },
@@ -169,17 +167,18 @@ export const enforceStreamFactoryModule = createRule<[], MessageIds>({
               const name = getValidFactoryName(statement);
               if (name === null) {
                 // Use invalidBuildChain only when the init is rooted in StreamFactoryBuilder
-                // but the chain is otherwise malformed (wrong methods, missing .build(), etc.)
+                // but is missing the terminating .build() call.
                 const init =
                   statement.kind === "const" &&
                   statement.declarations.length === 1
                     ? statement.declarations[0].init
                     : null;
-                const isAttemptedChain =
-                  init !== null &&
-                  init !== undefined &&
-                  walkCallChain(init) !== null;
-                if (isAttemptedChain) {
+                const chain =
+                  init !== null && init !== undefined
+                    ? walkCallChain(init)
+                    : null;
+                const isStreamFactoryChain = chain !== null;
+                if (isStreamFactoryChain) {
                   context.report({ node: statement, messageId: "invalidBuildChain" });
                 } else {
                   context.report({ node: statement, messageId: "invalidStatement" });

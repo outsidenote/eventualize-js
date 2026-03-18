@@ -121,6 +121,36 @@ ruleTester.run("enforce-stream-factory-module", enforceStreamFactoryModule as an
       `,
     },
 
+    // Chain with any intermediate methods — rule does not police method names
+    {
+      filename: "AnyMethodsFactory.ts",
+      code: `
+        import { StreamFactoryBuilder } from "@eventualize/core/factories/StreamFactoryBuilder";
+        import { MyEvent } from "./MyEvent.js";
+
+        const AnyMethodsFactory = new StreamFactoryBuilder("x")
+          .withEventType(MyEvent)
+          .withMessageFactories()
+          .build();
+
+        export default AnyMethodsFactory;
+      `,
+    },
+
+    // Chain with arbitrary custom method — TypeScript enforces this, not ESLint
+    {
+      filename: "CustomMethodFactory.ts",
+      code: `
+        import { StreamFactoryBuilder } from "@eventualize/core/factories/StreamFactoryBuilder";
+
+        const CustomMethodFactory = new StreamFactoryBuilder("x")
+          .withCustomThing()
+          .build();
+
+        export default CustomMethodFactory;
+      `,
+    },
+
     // Generated file header comment: comments are not AST body nodes, must not trigger
     {
       filename: "GeneratedFactory.ts",
@@ -175,29 +205,6 @@ ruleTester.run("enforce-stream-factory-module", enforceStreamFactoryModule as an
         export default F1;
       `,
       errors: [{ messageId: "multipleConsts" }],
-    },
-
-    // Chain uses disallowed method (.withMessageFactories)
-    // Also triggers invalidExportDefault since factory name is never recorded
-    {
-      filename: "BadFactory.ts",
-      code: `
-        import { StreamFactoryBuilder } from "@eventualize/core/factories/StreamFactoryBuilder";
-        const F = new StreamFactoryBuilder("x").withMessageFactories().build();
-        export default F;
-      `,
-      errors: [{ messageId: "invalidBuildChain" }, { messageId: "invalidExportDefault" }],
-    },
-
-    // Chain uses disallowed method (arbitrary custom method)
-    {
-      filename: "BadFactory.ts",
-      code: `
-        import { StreamFactoryBuilder } from "@eventualize/core/factories/StreamFactoryBuilder";
-        const F = new StreamFactoryBuilder("x").withCustomThing().build();
-        export default F;
-      `,
-      errors: [{ messageId: "invalidBuildChain" }, { messageId: "invalidExportDefault" }],
     },
 
     // Chain doesn't end with .build()
