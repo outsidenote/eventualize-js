@@ -13,7 +13,6 @@ import { EvDbPrismaStorageAdapter } from "@eventualize/relational-storage-adapte
 import EvDbPrismaStorageAdmin from "@eventualize/relational-storage-adapter/EvDbPrismaStorageAdmin.js";
 import EvDbPostgresPrismaClientFactory from "@eventualize/postgres-storage-adapter/EvDbPostgresPrismaClientFactory.js";
 import EvDbMySqlPrismaClientFactory from "@eventualize/mysql-storage-adapter/EvDbMySqlPrismaClientFactory.js";
-import type { PrismaClient } from "@eventualize/relational-storage-adapter/EvDbPrismaClient.js";
 import EvDbDynamoDbStorageAdapter from "@eventualize/dynamodb-storage-adapter/EvDbDynamoDbStorageAdapter.js";
 import EvDbDynamoDbAdmin from "@eventualize/dynamodb-storage-adapter/EvDBDynamoDBAdmin.js";
 import type IEvDbStorageAdmin from "@eventualize/types/adapters/IEvDbStorageAdmin";
@@ -31,7 +30,9 @@ const getEnvPath = () => {
 const envPath = getEnvPath();
 dotenv.config({ path: envPath });
 
-type RelationalClientType = PrismaClient;
+type RelationalClientType =
+  | ReturnType<typeof EvDbPostgresPrismaClientFactory.create>
+  | ReturnType<typeof EvDbMySqlPrismaClientFactory.create>;
 type StoreClientType = RelationalClientType | undefined;
 
 export default class Steps {
