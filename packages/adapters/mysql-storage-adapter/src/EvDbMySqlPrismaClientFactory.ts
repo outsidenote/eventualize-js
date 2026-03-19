@@ -1,5 +1,5 @@
 import { PrismaMariaDb } from "@prisma/adapter-mariadb";
-import { PrismaClient } from "./generated/prisma/client.js";
+import { PrismaClient } from "@eventualize/relational-storage-adapter/EvDbPrismaClient.js";
 
 export default class EvDbMySqlPrismaClientFactory {
   /**

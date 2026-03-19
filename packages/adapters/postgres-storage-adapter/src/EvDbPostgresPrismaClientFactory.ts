@@ -1,4 +1,4 @@
-import { PrismaClient } from "@eventualize/relational-storage-adapter/generated/prisma/client";
+import { PrismaClient } from "@eventualize/relational-storage-adapter/EvDbPrismaClient.js";
 import { PrismaPg } from "@prisma/adapter-pg";
 
 export default class EvDbPostgresPrismaClientFactory {
