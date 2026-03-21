@@ -1,5 +1,11 @@
 # @eventualize/types
 
+## 4.3.0
+
+### Minor Changes
+
+- 302c66c: fix: update PrismaClient imports
+
 ## 4.2.0
 
 ### Minor Changes
