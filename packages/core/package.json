@@ -1,6 +1,6 @@
 {
   "name": "@eventualize/core",
-  "version": "4.2.0",
+  "version": "4.3.0",
   "description": "",
   "repository": {
     "type": "git",
@@ -29,7 +29,7 @@
     "test": "echo not tests implemented yet."
   },
   "dependencies": {
-    "@eventualize/types": "4.2.0"
+    "@eventualize/types": "4.3.0"
   },
   "license": "ISC",
   "type": "module",

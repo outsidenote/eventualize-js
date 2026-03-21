@@ -1,5 +1,16 @@
 # @eventualize/relational-storage-adapter
 
+## 4.3.0
+
+### Minor Changes
+
+- 302c66c: fix: update PrismaClient imports
+
+### Patch Changes
+
+- Updated dependencies [302c66c]
+  - @eventualize/types@4.3.0
+
 ## 4.2.0
 
 ### Minor Changes
