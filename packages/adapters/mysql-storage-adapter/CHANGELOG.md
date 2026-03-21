@@ -1,5 +1,16 @@
 # @eventualize/mysql-storage-adapter
 
+## 4.4.0
+
+### Minor Changes
+
+- a02ab9b: fix import of PrismaClient
+
+### Patch Changes
+
+- Updated dependencies [a02ab9b]
+  - @eventualize/relational-storage-adapter@4.4.0
+
 ## 4.3.0
 
 ### Minor Changes
