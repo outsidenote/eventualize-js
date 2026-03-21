@@ -1,5 +1,11 @@
 # @eventualize/eslint-plugin
 
+## 4.4.0
+
+### Minor Changes
+
+- a02ab9b: fix import of PrismaClient
+
 ## 4.3.0
 
 ### Minor Changes
