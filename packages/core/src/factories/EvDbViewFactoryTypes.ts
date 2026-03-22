@@ -12,10 +12,10 @@ export type EvDbViewEventHandler<TState, TEvent extends IEvDbEventPayload> = (
 
 /**
  * Map of event handlers - one handler per event type in the union
- * Key is the payloadType string, value is the handler function
+ * Key is the eventType string, value is the handler function
  */
 export type EvDbStreamEventHandlersMap<TState, TEvents extends IEvDbEventPayload> = {
-  [K in TEvents["payloadType"]]: EvDbViewEventHandler<TState, Extract<TEvents, { payloadType: K }>>;
+  [K in TEvents["eventType"]]: EvDbViewEventHandler<TState, Extract<TEvents, { eventType: K }>>;
 };
 
 /**

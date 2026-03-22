@@ -7,7 +7,7 @@ import type EvDbStreamAddress from "@eventualize/types/stream/EvDbStreamAddress"
 import type EvDbViewAddress from "@eventualize/types/view/EvDbViewAddress";
 import { EvDbStoredSnapshotResultRaw } from "@eventualize/types/snapshots/EvDbStoredSnapshotResultRaw";
 import type { EvDbStoredSnapshotData } from "@eventualize/types/snapshots/EvDbStoredSnapshotData";
-import EvDbEvent from "@eventualize/types/events/EvDbEvent";
+import type IEvDbEvent from "@eventualize/types/events/EvDbEvent";
 import StreamStoreAffected from "@eventualize/types/stream/StreamStoreAffected";
 import type EvDbContinuousFetchOptions from "@eventualize/types/primitives/EvDbContinuousFetchOptions";
 import type EvDbMessageFilter from "@eventualize/types/messages/EvDbMessageFilter";
@@ -93,7 +93,7 @@ constructor(private readonly prisma: PrismaClient) {
    * Store stream events in a transaction
    */
   async storeStreamAsync(
-    events: ReadonlyArray<EvDbEvent>,
+    events: ReadonlyArray<IEvDbEvent>,
     messages: ReadonlyArray<EvDbMessage>,
   ): Promise<StreamStoreAffected> {
     try {
@@ -107,7 +107,7 @@ constructor(private readonly prisma: PrismaClient) {
           event_type: event.eventType,
           captured_by: event.capturedBy,
           captured_at: event.capturedAt,
-          payload: event.payload,
+          payload: event.payload as unknown as Prisma.InputJsonValue,
         };
       });
 
@@ -173,7 +173,7 @@ constructor(private readonly prisma: PrismaClient) {
   async *getEventsAsync(
     streamCursor: EvDbStreamCursor,
     _pageSize: number = 100,
-  ): AsyncGenerator<EvDbEvent, void, undefined> {
+  ): AsyncGenerator<IEvDbEvent, void, undefined> {
     const { streamType, streamId } = streamCursor;
     let currentOffset = streamCursor.offset;
     while (true) {
@@ -184,14 +184,14 @@ constructor(private readonly prisma: PrismaClient) {
       }
 
       for (const event of events) {
-        yield new EvDbEvent(
-          event.event_type,
-          new EvDbStreamCursor(event.stream_type, event.stream_id, Number(event.offset)),
-          { payloadType: event.event_type, payload: deserializePayload(event.payload) },
-          event.captured_at,
-          event.captured_by,
-          event.stored_at,
-        );
+        yield {
+          eventType: event.event_type,
+          streamCursor: new EvDbStreamCursor(event.stream_type, event.stream_id, Number(event.offset)),
+          payload: { eventType: event.event_type, ...deserializePayload(event.payload) },
+          capturedAt: event.captured_at,
+          capturedBy: event.captured_by,
+          storedAt: event.stored_at,
+        };
         currentOffset = Math.max(currentOffset, Number(event.offset));
       }
 

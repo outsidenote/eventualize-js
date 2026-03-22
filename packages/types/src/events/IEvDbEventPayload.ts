@@ -1,5 +1,4 @@
-import type { IEvDbPayloadData } from "./IEvDbPayloadData.js";
-
-export default interface IEvDbEventPayload extends IEvDbPayloadData {
-  readonly payloadType: string;
+export default interface IEvDbEventPayload {
+  readonly eventType: string;
+  [key: string]: unknown;
 }

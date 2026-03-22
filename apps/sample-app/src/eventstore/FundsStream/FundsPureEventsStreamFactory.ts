@@ -8,11 +8,11 @@ import { FundsRefunded } from "./FundsEvents/FundsRefunded.js";
 import { FundsWithdrawal } from "./FundsEvents/FundsWithdrawal.js";
 
 const FundsPureEventsStreamFactory = new StreamFactoryBuilder("funds-stream")
-  .withEventType(FundsCaptured)
-  .withEventType(FundsDenied)
-  .withEventType(FundsDeposited)
-  .withEventType(FundsRefunded)
-  .withEventType(FundsWithdrawal)
+  .withEventType<FundsCaptured>(FundsCaptured)
+  .withEventType<FundsDenied>(FundsDenied)
+  .withEventType<FundsDeposited>(FundsDeposited)
+  .withEventType<FundsRefunded>(FundsRefunded)
+  .withEventType<FundsWithdrawal>(FundsWithdrawal)
   .build();
 
 export default FundsPureEventsStreamFactory;

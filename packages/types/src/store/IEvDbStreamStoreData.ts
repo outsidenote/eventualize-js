@@ -1,7 +1,7 @@
 import type EvDbStreamAddress from "../stream/EvDbStreamAddress.js";
 import type ImmutableIEvDbView from "./ImmutableIEvDbView.js";
 import type { ImmutableIEvDbViewMap } from "./ImmutableIEvDbViewMap.js";
-import type EvDbEvent from "../events/EvDbEvent.js";
+import type IEvDbEvent from "../events/EvDbEvent.js";
 import type EvDbMessage from "../messages/EvDbMessage.js";
 
 export default interface IEvDbStreamStoreData {
@@ -14,7 +14,7 @@ export default interface IEvDbStreamStoreData {
   getView(viewName: string): ImmutableIEvDbView | undefined;
 
   /** Unspecialized events */
-  getEvents: () => ReadonlyArray<EvDbEvent>;
+  getEvents: () => ReadonlyArray<IEvDbEvent>;
 
   /** Unspecialized notifications */
   getMessages: () => ReadonlyArray<EvDbMessage>;

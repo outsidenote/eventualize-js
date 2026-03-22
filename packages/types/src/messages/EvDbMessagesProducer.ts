@@ -1,8 +1,8 @@
-import type EvDbEvent from "../events/EvDbEvent.js";
+import type IEvDbEvent from "../events/EvDbEvent.js";
 import type EvDbMessage from "./EvDbMessage.js";
 
 type EVDbMessagesProducer = (
-  event: EvDbEvent,
+  event: IEvDbEvent,
   viewStates: Readonly<Record<string, unknown>>,
 ) => EvDbMessage[];
 export default EVDbMessagesProducer;

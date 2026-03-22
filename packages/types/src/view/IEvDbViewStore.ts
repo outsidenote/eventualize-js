@@ -1,5 +1,5 @@
 import type IEvDbView from "./IEvDbView.js";
-import type EvDbEvent from "../events/EvDbEvent.js";
+import type IEvDbEvent from "../events/EvDbEvent.js";
 import type { EvDbStoredSnapshotData } from "../snapshots/EvDbStoredSnapshotData.js";
 
 /// View store contract.
@@ -16,7 +16,7 @@ export default interface IEvDbViewStore extends IEvDbView {
   /**
    * Apply event to the aggregate/view.
    */
-  applyEvent(e: EvDbEvent): void;
+  applyEvent(e: IEvDbEvent): void;
 
   /**
    * Get the snapshot data.

@@ -6,9 +6,7 @@ import { fileURLToPath } from "node:url";
 import StorageAdapterStub from "./StorageAdapterStub.js";
 import type { PointsStreamType } from "../eventstore/PointsStream/PointsStreamFactory.js";
 import PointsStreamFactory from "../eventstore/PointsStream/PointsStreamFactory.js";
-import { PointsAdded } from "../eventstore/PointsStream/PointsEvents/PointsAdded.js";
-import { PointsMultiplied } from "../eventstore/PointsStream/PointsEvents/PointsMultiplied.js";
-import { PointsSubtracted } from "../eventstore/PointsStream/PointsEvents/PointsSubtracted.js";
+
 import { EvDbPrismaStorageAdapter } from "@eventualize/relational-storage-adapter/EvDbPrismaStorageAdapter.js";
 import EvDbPrismaStorageAdmin from "@eventualize/relational-storage-adapter/EvDbPrismaStorageAdmin.js";
 import EvDbPostgresPrismaClientFactory from "@eventualize/postgres-storage-adapter/EvDbPostgresPrismaClientFactory.js";
@@ -74,17 +72,17 @@ export default class Steps {
   }
 
   public static addPointsEventsToStream(stream: PointsStreamType) {
-    stream.appendEventPointsAdded(new PointsAdded(50));
-    stream.appendEventPointsSubtracted(new PointsSubtracted(20));
-    stream.appendEventPointsAdded(new PointsAdded(50));
-    stream.appendEventPointsSubtracted(new PointsSubtracted(20));
-    stream.appendEventPointsMultiplied(new PointsMultiplied(2));
-    stream.appendEventPointsAdded(new PointsAdded(50));
-    stream.appendEventPointsSubtracted(new PointsSubtracted(20));
-    stream.appendEventPointsAdded(new PointsAdded(50));
-    stream.appendEventPointsSubtracted(new PointsSubtracted(20));
-    stream.appendEventPointsAdded(new PointsAdded(50));
-    stream.appendEventPointsSubtracted(new PointsSubtracted(20));
+    stream.appendEventPointsAdded({ points: 50 });
+    stream.appendEventPointsSubtracted({ points: 20 });
+    stream.appendEventPointsAdded({ points: 50 });
+    stream.appendEventPointsSubtracted({ points: 20 });
+    stream.appendEventPointsMultiplied({ multiplier: 2 });
+    stream.appendEventPointsAdded({ points: 50 });
+    stream.appendEventPointsSubtracted({ points: 20 });
+    stream.appendEventPointsAdded({ points: 50 });
+    stream.appendEventPointsSubtracted({ points: 20 });
+    stream.appendEventPointsAdded({ points: 50 });
+    stream.appendEventPointsSubtracted({ points: 20 });
   }
   public static assertStreamStateIsCorrect(stream: PointsStreamType) {
     if (!stream.views.Sum) assert.fail("SumView not found in stream");

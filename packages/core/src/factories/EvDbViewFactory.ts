@@ -5,7 +5,7 @@ import type IEvDbStorageSnapshotAdapter from "@eventualize/types/adapters/IEvDbS
 import EvDbViewAddress from "@eventualize/types/view/EvDbViewAddress";
 import EvDbStreamAddress from "@eventualize/types/stream/EvDbStreamAddress";
 import { EvDbStoredSnapshotResult } from "@eventualize/types/snapshots/EvDbStoredSnapshotResult";
-import type { ViewConfig } from "./EvDbViewFactoryTypes.js";
+import type { ViewConfig, EvDbViewEventHandler } from "./EvDbViewFactoryTypes.js";
 
 /**
  * Generic View class that uses the handlers map
@@ -25,15 +25,14 @@ class GenericView<TState, TEvents extends IEvDbEventPayload> extends EvDbView<TS
    * Dynamically applies events based on the handlers map
    */
   public handleOnApply(oldState: TState, event: TEvents, metadata: IEvDbEventMetadata): TState {
-    const payloadType = event.payloadType as keyof typeof this.config.handlers;
-    const handler = this.config.handlers[payloadType];
+    const eventType = event.eventType as keyof typeof this.config.handlers;
+    const handler = this.config.handlers[eventType];
 
     if (!handler) {
-      // console.warn(`No handler found for event type: ${event.payloadType}`);
       return oldState;
     }
 
-    return handler(oldState, event as any, metadata);
+    return (handler as EvDbViewEventHandler<TState, TEvents>)(oldState, event, metadata);
   }
 }
 

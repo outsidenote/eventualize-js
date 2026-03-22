@@ -4,7 +4,7 @@ import type { EvDbStoredSnapshotData } from "@eventualize/types/snapshots/EvDbSt
 import type { EvDbStoredSnapshotResultRaw } from "@eventualize/types/snapshots/EvDbStoredSnapshotResultRaw";
 import type IEvDbStorageStreamAdapter from "@eventualize/types/adapters/IEvDbStorageStreamAdapter";
 import type EvDbContinuousFetchOptions from "@eventualize/types/primitives/EvDbContinuousFetchOptions";
-import type EvDbEvent from "@eventualize/types/events/EvDbEvent";
+import type IEvDbEvent from "@eventualize/types/events/EvDbEvent";
 import type EvDbMessage from "@eventualize/types/messages/EvDbMessage";
 import type EvDbMessageFilter from "@eventualize/types/messages/EvDbMessageFilter";
 import type EvDbStreamAddress from "@eventualize/types/stream/EvDbStreamAddress";
@@ -18,14 +18,14 @@ export default class StorageAdapterStub
   close(): Promise<void> {
     throw new Error("Method not implemented.");
   }
-  getEventsAsync(_streamCursor: EvDbStreamCursor): AsyncGenerator<EvDbEvent, void, undefined> {
+  getEventsAsync(_streamCursor: EvDbStreamCursor): AsyncGenerator<IEvDbEvent, void, undefined> {
     throw new Error("Method not implemented.");
   }
   getLastOffsetAsync(_address: EvDbStreamAddress): Promise<number> {
     throw new Error("Method not implemented.");
   }
   storeStreamAsync(
-    _events: ReadonlyArray<EvDbEvent>,
+    _events: ReadonlyArray<IEvDbEvent>,
     _messages: ReadonlyArray<EvDbMessage>,
   ): Promise<StreamStoreAffected> {
     throw new Error("Method not implemented.");

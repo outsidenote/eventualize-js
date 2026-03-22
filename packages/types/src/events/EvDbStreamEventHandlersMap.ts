@@ -7,7 +7,7 @@ type EvDbStreamEventHandler = (
 ) => Promise<IEvDbEventMetadata>;
 
 type EvDbStreamEventHandlersMap<TEvents extends IEvDbEventPayload> = Partial<{
-  [E in TEvents as `apply${E["payloadType"]}`]: EvDbStreamEventHandler;
+  [E in TEvents as `apply${E["eventType"]}`]: EvDbStreamEventHandler;
 }>;
 
 export default EvDbStreamEventHandlersMap;

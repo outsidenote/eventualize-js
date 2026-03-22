@@ -8,9 +8,9 @@ import { pointsAddedMessages } from "./PointsMessages/PoinstAddedMessages.js";
 import { pointsMultipliedMessages } from "./PointsMessages/PointsMultipliedMessages.js";
 
 const PointsStreamFactory = new StreamFactoryBuilder("PointsStream")
-  .withEventType(PointsAdded, pointsAddedMessages)
-  .withEventType(PointsSubtracted)
-  .withEventType(PointsMultiplied, pointsMultipliedMessages)
+  .withEventType<PointsAdded>(PointsAdded, pointsAddedMessages)
+  .withEventType<PointsSubtracted>(PointsSubtracted)
+  .withEventType<PointsMultiplied>(PointsMultiplied, pointsMultipliedMessages)
   .withView("Sum", { sum: 0 }, sumViewHandlers)
   .withView("Count", { count: 0 }, countViewHandlers)
   .build();
