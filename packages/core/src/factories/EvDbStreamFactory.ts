@@ -1,6 +1,5 @@
 import type IEvDbStorageSnapshotAdapter from "@eventualize/types/adapters/IEvDbStorageSnapshotAdapter";
 import type IEvDbStorageStreamAdapter from "@eventualize/types/adapters/IEvDbStorageStreamAdapter";
-import type IEvDbEventPayload from "@eventualize/types/events/IEvDbEventPayload";
 import EvDbStreamCursor from "@eventualize/types/stream/EvDbStreamCursor";
 import EvDbStreamAddress from "@eventualize/types/stream/EvDbStreamAddress";
 import type EVDbMessagesProducer from "@eventualize/types/messages/EvDbMessagesProducer";
@@ -14,7 +13,7 @@ import type { IEvDbStreamFactory } from "./IEvDbStreamFactory.js";
 /**
  * Type helper to extract event methods
  */
-type EventMethods<TEvents extends IEvDbEventPayload> = {
+type EventMethods<TEvents extends { payloadType: string }> = {
   [K in TEvents as `appendEvent${K["payloadType"]}`]: (
     event: Omit<K, "payloadType">,
   ) => Promise<void>;
@@ -39,7 +38,7 @@ type ViewAccessors<TViews extends Record<string, EvDbView<unknown>>> = {
  * Combined stream type with event methods and view accessors
  */
 export type StreamWithEventMethods<
-  TEvents extends IEvDbEventPayload,
+  TEvents extends { payloadType: string },
   TViews extends Record<string, EvDbView<unknown>> = {},
 > = EvDbStream & EventMethods<TEvents> & ViewAccessors<TViews>;
 
@@ -47,7 +46,7 @@ export type StreamWithEventMethods<
  * Stream Factory - creates stream instances with configured views and dynamic event methods
  */
 export class EvDbStreamFactory<
-  TEvents extends IEvDbEventPayload,
+  TEvents extends { payloadType: string },
   TStreamType extends string,
   TViews extends Record<string, EvDbView<unknown>> = {},
 > implements IEvDbStreamFactory<TEvents, TStreamType, TViews> {
@@ -237,7 +236,7 @@ export class EvDbStreamFactory<
  * Factory function to create a StreamFactory
  */
 export function createEvDbStreamFactory<
-  TEvents extends IEvDbEventPayload,
+  TEvents extends { payloadType: string },
   TStreamType extends string,
   TViews extends Record<string, EvDbView<unknown>> = {},
 >(
