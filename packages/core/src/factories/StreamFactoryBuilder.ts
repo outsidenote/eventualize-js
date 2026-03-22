@@ -2,13 +2,13 @@ import type IEvDbEventPayload from "@eventualize/types/events/IEvDbEventPayload"
 import type EVDbMessagesProducer from "@eventualize/types/messages/EvDbMessagesProducer";
 import { EvDbStreamFactory } from "./EvDbStreamFactory.js";
 import type { StreamWithEventMethods } from "./EvDbStreamFactory.js";
-import type { EventTypeConfig } from "./EvDbStreamFactoryTypes.js"; // used by withEventType
+import type { EventTypeConfig } from "./EvDbStreamFactoryTypes.js"; // used by withEvent
 import type { ViewFactory, EvDbStreamEventHandlersMap } from "./EvDbViewFactory.js";
 import { createViewFactory } from "./EvDbViewFactory.js";
 import type { EvDbView } from "../view/EvDbView.js";
 
 /**
- * Intermediate step returned by `withEventType("name")`.
+ * Intermediate step returned by `withEvent("name")`.
  * Call `.as<EventType>()` to provide the event's TypeScript type.
  */
 export class EventTypeStep<
@@ -19,7 +19,7 @@ export class EventTypeStep<
 > {
   constructor(private builder: StreamFactoryBuilder<TStreamType, TEvents, TViews>) {}
 
-  as<TEvent extends object>(): StreamFactoryBuilder<TStreamType, TEvents | (TEvent & { readonly payloadType: TName }), TViews> {
+  asType<TEvent extends object>(): StreamFactoryBuilder<TStreamType, TEvents | (TEvent & { readonly payloadType: TName }), TViews> {
     return this.builder as unknown as StreamFactoryBuilder<TStreamType, TEvents | (TEvent & { readonly payloadType: TName }), TViews>;
   }
 }
@@ -41,7 +41,7 @@ export class StreamFactoryBuilder<
   /**
    * Register event type for dynamic method generation - infers the event name from class name
    */
-  withEventType<TEvent extends IEvDbEventPayload>(
+  withEvent<TEvent extends IEvDbEventPayload>(
     eventClass: new (...args: any[]) => TEvent,
     eventMessagesProducer?: EVDbMessagesProducer,
   ): StreamFactoryBuilder<TStreamType, TEvents | TEvent, TViews>;
@@ -49,14 +49,14 @@ export class StreamFactoryBuilder<
   /**
    * Register a plain object event type by name.
    * Returns an intermediate step — call `.as<EventType>()` to provide the type.
-   * Example: `.withEventType("FundsDeposited").as<FundsDeposited>()`
+   * Example: `.withEvent("FundsDeposited").as<FundsDeposited>()`
    */
-  withEventType<TName extends string>(
+  withEvent<TName extends string>(
     payloadType: TName,
   ): EventTypeStep<TStreamType, TEvents, TViews, TName>;
 
   // Implementation
-  withEventType<TEvent>(
+  withEvent<TEvent>(
     first: (new (...args: any[]) => TEvent) | string,
     second?: EVDbMessagesProducer,
   ): StreamFactoryBuilder<TStreamType, any, TViews> | EventTypeStep<TStreamType, any, TViews, string> {
@@ -81,7 +81,7 @@ export class StreamFactoryBuilder<
 
   /**
    * Add a view with inline handler definition
-   * This can only be called AFTER withEventType calls to ensure type safety
+   * This can only be called AFTER withEvent calls to ensure type safety
    */
   public withView<TViewName extends string, TState>(
     viewName: TViewName,
@@ -102,7 +102,7 @@ export class StreamFactoryBuilder<
   }
 
   /**
-   * Build the stream factory using event types registered via `withEventType`.
+   * Build the stream factory using event types registered via `withEvent`.
    */
   public build() {
     const factory = new EvDbStreamFactory({
