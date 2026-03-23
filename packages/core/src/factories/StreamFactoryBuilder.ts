@@ -17,7 +17,7 @@ export class EventTypeStep<
   TViews extends Record<string, EvDbView<unknown>>,
   TName extends string,
 > {
-  constructor(private builder: StreamFactoryBuilder<TStreamType, TEvents, TViews>) {}
+  constructor(private builder: StreamFactoryBuilder<TStreamType, TEvents, TViews>) { }
 
   asType<TEvent extends object>(): StreamFactoryBuilder<TStreamType, TEvents | (TEvent & { readonly eventType: TName }), TViews> {
     return this.builder as unknown as StreamFactoryBuilder<TStreamType, TEvents | (TEvent & { readonly eventType: TName }), TViews>;
@@ -40,8 +40,9 @@ export class StreamFactoryBuilder<
 
 
   /**
-   * Register event type for dynamic method generation - infers the event name from class name
-   */
+ * Register event type for dynamic method generation.
+ * Pass the event type name string (use declaration-merged const: `withEventType<MyEvent>(MyEvent)`).
+ */
   withEventType<TEvent extends IEvDbEventType>(
     eventClass: new (...args: any[]) => TEvent,
     eventMessagesProducer?: EVDbMessagesProducer,
