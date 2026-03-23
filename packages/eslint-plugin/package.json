@@ -11,6 +11,11 @@
       "types": "./dist/index.d.ts"
     }
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/outsidenote/eventualize-js",
+    "directory": "packages/eslint-plugin"
+  },
   "publishConfig": {
     "access": "public"
   },
