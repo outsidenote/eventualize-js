@@ -38,50 +38,40 @@ export class StreamFactoryBuilder<
 
   constructor(private streamType: TStreamType) { }
 
+
   /**
    * Register event type for dynamic method generation - infers the event name from class name
    */
-  withEvent<TEvent extends IEvDbEventType>(
+  withEventType<TEvent extends IEvDbEventType>(
     eventClass: new (...args: any[]) => TEvent,
     eventMessagesProducer?: EVDbMessagesProducer,
-  ): StreamFactoryBuilder<TStreamType, TEvents | TEvent, TViews>;
+  ): StreamFactoryBuilder<TStreamType, TEvents | TEvent, TViews> {
+    const eventName = eventClass.name;
+    this.eventTypes.push({
+      eventClass,
+      eventName,
+      eventMessagesProducer,
+    } as EventTypeConfig<any>);
+    return this as any;
+  }
 
   /**
    * Register a plain object event type by name.
-   * Returns an intermediate step — call `.as<EventType>()` to provide the type.
-   * Example: `.withEvent("FundsDeposited").as<FundsDeposited>()`
+   * Returns an intermediate step — call `.asType<EventType>()` to provide the type.
+   * Example: `.withEvent("FundsDeposited").asType<FundsDeposited>()`
    */
   withEvent<TName extends string>(
     eventType: TName,
-  ): EventTypeStep<TStreamType, TEvents, TViews, TName>;
-
-  // Implementation
-  withEvent<TEvent>(
-    first: (new (...args: any[]) => TEvent) | string,
-    second?: EVDbMessagesProducer,
-  ): StreamFactoryBuilder<TStreamType, any, TViews> | EventTypeStep<TStreamType, any, TViews, string> {
-    if (typeof first === 'function') {
-      // Class-based path (existing behavior)
-      const eventName = (first as new (...args: any[]) => TEvent).name;
-      this.eventTypes.push({
-        eventClass: first as new (...args: any[]) => TEvent,
-        eventName,
-        eventMessagesProducer: second,
-      } as EventTypeConfig<any>);
-      return this as any;
-    } else {
-      // String-based — return intermediate step for .as<Type>() chaining
-      const name = first;
-      this.eventTypes.push({
-        eventName: name,
-      } as EventTypeConfig<any>);
-      return new EventTypeStep<TStreamType, TEvents, TViews, typeof name>(this as any);
-    }
+  ): EventTypeStep<TStreamType, TEvents, TViews, TName> {
+    this.eventTypes.push({
+      eventName: eventType,
+    } as EventTypeConfig<any>);
+    return new EventTypeStep<TStreamType, TEvents, TViews, typeof eventType>(this as any);
   }
 
   /**
    * Add a view with inline handler definition
-   * This can only be called AFTER withEvent calls to ensure type safety
+   * This can only be called AFTER withEventType/withEvent calls to ensure type safety
    */
   public withView<TViewName extends string, TState>(
     viewName: TViewName,
@@ -102,7 +92,7 @@ export class StreamFactoryBuilder<
   }
 
   /**
-   * Build the stream factory using event types registered via `withEvent`.
+   * Build the stream factory using event types registered via `withEventType`/`withEvent`.
    */
   public build() {
     const factory = new EvDbStreamFactory({

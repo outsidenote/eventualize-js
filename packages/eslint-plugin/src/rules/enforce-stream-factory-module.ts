@@ -25,7 +25,7 @@ function isStreamFactoryImport(node: TSESTree.ImportDeclaration): boolean {
 
 /**
  * Walk the call chain leftward and collect method names.
- * Returns ordered list of method names (e.g. ["withEvent", "withView", "build"])
+ * Returns ordered list of method names (e.g. ["withEventType", "withView", "build"])
  * or null if the shape is invalid (not rooted in `new StreamFactoryBuilder(...)`).
  */
 function walkCallChain(node: TSESTree.Expression): string[] | null {

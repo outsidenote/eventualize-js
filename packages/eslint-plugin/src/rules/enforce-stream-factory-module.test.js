@@ -58,9 +58,9 @@ ruleTester.run("enforce-stream-factory-module", enforce_stream_factory_module_js
         import { FundsDeposited } from "./FundsEvents/FundsDeposited.js";
 
         const FundsPureEventsStreamFactory = new StreamFactoryBuilder("funds-stream")
-          .withEvent(FundsCaptured)
-          .withEvent(FundsDenied)
-          .withEvent(FundsDeposited)
+          .withEventType(FundsCaptured)
+          .withEventType(FundsDenied)
+          .withEventType(FundsDeposited)
           .build();
 
         export default FundsPureEventsStreamFactory;
@@ -76,8 +76,8 @@ ruleTester.run("enforce-stream-factory-module", enforce_stream_factory_module_js
         import { FundsDeposited } from "./FundsEvents/FundsDeposited.js";
 
         const FundsEventsAndViewsStreamFactory = new StreamFactoryBuilder("funds-stream")
-          .withEvent(FundsCaptured)
-          .withEvent(FundsDeposited)
+          .withEventType(FundsCaptured)
+          .withEventType(FundsDeposited)
           .withView("balance", 0, {
             FundsDeposited: (state, event) => state + event.amount,
             FundsCaptured: (state, event) => state - event.amount,
@@ -102,9 +102,9 @@ ruleTester.run("enforce-stream-factory-module", enforce_stream_factory_module_js
         import { pointsMultipliedMessages } from "./PointsMessages/PointsMultipliedMessages.js";
 
         const PointsStreamFactory = new StreamFactoryBuilder("PointsStream")
-          .withEvent(PointsAdded, pointsAddedMessages)
-          .withEvent(PointsSubtracted)
-          .withEvent(PointsMultiplied, pointsMultipliedMessages)
+          .withEventType(PointsAdded, pointsAddedMessages)
+          .withEventType(PointsSubtracted)
+          .withEventType(PointsMultiplied, pointsMultipliedMessages)
           .withView("Sum", { sum: 0 }, sumViewHandlers)
           .withView("Count", { count: 0 }, countViewHandlers)
           .build();
@@ -131,13 +131,13 @@ ruleTester.run("enforce-stream-factory-module", enforce_stream_factory_module_js
         import { MyEvent } from "./MyEvent.js";
 
         const MyFactory = new StreamFactoryBuilder("my-stream")
-          .withEvent(MyEvent)
+          .withEventType(MyEvent)
           .build();
 
         export default MyFactory;
       `,
         },
-        // Builder-only chain (no withEvent/withView calls) — just .build()
+        // Builder-only chain (no withEventType/withView calls) — just .build()
         {
             filename: "EmptyFactory.ts",
             code: `
@@ -156,7 +156,7 @@ ruleTester.run("enforce-stream-factory-module", enforce_stream_factory_module_js
         import { MyEvent } from "./MyEvent.js";
 
         const AnyMethodsFactory = new StreamFactoryBuilder("x")
-          .withEvent(MyEvent)
+          .withEventType(MyEvent)
           .withMessageFactories()
           .build();
 
@@ -186,7 +186,7 @@ ruleTester.run("enforce-stream-factory-module", enforce_stream_factory_module_js
         import { FundsCaptured } from "./FundsEvents/FundsCaptured.js";
 
         const GeneratedFactory = new StreamFactoryBuilder("funds-stream")
-          .withEvent(FundsCaptured)
+          .withEventType(FundsCaptured)
           .build();
 
         export default GeneratedFactory;
@@ -233,7 +233,7 @@ ruleTester.run("enforce-stream-factory-module", enforce_stream_factory_module_js
             filename: "BadFactory.ts",
             code: `
         import { StreamFactoryBuilder } from "@eventualize/core/factories/StreamFactoryBuilder";
-        const F = new StreamFactoryBuilder("x").withEvent(SomeEvent);
+        const F = new StreamFactoryBuilder("x").withEventType(SomeEvent);
         export default F;
       `,
             errors: [{ messageId: "invalidBuildChain" }, { messageId: "invalidExportDefault" }],
