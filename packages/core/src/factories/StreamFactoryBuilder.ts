@@ -33,7 +33,7 @@ export class StreamFactoryBuilder<
   TViews extends Record<string, EvDbView<unknown>> = {},
 > {
   private viewFactories: ViewFactory<any, TEvents>[] = [];
-  private eventTypes: EventTypeConfig<any>[] = [];
+  private eventTypes: EventTypeConfig[] = [];
   private viewNames: string[] = [];
 
   constructor(private streamType: TStreamType) { }
@@ -49,10 +49,9 @@ export class StreamFactoryBuilder<
   ): StreamFactoryBuilder<TStreamType, TEvents | TEvent, TViews> {
     const eventName = eventClass.name;
     this.eventTypes.push({
-      eventClass,
       eventName,
       eventMessagesProducer,
-    } as EventTypeConfig<any>);
+    } as EventTypeConfig);
     return this as any;
   }
 
@@ -66,7 +65,7 @@ export class StreamFactoryBuilder<
   ): EventTypeStep<TStreamType, TEvents, TViews, TName> {
     this.eventTypes.push({
       eventName: eventType,
-    } as EventTypeConfig<any>);
+    } as EventTypeConfig);
     return new EventTypeStep<TStreamType, TEvents, TViews, typeof eventType>(this as any);
   }
 

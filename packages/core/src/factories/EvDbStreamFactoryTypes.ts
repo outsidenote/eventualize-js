@@ -10,15 +10,14 @@ export interface EvDbStreamFactoryConfig<
 > {
   streamType: TStreamType;
   viewFactories: ViewFactory<any, TEvents>[];
-  eventTypes: EventTypeConfig<TEvents>[];
+  eventTypes: EventTypeConfig[];
   viewNames: string[]; // Track view names for accessor creation
 }
 
 /**
  * Configuration for each event type
  */
-export interface EventTypeConfig<TEvent> {
-  eventClass?: new (...args: any[]) => TEvent;
+export interface EventTypeConfig {
   eventName: string;
   eventMessagesProducer?: EVDbMessagesProducer;
 }
