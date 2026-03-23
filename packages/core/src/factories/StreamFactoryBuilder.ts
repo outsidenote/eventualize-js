@@ -1,4 +1,3 @@
-import type IEvDbEventType from "@eventualize/types/events/IEvDbEventType";
 import type EVDbMessagesProducer from "@eventualize/types/messages/EvDbMessagesProducer";
 import { EvDbStreamFactory } from "./EvDbStreamFactory.js";
 import type { StreamWithEventMethods } from "./EvDbStreamFactory.js";
@@ -9,7 +8,7 @@ import type { EvDbView } from "../view/EvDbView.js";
 
 /**
  * Intermediate step returned by `withEvent("name")`.
- * Call `.as<EventType>()` to provide the event's TypeScript type.
+ * Call `.asType<EventType>()` to provide the event's TypeScript type.
  */
 export class EventTypeStep<
   TStreamType extends string,
@@ -19,8 +18,15 @@ export class EventTypeStep<
 > {
   constructor(private builder: StreamFactoryBuilder<TStreamType, TEvents, TViews>) { }
 
-  asType<TEvent extends object>(): StreamFactoryBuilder<TStreamType, TEvents | (TEvent & { readonly eventType: TName }), TViews> {
-    return this.builder as unknown as StreamFactoryBuilder<TStreamType, TEvents | (TEvent & { readonly eventType: TName }), TViews>;
+  asType<TEvent extends object>(): StreamFactoryBuilder<TStreamType, TEvents | (TEvent & { readonly eventType: TName }), TViews> & { withMessages(producer: EVDbMessagesProducer): StreamFactoryBuilder<TStreamType, TEvents | (TEvent & { readonly eventType: TName }), TViews> } {
+    type ResultBuilder = StreamFactoryBuilder<TStreamType, TEvents | (TEvent & { readonly eventType: TName }), TViews>;
+    const b = this.builder as unknown as ResultBuilder;
+    const lastIndex = (b as any).eventTypes.length - 1;
+    (b as any).withMessages = (producer: EVDbMessagesProducer): ResultBuilder => {
+      (b as any).eventTypes[lastIndex].eventMessagesProducer = producer;
+      return b;
+    };
+    return b as ResultBuilder & { withMessages(producer: EVDbMessagesProducer): ResultBuilder };
   }
 }
 
@@ -38,23 +44,6 @@ export class StreamFactoryBuilder<
 
   constructor(private streamType: TStreamType) { }
 
-
-  /**
- * Register event type for dynamic method generation.
- * Pass the event type name string (use declaration-merged const: `withEventType<MyEvent>(MyEvent)`).
- */
-  withEventType<TEvent extends IEvDbEventType>(
-    eventClass: new (...args: any[]) => TEvent,
-    eventMessagesProducer?: EVDbMessagesProducer,
-  ): StreamFactoryBuilder<TStreamType, TEvents | TEvent, TViews> {
-    const eventName = eventClass.name;
-    this.eventTypes.push({
-      eventName,
-      eventMessagesProducer,
-    } as EventTypeConfig);
-    return this as any;
-  }
-
   /**
    * Register a plain object event type by name.
    * Returns an intermediate step — call `.asType<EventType>()` to provide the type.
@@ -71,7 +60,7 @@ export class StreamFactoryBuilder<
 
   /**
    * Add a view with inline handler definition
-   * This can only be called AFTER withEventType/withEvent calls to ensure type safety
+   * This can only be called AFTER withEvent calls to ensure type safety
    */
   public withView<TViewName extends string, TState>(
     viewName: TViewName,
@@ -92,7 +81,7 @@ export class StreamFactoryBuilder<
   }
 
   /**
-   * Build the stream factory using event types registered via `withEventType`/`withEvent`.
+   * Build the stream factory using event types registered via `withEvent`.
    */
   public build() {
     const factory = new EvDbStreamFactory({
