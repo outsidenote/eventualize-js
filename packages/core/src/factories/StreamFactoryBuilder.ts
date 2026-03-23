@@ -1,6 +1,7 @@
-import type EVDbMessagesProducer from "@eventualize/types/messages/EvDbMessagesProducer";
+import type IEvDbEventMetadata from "@eventualize/types/events/IEvDbEventMetadata";
+import type EvDbMessage from "@eventualize/types/messages/EvDbMessage";
 import { EvDbStreamFactory } from "./EvDbStreamFactory.js";
-import type { StreamWithEventMethods } from "./EvDbStreamFactory.js";
+import type { StreamWithEventMethods, TypedViewStates } from "./EvDbStreamFactory.js";
 import type { EventTypeConfig } from "./EvDbStreamFactoryTypes.js"; // used by withEvent
 import type { ViewFactory, EvDbStreamEventHandlersMap } from "./EvDbViewFactory.js";
 import { createViewFactory } from "./EvDbViewFactory.js";
@@ -18,15 +19,8 @@ export class EventTypeStep<
 > {
   constructor(private builder: StreamFactoryBuilder<TStreamType, TEvents, TViews>) { }
 
-  asType<TEvent extends object>(): StreamFactoryBuilder<TStreamType, TEvents | (TEvent & { readonly eventType: TName }), TViews> & { withMessages(producer: EVDbMessagesProducer): StreamFactoryBuilder<TStreamType, TEvents | (TEvent & { readonly eventType: TName }), TViews> } {
-    type ResultBuilder = StreamFactoryBuilder<TStreamType, TEvents | (TEvent & { readonly eventType: TName }), TViews>;
-    const b = this.builder as unknown as ResultBuilder;
-    const lastIndex = (b as any).eventTypes.length - 1;
-    (b as any).withMessages = (producer: EVDbMessagesProducer): ResultBuilder => {
-      (b as any).eventTypes[lastIndex].eventMessagesProducer = producer;
-      return b;
-    };
-    return b as ResultBuilder & { withMessages(producer: EVDbMessagesProducer): ResultBuilder };
+  asType<TEvent extends object>(): StreamFactoryBuilder<TStreamType, TEvents | (TEvent & { readonly eventType: TName }), TViews> {
+    return this.builder as unknown as StreamFactoryBuilder<TStreamType, TEvents | (TEvent & { readonly eventType: TName }), TViews>;
   }
 }
 
@@ -78,6 +72,31 @@ export class StreamFactoryBuilder<
     this.viewFactories.push(viewFactory);
     this.viewNames.push(viewName);
     return this as any;
+  }
+
+  /**
+   * Register a message producer for a specific event type.
+   * Should be called after `withView` so that view state types are available.
+   */
+  public withMessages<TName extends TEvents["eventType"]>(
+    eventType: TName,
+    producer: (
+      payload: Omit<Extract<TEvents, { eventType: TName }>, "eventType">,
+      views: Readonly<TypedViewStates<TViews>>,
+      metadata: IEvDbEventMetadata,
+    ) => EvDbMessage[],
+  ): this {
+    const config = this.eventTypes.find(e => e.eventName === eventType);
+    if (config) {
+      config.eventMessagesProducer = (event, viewStates) => {
+        return producer(
+          event.payload as Omit<Extract<TEvents, { eventType: TName }>, "eventType">,
+          viewStates as Readonly<TypedViewStates<TViews>>,
+          event,
+        );
+      };
+    }
+    return this;
   }
 
   /**

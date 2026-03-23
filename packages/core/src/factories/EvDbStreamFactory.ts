@@ -23,7 +23,7 @@ type EventMethods<TEvents extends { eventType: string }> = {
  * Maps { viewName: EvDbView<TState> } → { viewName: TState }
  * so that stream.views.balance returns the state value directly
  */
-type TypedViewStates<TViews extends Record<string, EvDbView<unknown>>> = {
+export type TypedViewStates<TViews extends Record<string, EvDbView<unknown>>> = {
   [K in keyof TViews]: TViews[K] extends EvDbView<infer TState> ? TState : never;
 };
 

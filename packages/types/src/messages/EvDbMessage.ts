@@ -1,4 +1,5 @@
 import type EvDbEvent from "../events/EvDbEvent.js";
+import type IEvDbEventMetadata from "../events/IEvDbEventMetadata.js";
 import type EvDbStreamCursor from "../stream/EvDbStreamCursor.js";
 import type { IEvDbPayloadData } from "../events/IEvDbPayloadData.js";
 
@@ -97,6 +98,26 @@ export default class EvDbMessage {
       event.capturedAt,
       event.capturedBy,
       event.streamCursor,
+      payload,
+    );
+  }
+
+  public static createFromMetadata(
+    metadata: IEvDbEventMetadata,
+    payload: IEvDbPayloadData & { messageType: string },
+    channel: string = "default",
+    serializeType: string = "json",
+  ): EvDbMessage {
+    return new EvDbMessage(
+      crypto.randomUUID(),
+      metadata.eventType,
+      channel,
+      "default",
+      payload.messageType,
+      serializeType,
+      metadata.capturedAt,
+      metadata.capturedBy,
+      metadata.streamCursor,
       payload,
     );
   }

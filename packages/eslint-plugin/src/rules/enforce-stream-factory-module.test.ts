@@ -65,17 +65,18 @@ ruleTester.run("enforce-stream-factory-module", enforceStreamFactoryModule as an
         import type { PointsSubtracted } from "./PointsEvents/PointsSubtracted.js";
         import type { PointsMultiplied } from "./PointsEvents/PointsMultiplied.js";
         import { StreamFactoryBuilder } from "@eventualize/core/factories/StreamFactoryBuilder";
+        import EvDbMessage from "@eventualize/types/messages/EvDbMessage";
         import { sumViewHandlers } from "./PointsViews/SumViewHandlers.js";
         import { countViewHandlers } from "./PointsViews/CountViewHandlers.js";
-        import { pointsAddedMessages } from "./PointsMessages/PoinstAddedMessages.js";
-        import { pointsMultipliedMessages } from "./PointsMessages/PointsMultipliedMessages.js";
 
         const PointsStreamFactory = new StreamFactoryBuilder("PointsStream")
-          .withEvent("PointsAdded").asType().withMessages(pointsAddedMessages)
+          .withEvent("PointsAdded").asType()
           .withEvent("PointsSubtracted").asType()
-          .withEvent("PointsMultiplied").asType().withMessages(pointsMultipliedMessages)
+          .withEvent("PointsMultiplied").asType()
           .withView("Sum", { sum: 0 }, sumViewHandlers)
           .withView("Count", { count: 0 }, countViewHandlers)
+          .withMessages("PointsAdded", (payload, views, metadata) => [])
+          .withMessages("PointsMultiplied", (payload, views, metadata) => [])
           .build();
 
         export default PointsStreamFactory;
