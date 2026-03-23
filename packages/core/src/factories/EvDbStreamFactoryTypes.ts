@@ -5,7 +5,7 @@ import type { ViewFactory } from "./EvDbViewFactory.js";
  * Configuration for creating a stream factory
  */
 export interface EvDbStreamFactoryConfig<
-  TEvents extends { payloadType: string },
+  TEvents extends { eventType: string },
   TStreamType extends string,
 > {
   streamType: TStreamType;

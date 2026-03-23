@@ -1,4 +1,4 @@
-import type IEvDbEventPayload from "@eventualize/types/events/IEvDbEventPayload";
+import type IEvDbEventType from "@eventualize/types/events/IEvDbEventType";
 import type EVDbMessagesProducer from "@eventualize/types/messages/EvDbMessagesProducer";
 import { EvDbStreamFactory } from "./EvDbStreamFactory.js";
 import type { StreamWithEventMethods } from "./EvDbStreamFactory.js";
@@ -13,14 +13,14 @@ import type { EvDbView } from "../view/EvDbView.js";
  */
 export class EventTypeStep<
   TStreamType extends string,
-  TEvents extends { payloadType: string },
+  TEvents extends { eventType: string },
   TViews extends Record<string, EvDbView<unknown>>,
   TName extends string,
 > {
   constructor(private builder: StreamFactoryBuilder<TStreamType, TEvents, TViews>) {}
 
-  asType<TEvent extends object>(): StreamFactoryBuilder<TStreamType, TEvents | (TEvent & { readonly payloadType: TName }), TViews> {
-    return this.builder as unknown as StreamFactoryBuilder<TStreamType, TEvents | (TEvent & { readonly payloadType: TName }), TViews>;
+  asType<TEvent extends object>(): StreamFactoryBuilder<TStreamType, TEvents | (TEvent & { readonly eventType: TName }), TViews> {
+    return this.builder as unknown as StreamFactoryBuilder<TStreamType, TEvents | (TEvent & { readonly eventType: TName }), TViews>;
   }
 }
 
@@ -29,7 +29,7 @@ export class EventTypeStep<
  */
 export class StreamFactoryBuilder<
   TStreamType extends string,
-  TEvents extends { payloadType: string } = never,
+  TEvents extends { eventType: string } = never,
   TViews extends Record<string, EvDbView<unknown>> = {},
 > {
   private viewFactories: ViewFactory<any, TEvents>[] = [];
@@ -41,7 +41,7 @@ export class StreamFactoryBuilder<
   /**
    * Register event type for dynamic method generation - infers the event name from class name
    */
-  withEvent<TEvent extends IEvDbEventPayload>(
+  withEvent<TEvent extends IEvDbEventType>(
     eventClass: new (...args: any[]) => TEvent,
     eventMessagesProducer?: EVDbMessagesProducer,
   ): StreamFactoryBuilder<TStreamType, TEvents | TEvent, TViews>;
@@ -52,7 +52,7 @@ export class StreamFactoryBuilder<
    * Example: `.withEvent("FundsDeposited").as<FundsDeposited>()`
    */
   withEvent<TName extends string>(
-    payloadType: TName,
+    eventType: TName,
   ): EventTypeStep<TStreamType, TEvents, TViews, TName>;
 
   // Implementation

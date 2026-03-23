@@ -1,8 +1,8 @@
-import type IEvDbEventPayload from "../events/IEvDbEventPayload.js";
+import type IEvDbEventType from "../events/IEvDbEventType.js";
 import type IEvDbEventMetadata from "../events/IEvDbEventMetadata.js";
 
-type IEvDbViewAppliesSet<Tstate, TEvents extends IEvDbEventPayload> = {
-  [E in TEvents as `apply${E["payloadType"]}`]: (
+type IEvDbViewAppliesSet<Tstate, TEvents extends IEvDbEventType> = {
+  [E in TEvents as `apply${E["eventType"]}`]: (
     oldState: Tstate,
     newEvent: E,
     eventMetadata: IEvDbEventMetadata,

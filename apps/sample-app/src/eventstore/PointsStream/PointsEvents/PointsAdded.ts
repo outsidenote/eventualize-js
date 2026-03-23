@@ -1,8 +1,6 @@
-import type IEvDbEventPayload from "@eventualize/types/events/IEvDbEventPayload";
+import type IEvDbEventType from "@eventualize/types/events/IEvDbEventType";
 
-// TODO: export type PointsAdded = IEvDbEventPayload & { readonly payloadType: "PointsAdded"; readonly points: number };
-
-export class PointsAdded implements IEvDbEventPayload {
-  readonly payloadType = "PointsAdded";
+export class PointsAdded implements IEvDbEventType {
+  readonly eventType = "PointsAdded";
   constructor(public readonly points: number) {}
 }

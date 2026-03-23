@@ -8,7 +8,7 @@ import type { StreamWithEventMethods } from "./EvDbStreamFactory";
  */
 
 export interface IEvDbStreamFactory<
-  TEvents extends { payloadType: string },
+  TEvents extends { eventType: string },
   TStreamType extends string,
   TViews extends Record<string, EvDbView<unknown>> = {}
 > {

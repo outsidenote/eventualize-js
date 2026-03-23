@@ -13,9 +13,9 @@ import type { IEvDbStreamFactory } from "./IEvDbStreamFactory.js";
 /**
  * Type helper to extract event methods
  */
-type EventMethods<TEvents extends { payloadType: string }> = {
-  [K in TEvents as `appendEvent${K["payloadType"]}`]: (
-    event: Omit<K, "payloadType">,
+type EventMethods<TEvents extends { eventType: string }> = {
+  [K in TEvents as `appendEvent${K["eventType"]}`]: (
+    event: Omit<K, "eventType">,
   ) => Promise<void>;
 };
 
@@ -38,7 +38,7 @@ type ViewAccessors<TViews extends Record<string, EvDbView<unknown>>> = {
  * Combined stream type with event methods and view accessors
  */
 export type StreamWithEventMethods<
-  TEvents extends { payloadType: string },
+  TEvents extends { eventType: string },
   TViews extends Record<string, EvDbView<unknown>> = {},
 > = EvDbStream & EventMethods<TEvents> & ViewAccessors<TViews>;
 
@@ -46,7 +46,7 @@ export type StreamWithEventMethods<
  * Stream Factory - creates stream instances with configured views and dynamic event methods
  */
 export class EvDbStreamFactory<
-  TEvents extends { payloadType: string },
+  TEvents extends { eventType: string },
   TStreamType extends string,
   TViews extends Record<string, EvDbView<unknown>> = {},
 > implements IEvDbStreamFactory<TEvents, TStreamType, TViews> {
@@ -119,7 +119,7 @@ export class EvDbStreamFactory<
       (DynamicStream.prototype as any)[methodName] = async function (
         event: any,
       ) {
-        return this.appendEvent({ ...event, payloadType: eventName });
+        return this.appendEvent({ ...event, eventType: eventName });
       };
     });
 
@@ -236,7 +236,7 @@ export class EvDbStreamFactory<
  * Factory function to create a StreamFactory
  */
 export function createEvDbStreamFactory<
-  TEvents extends { payloadType: string },
+  TEvents extends { eventType: string },
   TStreamType extends string,
   TViews extends Record<string, EvDbView<unknown>> = {},
 >(

@@ -1,6 +1,6 @@
-import type IEvDbEventPayload from "@eventualize/types/events/IEvDbEventPayload";
+import type IEvDbEventType from "@eventualize/types/events/IEvDbEventType";
 
-export class PointsMultiplied implements IEvDbEventPayload {
-  readonly payloadType = "PointsMultiplied";
+export class PointsMultiplied implements IEvDbEventType {
+  readonly eventType = "PointsMultiplied";
   constructor(public readonly multiplier: number) {}
 }

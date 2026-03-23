@@ -9,12 +9,12 @@ export const pointsAddedMessages = (
   viewStates: Readonly<Record<string, unknown>>,
 ) => [
   EvDbMessage.createFromEvent(event, {
-    payloadType: "Points Added With Sum Notification",
+    messageType: "Points Added With Sum Notification",
     pointsAdded: (event.payload as PointsAdded).points,
     PointsSum: (viewStates["Sum"] as SumViewState).sum,
   }),
   EvDbMessage.createFromEvent(event, {
-    payloadType: "Points Added With Count Notification",
+    messageType: "Points Added With Count Notification",
     pointsAdded: (event.payload as PointsAdded).points,
     PointsCount: (viewStates["Count"] as CountViewState).count,
   }),
