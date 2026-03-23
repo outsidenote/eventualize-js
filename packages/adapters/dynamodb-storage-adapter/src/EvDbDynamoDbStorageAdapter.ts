@@ -8,7 +8,7 @@ import type EvDbStreamAddress from "@eventualize/types/stream/EvDbStreamAddress"
 import type EvDbViewAddress from "@eventualize/types/view/EvDbViewAddress";
 import { EvDbStoredSnapshotResultRaw } from "@eventualize/types/snapshots/EvDbStoredSnapshotResultRaw";
 import type { EvDbStoredSnapshotData } from "@eventualize/types/snapshots/EvDbStoredSnapshotData";
-import type EvDbEvent from "@eventualize/types/events/EvDbEvent";
+import type IEvDbEvent from "@eventualize/types/events/EvDbEvent";
 import StreamStoreAffected from "@eventualize/types/stream/StreamStoreAffected";
 import type EvDbContinuousFetchOptions from "@eventualize/types/primitives/EvDbContinuousFetchOptions";
 import type EvDbMessageFilter from "@eventualize/types/messages/EvDbMessageFilter";
@@ -101,7 +101,7 @@ export default class EvDbDynamoDbStorageAdapter
    * Store stream events in a transaction
    */
   async storeStreamAsync(
-    events: ReadonlyArray<EvDbEvent>,
+    events: ReadonlyArray<IEvDbEvent>,
     messages: ReadonlyArray<EvDbMessage>,
   ): Promise<StreamStoreAffected> {
     try {
@@ -172,7 +172,7 @@ export default class EvDbDynamoDbStorageAdapter
   async *getEventsAsync(
     streamCursor: EvDbStreamCursor,
     _pageSize: number = 100,
-  ): AsyncGenerator<EvDbEvent, void, undefined> {
+  ): AsyncGenerator<IEvDbEvent, void, undefined> {
     let queryCursor: Record<string, any> | undefined = undefined;
 
     do {

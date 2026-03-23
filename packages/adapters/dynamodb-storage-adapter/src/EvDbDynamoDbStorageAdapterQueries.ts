@@ -8,7 +8,7 @@ import type {
 import { PutItemCommand, QueryCommand } from "@aws-sdk/client-dynamodb";
 import type EvDbStreamCursor from "@eventualize/types/stream/EvDbStreamCursor";
 import EvDbStreamAddress from "@eventualize/types/stream/EvDbStreamAddress";
-import EvDbEvent from "@eventualize/types/events/EvDbEvent";
+import type IEvDbEvent from "@eventualize/types/events/EvDbEvent";
 import EvDbViewAddress from "@eventualize/types/view/EvDbViewAddress";
 import type { EvDbStoredSnapshotData } from "@eventualize/types/snapshots/EvDbStoredSnapshotData";
 import { marshall } from "@aws-sdk/util-dynamodb";
@@ -24,7 +24,7 @@ export class EventRecord {
     public readonly stored_at?: Date,
   ) {}
 
-  public static createFromEvent(e: EvDbEvent): EventRecord {
+  public static createFromEvent(e: IEvDbEvent): EventRecord {
     return new EventRecord(
       crypto.randomUUID(),
       e.streamCursor,
@@ -32,19 +32,19 @@ export class EventRecord {
       e.capturedBy,
       e.capturedAt,
       e.payload,
-      e.storedAt,
+      e.storedAt ?? undefined,
     );
   }
 
-  public toEvDbEvent(): EvDbEvent {
-    return new EvDbEvent(
-      this.event_type,
-      this.stream_cursor,
-      this.payload,
-      this.captured_at,
-      this.captured_by,
-      new Date(Number(this.stored_at)),
-    );
+  public toEvDbEvent(): IEvDbEvent {
+    return {
+      eventType: this.event_type,
+      streamCursor: this.stream_cursor,
+      payload: this.payload,
+      capturedAt: this.captured_at,
+      capturedBy: this.captured_by,
+      storedAt: new Date(Number(this.stored_at)),
+    };
   }
 }
 

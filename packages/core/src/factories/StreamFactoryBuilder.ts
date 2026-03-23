@@ -22,18 +22,15 @@ export class StreamFactoryBuilder<
   constructor(private streamType: TStreamType) { }
 
   /**
-   * Register event type for dynamic method generation - infers the event name from class name
+   * Register event type for dynamic method generation.
+   * Pass the event type name string (use declaration-merged const: `withEventType<MyEvent>(MyEvent)`).
    */
   withEventType<TEvent extends IEvDbEventPayload>(
-    eventClass: new (...args: any[]) => TEvent,
+    eventType: TEvent["eventType"],
     eventMessagesProducer?: EVDbMessagesProducer,
   ): StreamFactoryBuilder<TStreamType, TEvents | TEvent, TViews> {
-    // Use the class name as the event name
-    const eventName = eventClass.name;
-
     this.eventTypes.push({
-      eventClass,
-      eventName,
+      eventName: eventType,
       eventMessagesProducer,
     } as EventTypeConfig<TEvent>);
     return this as any;

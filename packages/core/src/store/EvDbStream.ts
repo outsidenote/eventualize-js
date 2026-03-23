@@ -1,4 +1,4 @@
-import EvDbEvent from "@eventualize/types/events/EvDbEvent";
+import type IEvDbEvent from "@eventualize/types/events/EvDbEvent";
 import type EvDbMessage from "@eventualize/types/messages/EvDbMessage";
 import type IEvDbStorageStreamAdapter from "@eventualize/types/adapters/IEvDbStorageStreamAdapter";
 import type IEvDbView from "@eventualize/types/view/IEvDbView";
@@ -34,7 +34,7 @@ export type ImmutableIEvDbViewMap = Readonly<Record<string, ImmutableIEvDbView>>
  * against those interfaces without coupling to this concrete class.
  */
 export default class EvDbStream implements IEvDbStreamStore, IEvDbStreamStoreData {
-  protected _pendingEvents: ReadonlyArray<EvDbEvent> = [];
+  protected _pendingEvents: ReadonlyArray<IEvDbEvent> = [];
   protected _pendingMessages: ReadonlyArray<EvDbMessage> = [];
 
   private static readonly ASSEMBLY_NAME = {
@@ -75,7 +75,7 @@ export default class EvDbStream implements IEvDbStreamStore, IEvDbStreamStoreDat
    * list, e.g. for logging, debugging, or framework-level inspection.
    * Strongly-typed subclasses may expose a narrower accessor instead.
    */
-  getEvents(): ReadonlyArray<EvDbEvent> {
+  getEvents(): ReadonlyArray<IEvDbEvent> {
     return this._pendingEvents;
   }
 
@@ -154,7 +154,13 @@ export default class EvDbStream implements IEvDbStreamStore, IEvDbStreamStoreDat
     // const json = JSON.stringify(payload); // Or use custom serializer
 
     const cursor = this.getNextCursor(this._pendingEvents);
-    const e = new EvDbEvent(payload.payloadType, cursor, payload, new Date(), capturedBy);
+    const e: IEvDbEvent = {
+      eventType: payload.eventType,
+      streamCursor: cursor,
+      payload,
+      capturedAt: new Date(),
+      capturedBy,
+    };
     this._pendingEvents = [...this._pendingEvents, e];
 
     // Apply to views
@@ -174,7 +180,7 @@ export default class EvDbStream implements IEvDbStreamStore, IEvDbStreamStoreDat
     return e;
   }
 
-  private getNextCursor(events: ReadonlyArray<EvDbEvent>): EvDbStreamCursor {
+  private getNextCursor(events: ReadonlyArray<IEvDbEvent>): EvDbStreamCursor {
     if (events.length === 0) {
       return new EvDbStreamCursor(this.streamAddress, this.storedOffset + 1);
     }

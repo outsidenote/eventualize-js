@@ -1,7 +1,7 @@
 import type IEvDbViewStore from "@eventualize/types/view/IEvDbViewStore";
 import type EvDbViewAddress from "@eventualize/types/view/EvDbViewAddress";
 import type IEvDbStorageSnapshotAdapter from "@eventualize/types/adapters/IEvDbStorageSnapshotAdapter";
-import type EvDbEvent from "@eventualize/types/events/EvDbEvent";
+import type IEvDbEvent from "@eventualize/types/events/EvDbEvent";
 import type { EvDbStoredSnapshotData } from "@eventualize/types/snapshots/EvDbStoredSnapshotData";
 import type { EvDbStoredSnapshotResult } from "@eventualize/types/snapshots/EvDbStoredSnapshotResult";
 
@@ -36,7 +36,7 @@ export abstract class EvDbViewRaw implements IEvDbViewStore {
   shouldStoreSnapshot(_offsetGapFromLastSave: number, _durationSinceLastSaveMs: number): boolean {
     return true;
   }
-  applyEvent(e: EvDbEvent): void {
+  applyEvent(e: IEvDbEvent): void {
     const offset = e.streamCursor.offset;
     if (this.memoryOffset >= offset) {
       return;
@@ -56,5 +56,5 @@ export abstract class EvDbViewRaw implements IEvDbViewStore {
     this._storeOffset = this._memoryOffset;
   }
 
-  protected abstract onApplyEvent(e: EvDbEvent): void;
+  protected abstract onApplyEvent(e: IEvDbEvent): void;
 }

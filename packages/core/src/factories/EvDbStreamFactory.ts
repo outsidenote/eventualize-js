@@ -4,7 +4,7 @@ import type IEvDbEventPayload from "@eventualize/types/events/IEvDbEventPayload"
 import EvDbStreamCursor from "@eventualize/types/stream/EvDbStreamCursor";
 import EvDbStreamAddress from "@eventualize/types/stream/EvDbStreamAddress";
 import type EVDbMessagesProducer from "@eventualize/types/messages/EvDbMessagesProducer";
-import type EvDbEvent from "@eventualize/types/events/EvDbEvent";
+import type IEvDbEvent from "@eventualize/types/events/EvDbEvent";
 
 import EvDbStream from "../store/EvDbStream.js";
 import type { EvDbView } from "../view/EvDbView.js";
@@ -15,8 +15,8 @@ import type { IEvDbStreamFactory } from "./IEvDbStreamFactory.js";
  * Type helper to extract event methods
  */
 type EventMethods<TEvents extends IEvDbEventPayload> = {
-  [K in TEvents as `appendEvent${K["payloadType"]}`]: (
-    event: Omit<K, "payloadType">,
+  [K in TEvents as `appendEvent${K["eventType"]}`]: (
+    event: Omit<K, "eventType">,
   ) => Promise<void>;
 };
 
@@ -71,7 +71,7 @@ export class EvDbStreamFactory<
     const viewNames = this.config.viewNames;
 
     const messagesProducer: EVDbMessagesProducer = (
-      event: EvDbEvent,
+      event: IEvDbEvent,
       viewsState: Readonly<Record<string, unknown>>,
     ) => {
       const eventType = eventTypes.find((e) => e.eventName === event.eventType);
@@ -120,7 +120,7 @@ export class EvDbStreamFactory<
       (DynamicStream.prototype as any)[methodName] = async function (
         event: any,
       ) {
-        return this.appendEvent({ ...event, payloadType: eventName });
+        return this.appendEvent({ ...event, eventType: eventName });
       };
     });
 

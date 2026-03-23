@@ -5,7 +5,7 @@ import { EvDbStoredSnapshotData } from "@eventualize/types/snapshots/EvDbStoredS
 import type { EvDbStoredSnapshotResult } from "@eventualize/types/snapshots/EvDbStoredSnapshotResult";
 import type IEvDbEventMetadata from "@eventualize/types/events/IEvDbEventMetadata";
 import type IEvDbEventPayload from "@eventualize/types/events/IEvDbEventPayload";
-import type EvDbEvent from "@eventualize/types/events/EvDbEvent";
+import type IEvDbEvent from "@eventualize/types/events/EvDbEvent";
 import { EvDbViewRaw } from "./EvDbViewRaw.js";
 
 export abstract class EvDbView<TState>
@@ -46,7 +46,7 @@ export abstract class EvDbView<TState>
     metadata: IEvDbEventMetadata,
   ): TState;
 
-  protected onApplyEvent(e: EvDbEvent): void {
+  protected onApplyEvent(e: IEvDbEvent): void {
     this._state = this.handleOnApply(this._state, e.payload, e);
   }
 }
