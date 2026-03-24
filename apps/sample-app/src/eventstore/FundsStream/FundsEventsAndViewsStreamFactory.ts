@@ -6,6 +6,7 @@ import type { FundsDenied } from "./FundsEvents/FundsDenied.js";
 import type { FundsDeposited } from "./FundsEvents/FundsDeposited.js";
 import type { FundsRefunded } from "./FundsEvents/FundsRefunded.js";
 import type { FundsWithdrawal } from "./FundsEvents/FundsWithdrawal.js";
+import EvDbMessage from "@eventualize/types/messages/EvDbMessage";
 
 const FundsEventsAndViewsStreamFactory = new StreamFactoryBuilder("funds-stream")
   .withEvent("FundsCaptured").asType<FundsCaptured>()
@@ -19,6 +20,13 @@ const FundsEventsAndViewsStreamFactory = new StreamFactoryBuilder("funds-stream"
     FundsCaptured: (state, event) => state - event.amount,
     FundsWithdrawal: (state, event) => state - event.amount,
   })
+  .withMessages("FundsCaptured", (payload, views, metadata) => [
+    EvDbMessage.createFromMetadata(metadata, {
+      messageType: "Funds Captured with Balance Notification",
+      amountCaptured: payload.amount,
+      balanceAfterCapture: views.balance,
+    }),
+  ])
   .build();
 
 export default FundsEventsAndViewsStreamFactory;

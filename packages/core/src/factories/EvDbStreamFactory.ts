@@ -19,13 +19,16 @@ type EventMethods<TEvents extends { eventType: string }> = {
   ) => Promise<void>;
 };
 
+/** Forces TypeScript to eagerly resolve mapped/intersection types for cleaner intellisense */
+type Prettify<T> = { [K in keyof T]: T[K] } & {};
+
 /**
  * Maps { viewName: EvDbView<TState> } → { viewName: TState }
- * so that stream.views.balance returns the state value directly
+* so that stream.views.balance returns the state value directly
  */
-export type TypedViewStates<TViews extends Record<string, EvDbView<unknown>>> = {
+export type TypedViewStates<TViews extends Record<string, EvDbView<unknown>>> = Prettify<{
   [K in keyof TViews]: TViews[K] extends EvDbView<infer TState> ? TState : never;
-};
+}>;
 
 /**
  * Type helper to create view accessors map

@@ -8,6 +8,17 @@ import { createViewFactory } from "./EvDbViewFactory.js";
 import type { EvDbView } from "../view/EvDbView.js";
 
 /**
+ * Maps TEventMap keys to view event handler functions with clean payload types
+ */
+type EventHandlersFromMap<TState, TEventMap extends Record<string, object>> = {
+  [K in keyof TEventMap]: (
+    oldState: TState,
+    event: Readonly<TEventMap[K]>,
+    metadata: IEvDbEventMetadata,
+  ) => TState;
+};
+
+/**
  * Intermediate step returned by `withEvent("name")`.
  * Call `.asType<EventType>()` to provide the event's TypeScript type.
  */
@@ -16,11 +27,12 @@ export class EventTypeStep<
   TEvents extends { eventType: string },
   TViews extends Record<string, EvDbView<unknown>>,
   TName extends string,
+  TEventMap extends Record<string, object> = {},
 > {
-  constructor(private builder: StreamFactoryBuilder<TStreamType, TEvents, TViews>) { }
+  constructor(private builder: StreamFactoryBuilder<TStreamType, TEvents, TViews, TEventMap>) { }
 
-  asType<TEvent extends object>(): StreamFactoryBuilder<TStreamType, TEvents | (TEvent & { readonly eventType: TName }), TViews> {
-    return this.builder as unknown as StreamFactoryBuilder<TStreamType, TEvents | (TEvent & { readonly eventType: TName }), TViews>;
+  asType<TEvent extends object>(): StreamFactoryBuilder<TStreamType, TEvents | (TEvent & { readonly eventType: TName }), TViews, TEventMap & Record<TName, TEvent>> {
+    return this.builder as unknown as StreamFactoryBuilder<TStreamType, TEvents | (TEvent & { readonly eventType: TName }), TViews, TEventMap & Record<TName, TEvent>>;
   }
 }
 
@@ -31,6 +43,7 @@ export class StreamFactoryBuilder<
   TStreamType extends string,
   TEvents extends { eventType: string } = never,
   TViews extends Record<string, EvDbView<unknown>> = {},
+  TEventMap extends Record<string, object> = {},
 > {
   private viewFactories: ViewFactory<any, TEvents>[] = [];
   private eventTypes: EventTypeConfig[] = [];
@@ -45,11 +58,11 @@ export class StreamFactoryBuilder<
    */
   withEvent<TName extends string>(
     eventType: TName,
-  ): EventTypeStep<TStreamType, TEvents, TViews, TName> {
+  ): EventTypeStep<TStreamType, TEvents, TViews, TName, TEventMap> {
     this.eventTypes.push({
       eventName: eventType,
     } as EventTypeConfig);
-    return new EventTypeStep<TStreamType, TEvents, TViews, typeof eventType>(this as any);
+    return new EventTypeStep<TStreamType, TEvents, TViews, typeof eventType, TEventMap>(this as any);
   }
 
   /**
@@ -59,14 +72,14 @@ export class StreamFactoryBuilder<
   public withView<TViewName extends string, TState>(
     viewName: TViewName,
     defaultState: TState,
-    handlers: Partial<EvDbStreamEventHandlersMap<TState, TEvents>>,
-  ): StreamFactoryBuilder<TStreamType, TEvents, TViews & Record<TViewName, EvDbView<TState>>> {
+    handlers: Partial<EventHandlersFromMap<TState, TEventMap>>,
+  ): StreamFactoryBuilder<TStreamType, TEvents, TViews & Record<TViewName, EvDbView<TState>>, TEventMap> {
     // Create the view factory
     const viewFactory = createViewFactory<TState, TEvents>({
       viewName,
       streamType: this.streamType,
       defaultState,
-      handlers,
+      handlers: handlers as unknown as Partial<EvDbStreamEventHandlersMap<TState, TEvents>>,
     });
 
     this.viewFactories.push(viewFactory);
@@ -78,10 +91,10 @@ export class StreamFactoryBuilder<
    * Register a message producer for a specific event type.
    * Should be called after `withView` so that view state types are available.
    */
-  public withMessages<TName extends TEvents["eventType"]>(
+  public withMessages<TName extends TEvents["eventType"] & keyof TEventMap>(
     eventType: TName,
     producer: (
-      payload: Omit<Extract<TEvents, { eventType: TName }>, "eventType">,
+      payload: Readonly<TEventMap[TName]>,
       views: Readonly<TypedViewStates<TViews>>,
       metadata: IEvDbEventMetadata,
     ) => EvDbMessage[],
@@ -90,7 +103,7 @@ export class StreamFactoryBuilder<
     if (config) {
       config.eventMessagesProducer = (event, viewStates) => {
         return producer(
-          event.payload as Omit<Extract<TEvents, { eventType: TName }>, "eventType">,
+          event.payload as TEventMap[TName],
           viewStates as Readonly<TypedViewStates<TViews>>,
           event,
         );
