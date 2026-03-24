@@ -7,11 +7,11 @@ import type IEvDbEventMetadata from "@eventualize/types/events/IEvDbEventMetadat
 import type IEvDbEventType from "@eventualize/types/events/IEvDbEventType";
 import type EvDbEvent from "@eventualize/types/events/EvDbEvent";
 import { EvDbViewRaw } from "./EvDbViewRaw.js";
+import { IEvDbPayloadData } from "@eventualize/types/events/IEvDbPayloadData.js";
 
 export abstract class EvDbView<TState>
   extends EvDbViewRaw
-  implements IEvDbViewStoreGeneric<TState>
-{
+  implements IEvDbViewStoreGeneric<TState> {
   protected getDefaultState(): TState {
     return this.defaultState;
   }
@@ -42,7 +42,7 @@ export abstract class EvDbView<TState>
 
   public abstract handleOnApply(
     oldState: TState,
-    event: IEvDbEventType,
+    event: IEvDbPayloadData,
     metadata: IEvDbEventMetadata,
   ): TState;
 
