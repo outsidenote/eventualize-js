@@ -27,7 +27,7 @@ export default class EvDbMessage {
     public readonly capturedAt: Date,
     public readonly capturedBy: string,
     public readonly streamCursor: EvDbStreamCursor,
-    public readonly payload: IEvDbPayloadData,
+    public readonly payload: IEvDbPayloadData | undefined,
     public readonly storedAt?: Date,
   ) { }
 
@@ -41,7 +41,7 @@ export default class EvDbMessage {
     capturedAt: Date,
     capturedBy: string,
     streamCursor: EvDbStreamCursor,
-    payload: any,
+    payload: IEvDbPayloadData | undefined,
   ): EvDbMessage {
     return new EvDbMessage(
       id,
@@ -66,7 +66,7 @@ export default class EvDbMessage {
     capturedAt: Date,
     capturedBy: string,
     streamCursor: EvDbStreamCursor,
-    payload: any,
+    payload: IEvDbPayloadData | undefined,
   ): EvDbMessage {
     return new EvDbMessage(
       crypto.randomUUID(),
@@ -93,7 +93,7 @@ export default class EvDbMessage {
       event.eventType,
       channel,
       "default",
-      payload.messageType,
+      payload.messageType as string,
       serializeType,
       event.capturedAt,
       event.capturedBy,
@@ -113,7 +113,7 @@ export default class EvDbMessage {
       metadata.eventType,
       channel,
       "default",
-      payload.messageType,
+      payload.messageType as string,
       serializeType,
       metadata.capturedAt,
       metadata.capturedBy,

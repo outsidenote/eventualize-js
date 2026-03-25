@@ -148,7 +148,7 @@ export default class EvDbDynamoDbStorageAdapterQueries {
 
   public static getEvents(
     streamCursor: EvDbStreamCursor,
-    queryCursor: Record<string, any> | undefined = undefined,
+    queryCursor: Record<string, AttributeValue> | undefined = undefined,
     pageSize: number = 100,
   ) {
     const queryParams = {

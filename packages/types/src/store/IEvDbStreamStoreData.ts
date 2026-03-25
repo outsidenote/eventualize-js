@@ -6,7 +6,7 @@ import type EvDbMessage from "../messages/EvDbMessage.js";
 
 export default interface IEvDbStreamStoreData {
   /** Serialization options (optional) */
-  options?: Record<string, any>; // JsonSerializerOptions equivalent in TS
+  options?: Record<string, unknown>; // JsonSerializerOptions equivalent in TS
 
   /** Views (unspecialized) */
   getViews: () => ImmutableIEvDbViewMap;

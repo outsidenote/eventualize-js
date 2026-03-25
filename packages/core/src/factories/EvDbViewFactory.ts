@@ -24,14 +24,14 @@ class GenericView<TState, TEvents extends { eventType: string }> extends EvDbVie
    * Dynamically applies events based on the handlers map
    */
   public handleOnApply(oldState: TState, event: TEvents, metadata: IEvDbEventMetadata): TState {
-    const eventType = event.eventType as keyof typeof this.config.handlers;
+    const eventType = metadata.eventType as keyof typeof this.config.handlers;
     const handler = this.config.handlers[eventType];
 
     if (!handler) {
       return oldState;
     }
 
-    return handler(oldState, event as any, metadata);
+    return handler(oldState, event as unknown as Parameters<typeof handler>[1], metadata);
   }
 }
 
@@ -39,7 +39,7 @@ class GenericView<TState, TEvents extends { eventType: string }> extends EvDbVie
  * View Factory - creates view instances with the handlers map
  */
 export class ViewFactory<TState, TEvents extends { eventType: string }> {
-  constructor(private readonly config: ViewConfig<TState, TEvents>) {}
+  constructor(private readonly config: ViewConfig<TState, TEvents>) { }
 
   /**
    * Creates a view instance
@@ -68,7 +68,12 @@ export class ViewFactory<TState, TEvents extends { eventType: string }> {
 
     const snapshot = await storageAdapter.getSnapshotAsync(viewAddress);
 
-    return new GenericView<TState, TEvents>(viewAddress, storageAdapter, snapshot, this.config);
+    return new GenericView<TState, TEvents>(
+      viewAddress,
+      storageAdapter,
+      snapshot as unknown as EvDbStoredSnapshotResult<TState>,
+      this.config,
+    );
   }
 }
 

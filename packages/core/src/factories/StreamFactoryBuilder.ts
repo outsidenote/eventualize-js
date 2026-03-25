@@ -45,7 +45,7 @@ export class StreamFactoryBuilder<
   TViews extends Record<string, EvDbView<unknown>> = {},
   TEventMap extends Record<string, object> = {},
 > {
-  private viewFactories: ViewFactory<any, TEvents>[] = [];
+  private viewFactories: ViewFactory<unknown, TEvents>[] = [];
   private eventTypes: EventTypeConfig[] = [];
   private viewNames: string[] = [];
 
@@ -62,7 +62,7 @@ export class StreamFactoryBuilder<
     this.eventTypes.push({
       eventName: eventType,
     } as EventTypeConfig);
-    return new EventTypeStep<TStreamType, TEvents, TViews, typeof eventType, TEventMap>(this as any);
+    return new EventTypeStep<TStreamType, TEvents, TViews, typeof eventType, TEventMap>(this as unknown as StreamFactoryBuilder<TStreamType, TEvents, TViews, TEventMap>);
   }
 
   /**
@@ -82,9 +82,9 @@ export class StreamFactoryBuilder<
       handlers: handlers as unknown as Partial<EvDbStreamEventHandlersMap<TState, TEvents>>,
     });
 
-    this.viewFactories.push(viewFactory);
+    this.viewFactories.push(viewFactory as unknown as ViewFactory<unknown, TEvents>);
     this.viewNames.push(viewName);
-    return this as any;
+    return this as unknown as StreamFactoryBuilder<TStreamType, TEvents, TViews & Record<TViewName, EvDbView<TState>>, TEventMap>;
   }
 
   /**

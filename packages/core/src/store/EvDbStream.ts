@@ -7,6 +7,7 @@ import type IEvDbViewStore from "@eventualize/types/view/IEvDbViewStore";
 import type IEvDbStreamStore from "@eventualize/types/store/IEvDbStreamStore";
 import type IEvDbStreamStoreData from "@eventualize/types/store/IEvDbStreamStoreData";
 import type IEvDbEventType from "@eventualize/types/events/IEvDbEventType";
+import type { IEvDbPayloadData } from "@eventualize/types/events/IEvDbPayloadData";
 import StreamStoreAffected from "@eventualize/types/stream/StreamStoreAffected";
 import type IEvDbEventMetadata from "@eventualize/types/events/IEvDbEventMetadata";
 import EvDbStreamCursor from "@eventualize/types/stream/EvDbStreamCursor";
@@ -147,14 +148,15 @@ export default class EvDbStream implements IEvDbStreamStore, IEvDbStreamStoreDat
    * @returns The populated event metadata (cursor, timestamp, capturedBy).
    */
   protected appendEvent(
-    payload: IEvDbEventType,
+    eventType: string,
+    payload: IEvDbPayloadData,
     capturedBy?: string | null,
   ): IEvDbEventMetadata {
     capturedBy = capturedBy ?? EvDbStream.DEFAULT_CAPTURE_BY;
     // const json = JSON.stringify(payload); // Or use custom serializer
 
     const cursor = this.getNextCursor(this._pendingEvents);
-    const e = new EvDbEvent(payload.eventType, cursor, payload, new Date(), capturedBy);
+    const e = new EvDbEvent(eventType, cursor, payload, new Date(), capturedBy);
     this._pendingEvents = [...this._pendingEvents, e];
 
     // Apply to views

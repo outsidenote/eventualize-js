@@ -13,6 +13,7 @@ export default tseslint.config(
       "**/*.js",
       "**/*.cjs",
       "**/*.mjs",
+      ".claude/",
     ],
   },
   eslint.configs.recommended,

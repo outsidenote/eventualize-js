@@ -29,11 +29,11 @@ async function createDynamoDBTables() {
         try {
             await dynamoClient.send(new CreateTableCommand(schemaData));
             console.log(`✓ Created table: ${schemaData.TableName}`);
-        } catch (error: any) {
-            if (error.name === "ResourceInUseException") {
+        } catch (error: unknown) {
+            if ((error as { name?: string }).name === "ResourceInUseException") {
                 console.log(`⚠ Table already exists: ${schemaData.TableName}`);
             } else {
-                console.error(`✗ Error creating table ${schemaData.TableName}:`, error.message);
+                console.error(`✗ Error creating table ${schemaData.TableName}:`, (error as Error).message);
                 throw error;
             }
         }

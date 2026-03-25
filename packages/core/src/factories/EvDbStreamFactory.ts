@@ -119,14 +119,16 @@ export class EvDbStreamFactory<
     // Add dynamic methods for each event type
     eventTypes.forEach(({ eventName }) => {
       const methodName = `appendEvent${eventName}`;
-      (DynamicStream.prototype as any)[methodName] = async function (
-        event: any,
+      (DynamicStream.prototype as unknown as Record<string, unknown>)[methodName] = async function (
+        this: EvDbStream,
+        event: Record<string, unknown>,
+        capturedBy?: string | null
       ) {
-        return this.appendEvent({ ...event, eventType: eventName });
+        return this.appendEvent(eventName, event, capturedBy);
       };
     });
 
-    return DynamicStream as any;
+    return DynamicStream as unknown as typeof this.DynamicStreamClass;
   }
 
   /**

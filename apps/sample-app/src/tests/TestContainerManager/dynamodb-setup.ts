@@ -80,7 +80,10 @@ export async function setupDynamoDBTables(config: DynamoDBConfig): Promise<void>
     try {
       await dynamoClient.send(new CreateTableCommand(schema));
       console.log(`✓ Created DynamoDB table: ${schema.TableName}`);
-    } catch (error: any) {
+    } catch (error: unknown | Error) {
+      if (!(error instanceof Error)) {
+        throw new Error("Unknown error occurred while creating DynamoDB table");
+      }
       if (error.name === "ResourceInUseException") {
         console.log(`⚠ Table already exists: ${schema.TableName}`);
       } else {

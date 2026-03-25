@@ -1,13 +1,13 @@
-import EvDbPrismaStorageAdapter from "@eventualize/relational-storage-adapter/EvDbPrismaStorageAdapter.js";
+import EvDbPrismaStorageAdapter from "@eventualize/relational-storage-adapter/EvDbPrismaStorageAdapter";
 import { EVENT_STORE_TYPE } from "./EVENT_STORE_TYPE.js";
-import EvDbDynamoDbStorageAdapter from "@eventualize/dynamodb-storage-adapter/EvDbDynamoDbStorageAdapter.js";
+import EvDbDynamoDbStorageAdapter from "@eventualize/dynamodb-storage-adapter/EvDbDynamoDbStorageAdapter";
 import StorageAdapterStub from "./StorageAdapterStub.js";
 import type IEvDbStorageStreamAdapter from "@eventualize/types/adapters/IEvDbStorageStreamAdapter";
 import type IEvDbStorageSnapshotAdapter from "@eventualize/types/adapters/IEvDbStorageSnapshotAdapter";
-import EvDbPostgresPrismaClientFactory from "@eventualize/postgres-storage-adapter/EvDbPostgresPrismaClientFactory.js";
-import EvDbMySqlPrismaClientFactory from "@eventualize/mysql-storage-adapter/EvDbMySqlPrismaClientFactory.js";
+import EvDbPostgresPrismaClientFactory from "@eventualize/postgres-storage-adapter/EvDbPostgresPrismaClientFactory";
+import EvDbMySqlPrismaClientFactory from "@eventualize/mysql-storage-adapter/EvDbMySqlPrismaClientFactory";
 import type { PrismaClient } from "@prisma/client/extension";
-import type { DynamoDBClientOptions } from "@eventualize/dynamodb-storage-adapter/DynamoDbClient.js";
+import type { DynamoDBClientOptions } from "@eventualize/dynamodb-storage-adapter/DynamoDbClient";
 
 export default class Helpers {
   /**

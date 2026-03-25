@@ -4,6 +4,21 @@ import Steps from "./steps.js";
 import { EVENT_STORE_TYPE } from "./EVENT_STORE_TYPE.js";
 import { TestManager } from "./TestContainerManager/TestManager.js";
 import PointsStreamFactory from "../eventstore/PointsStream/PointsStreamFactory.js";
+import type { PointsStreamType } from "../eventstore/PointsStream/PointsStreamFactory.js";
+import type { IEvDbStorageAdapter } from "@eventualize/core/adapters/IEvDbStorageAdapter";
+
+type StoreClientType = ReturnType<typeof Steps.createStoreClient>;
+
+interface IntegrationTestData {
+  storeClient?: StoreClientType;
+  storageAdapter?: IEvDbStorageAdapter;
+  streamId?: string;
+  pointsStream?: PointsStreamType;
+  fetchedStream?: PointsStreamType;
+  dupPointsStream?: PointsStreamType;
+  fetchedStream1?: PointsStreamType;
+  fetchedStream2?: PointsStreamType;
+}
 
 // Start containers before all tests
 describe("Database Integration Tests", () => {
@@ -22,7 +37,7 @@ describe("Database Integration Tests", () => {
     const databasesToTest = testManager.supportedDatabases;
     for (const storeType of databasesToTest) {
       await test(`${storeType} execution`, async (t) => {
-        const testData: any = {};
+        const testData: IntegrationTestData = {};
 
         await t.before(async () => {
           const connectionConfig = testManager.getConnection(storeType);
@@ -43,28 +58,28 @@ describe("Database Integration Tests", () => {
 
         await t.test("Given: local stream with events", () => {
           testData.streamId = "pointsStream1";
-          testData.pointsStream = Steps.createPointsStream(testData.streamId, testData.storageAdapter);
+          testData.pointsStream = Steps.createPointsStream(testData.streamId, testData.storageAdapter!);
           Steps.addPointsEventsToStream(testData.pointsStream);
           Steps.assertStreamStateIsCorrect(testData.pointsStream);
         });
 
         await t.test("When: stream stored and fetched", async () => {
-          await assert.doesNotReject(testData.pointsStream.store());
+          await assert.doesNotReject(testData.pointsStream!.store());
           testData.fetchedStream = await PointsStreamFactory.get(
-            testData.streamId,
-            testData.storageAdapter,
-            testData.storageAdapter,
+            testData.streamId!,
+            testData.storageAdapter!,
+            testData.storageAdapter!,
           );
         });
 
         await t.test("Then: fetched stream is correct", async () => {
-          Steps.compareFetchedAndStoredStreams(testData.pointsStream, testData.fetchedStream);
+          Steps.compareFetchedAndStoredStreams(testData.pointsStream!, testData.fetchedStream!);
         });
 
         await t.test("AND: Duplicate stream cannot be stored", async () => {
           testData.dupPointsStream = Steps.createPointsStream(
-            testData.streamId,
-            testData.storageAdapter,
+            testData.streamId!,
+            testData.storageAdapter!,
           );
           Steps.addPointsEventsToStream(testData.dupPointsStream);
           await assert.rejects(testData.dupPointsStream.store(), {
@@ -74,14 +89,14 @@ describe("Database Integration Tests", () => {
 
         await t.test("Race condition is handled correctly", async () => {
           testData.fetchedStream1 = await PointsStreamFactory.get(
-            testData.streamId,
-            testData.storageAdapter,
-            testData.storageAdapter,
+            testData.streamId!,
+            testData.storageAdapter!,
+            testData.storageAdapter!,
           );
           testData.fetchedStream2 = await PointsStreamFactory.get(
-            testData.streamId,
-            testData.storageAdapter,
-            testData.storageAdapter,
+            testData.streamId!,
+            testData.storageAdapter!,
+            testData.storageAdapter!,
           );
           Steps.addPointsEventsToStream(testData.fetchedStream1);
           Steps.addPointsEventsToStream(testData.fetchedStream2);

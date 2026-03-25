@@ -1,5 +1,6 @@
 import { unmarshall } from "@aws-sdk/util-dynamodb";
 
+import type { IEvDbPayloadData } from "@eventualize/types/events/IEvDbPayloadData";
 import EvDbStreamCursor from "@eventualize/types/stream/EvDbStreamCursor";
 import type EvDbMessage from "@eventualize/types/messages/EvDbMessage";
 import type IEvDbStorageSnapshotAdapter from "@eventualize/types/adapters/IEvDbStorageSnapshotAdapter";
@@ -21,7 +22,7 @@ import QueryProvider, {
   deserializeStreamAddress,
   EventRecord,
 } from "./EvDbDynamoDbStorageAdapterQueries.js";
-import type { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import type { AttributeValue, DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { TransactionCanceledException, TransactWriteItemsCommand } from "@aws-sdk/client-dynamodb";
 
 /**
@@ -118,7 +119,7 @@ export default class EvDbDynamoDbStorageAdapter
           event_type: message.eventType,
           captured_by: message.capturedBy,
           captured_at: message.capturedAt,
-          payload: message.payload,
+          payload: message.payload as IEvDbPayloadData,
         };
       });
 
@@ -173,7 +174,7 @@ export default class EvDbDynamoDbStorageAdapter
     streamCursor: EvDbStreamCursor,
     _pageSize: number = 100,
   ): AsyncGenerator<EvDbEvent, void, undefined> {
-    let queryCursor: Record<string, any> | undefined = undefined;
+    let queryCursor: Record<string, AttributeValue> | undefined = undefined;
 
     do {
       const getEventsCommand = QueryProvider.getEvents(streamCursor);
