@@ -8,46 +8,45 @@
     "declarationMap": false,
     "sourceMap": true,
     "strict": true,
-    "esModuleInterop": true,
+    "types": ["node"],
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "baseUrl": ".",
     "paths": {
       "@eventualize/types": [
-        "packages/types/src"
+        "./packages/types/src"
       ],
       "@eventualize/types/*": [
-        "packages/types/src/*"
+        "./packages/types/src/*"
       ],
       "@eventualize/core": [
-        "packages/core/src"
+        "./packages/core/src"
       ],
       "@eventualize/core/*": [
-        "packages/core/src/*"
+        "./packages/core/src/*"
       ],
       "@eventualize/relational-storage-adapter": [
-        "packages/adapters/relational-storage-adapter/src"
+        "./packages/adapters/relational-storage-adapter/src"
       ],
       "@eventualize/relational-storage-adapter/*": [
-        "packages/adapters/relational-storage-adapter/src/*"
+        "./packages/adapters/relational-storage-adapter/src/*"
       ],
       "@eventualize/postgres-storage-adapter": [
-        "packages/adapters/postgres-storage-adapter/src"
+        "./packages/adapters/postgres-storage-adapter/src"
       ],
       "@eventualize/postgres-storage-adapter/*": [
-        "packages/adapters/postgres-storage-adapter/src/*"
+        "./packages/adapters/postgres-storage-adapter/src/*"
       ],
       "@eventualize/mysql-storage-adapter": [
-        "packages/adapters/mysql-storage-adapter/src"
+        "./packages/adapters/mysql-storage-adapter/src"
       ],
       "@eventualize/mysql-storage-adapter/*": [
-        "packages/adapters/mysql-storage-adapter/src/*"
+        "./packages/adapters/mysql-storage-adapter/src/*"
       ],
       "@eventualize/dynamodb-storage-adapter": [
-        "packages/adapters/dynamodb-storage-adapter/src"
+        "./packages/adapters/dynamodb-storage-adapter/src"
       ],
       "@eventualize/dynamodb-storage-adapter/*": [
-        "packages/adapters/dynamodb-storage-adapter/src/*"
+        "./packages/adapters/dynamodb-storage-adapter/src/*"
       ],
     }
   },
