@@ -12,7 +12,7 @@ import type { EvDbView } from "../view/EvDbView.js";
  */
 type EventHandlersFromMap<TState, TEventMap extends Record<string, object>> = {
   [K in keyof TEventMap]: (
-    oldState: TState,
+    oldState: Readonly<TState>,
     event: Readonly<TEventMap[K]>,
     metadata: IEvDbEventMetadata,
   ) => TState;
