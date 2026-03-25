@@ -1,5 +1,16 @@
 # @eventualize/relational-storage-adapter
 
+## 5.0.0
+
+### Major Changes
+
+- e062a12: api changes, add withMessages and metadata
+
+### Patch Changes
+
+- Updated dependencies [e062a12]
+  - @eventualize/types@5.0.0
+
 ## 4.4.0
 
 ### Minor Changes
