@@ -4,10 +4,9 @@ import type IEvDbStorageSnapshotAdapter from "@eventualize/types/adapters/IEvDbS
 import { EvDbStoredSnapshotData } from "@eventualize/types/snapshots/EvDbStoredSnapshotData";
 import type { EvDbStoredSnapshotResult } from "@eventualize/types/snapshots/EvDbStoredSnapshotResult";
 import type IEvDbEventMetadata from "@eventualize/types/events/IEvDbEventMetadata";
-import type IEvDbEventType from "@eventualize/types/events/IEvDbEventType";
 import type EvDbEvent from "@eventualize/types/events/EvDbEvent";
 import { EvDbViewRaw } from "./EvDbViewRaw.js";
-import { IEvDbPayloadData } from "@eventualize/types/events/IEvDbPayloadData.js";
+import type { IEvDbPayloadData } from "@eventualize/types/events/IEvDbPayloadData.js";
 
 export abstract class EvDbView<TState>
   extends EvDbViewRaw

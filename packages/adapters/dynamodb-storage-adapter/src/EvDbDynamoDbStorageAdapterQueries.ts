@@ -1,5 +1,4 @@
 import type { IEvDbPayloadData } from "@eventualize/types/events/IEvDbPayloadData";
-import type IEvDbEventType from "@eventualize/types/events/IEvDbEventType";
 import type {
   AttributeValue,
   PutItemCommandInput,
