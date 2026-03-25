@@ -3,12 +3,11 @@
   "compilerOptions": {
     "outDir": "./dist",
     "rootDir": "./src",
-    "module": "CommonJS",
-    "moduleResolution": "node",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
     "composite": true,
     "declaration": true,
-    "strict": true,
-    "esModuleInterop": true
+    "strict": true
   },
   "include": ["src/**/*.ts"],
   "exclude": ["src/**/*.test.ts"]
