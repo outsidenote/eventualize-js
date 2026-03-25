@@ -29,7 +29,7 @@ export default class EvDbMessage {
     public readonly streamCursor: EvDbStreamCursor,
     public readonly payload: IEvDbPayloadData,
     public readonly storedAt?: Date,
-  ) {}
+  ) { }
 
   public static createWithId(
     id: string,
@@ -84,7 +84,7 @@ export default class EvDbMessage {
 
   public static createFromEvent(
     event: EvDbEvent,
-    payload: IEvDbPayloadData & { messageType: string },
+    payload: IEvDbPayloadData,
     channel: string = "default",
     serializeType: string = "json",
   ): EvDbMessage {
@@ -104,7 +104,7 @@ export default class EvDbMessage {
 
   public static createFromMetadata(
     metadata: IEvDbEventMetadata,
-    payload: IEvDbPayloadData & { messageType: string },
+    payload: IEvDbPayloadData,
     channel: string = "default",
     serializeType: string = "json",
   ): EvDbMessage {
