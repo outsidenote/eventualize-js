@@ -1,59 +1,85 @@
-import type IEvDbEventPayload from "@eventualize/types/events/IEvDbEventPayload";
-import type EVDbMessagesProducer from "@eventualize/types/messages/EvDbMessagesProducer";
+import type IEvDbEventMetadata from "@eventualize/types/events/IEvDbEventMetadata";
+import type EvDbMessage from "@eventualize/types/messages/EvDbMessage";
 import { EvDbStreamFactory } from "./EvDbStreamFactory.js";
-import type { StreamWithEventMethods } from "./EvDbStreamFactory.js";
-import type { EventTypeConfig } from "./EvDbStreamFactoryTypes.js"; // used by withEventType
+import type { StreamWithEventMethods, TypedViewStates } from "./EvDbStreamFactory.js";
+import type { EventTypeConfig } from "./EvDbStreamFactoryTypes.js"; // used by withEvent
 import type { ViewFactory, EvDbStreamEventHandlersMap } from "./EvDbViewFactory.js";
 import { createViewFactory } from "./EvDbViewFactory.js";
 import type { EvDbView } from "../view/EvDbView.js";
+
+/**
+ * Maps TEventMap keys to view event handler functions with clean payload types
+ */
+type EventHandlersFromMap<TState, TEventMap extends Record<string, object>> = {
+  [K in keyof TEventMap]: (
+    oldState: Readonly<TState>,
+    event: Readonly<TEventMap[K]>,
+    metadata: IEvDbEventMetadata,
+  ) => TState;
+};
+
+/**
+ * Intermediate step returned by `withEvent("name")`.
+ * Call `.asType<EventType>()` to provide the event's TypeScript type.
+ */
+export class EventTypeStep<
+  TStreamType extends string,
+  TEvents extends { eventType: string },
+  TViews extends Record<string, EvDbView<unknown>>,
+  TName extends string,
+  TEventMap extends Record<string, object> = {},
+> {
+  constructor(private builder: StreamFactoryBuilder<TStreamType, TEvents, TViews, TEventMap>) { }
+
+  asType<TEvent extends object>(): StreamFactoryBuilder<TStreamType, TEvents | (TEvent & { readonly eventType: TName }), TViews, TEventMap & Record<TName, TEvent>> {
+    return this.builder as unknown as StreamFactoryBuilder<TStreamType, TEvents | (TEvent & { readonly eventType: TName }), TViews, TEventMap & Record<TName, TEvent>>;
+  }
+}
 
 /**
  * Fluent builder for creating stream factories with inferred event types
  */
 export class StreamFactoryBuilder<
   TStreamType extends string,
-  TEvents extends IEvDbEventPayload = never,
+  TEvents extends { eventType: string } = never,
   TViews extends Record<string, EvDbView<unknown>> = {},
+  TEventMap extends Record<string, object> = {},
 > {
   private viewFactories: ViewFactory<any, TEvents>[] = [];
-  private eventTypes: EventTypeConfig<any>[] = [];
+  private eventTypes: EventTypeConfig[] = [];
   private viewNames: string[] = [];
 
   constructor(private streamType: TStreamType) { }
 
   /**
-   * Register event type for dynamic method generation - infers the event name from class name
+   * Register a plain object event type by name.
+   * Returns an intermediate step — call `.asType<EventType>()` to provide the type.
+   * Example: `.withEvent("FundsDeposited").asType<FundsDeposited>()`
    */
-  withEventType<TEvent extends IEvDbEventPayload>(
-    eventClass: new (...args: any[]) => TEvent,
-    eventMessagesProducer?: EVDbMessagesProducer,
-  ): StreamFactoryBuilder<TStreamType, TEvents | TEvent, TViews> {
-    // Use the class name as the event name
-    const eventName = eventClass.name;
-
+  withEvent<TName extends string>(
+    eventType: TName,
+  ): EventTypeStep<TStreamType, TEvents, TViews, TName, TEventMap> {
     this.eventTypes.push({
-      eventClass,
-      eventName,
-      eventMessagesProducer,
-    } as EventTypeConfig<TEvent>);
-    return this as any;
+      eventName: eventType,
+    } as EventTypeConfig);
+    return new EventTypeStep<TStreamType, TEvents, TViews, typeof eventType, TEventMap>(this as any);
   }
 
   /**
    * Add a view with inline handler definition
-   * This can only be called AFTER withEventType calls to ensure type safety
+   * This can only be called AFTER withEvent calls to ensure type safety
    */
   public withView<TViewName extends string, TState>(
     viewName: TViewName,
     defaultState: TState,
-    handlers: Partial<EvDbStreamEventHandlersMap<TState, TEvents>>,
-  ): StreamFactoryBuilder<TStreamType, TEvents, TViews & Record<TViewName, EvDbView<TState>>> {
+    handlers: Partial<EventHandlersFromMap<TState, TEventMap>>,
+  ): StreamFactoryBuilder<TStreamType, TEvents, TViews & Record<TViewName, EvDbView<TState>>, TEventMap> {
     // Create the view factory
     const viewFactory = createViewFactory<TState, TEvents>({
       viewName,
       streamType: this.streamType,
       defaultState,
-      handlers,
+      handlers: handlers as unknown as Partial<EvDbStreamEventHandlersMap<TState, TEvents>>,
     });
 
     this.viewFactories.push(viewFactory);
@@ -62,7 +88,32 @@ export class StreamFactoryBuilder<
   }
 
   /**
-   * Build the stream factory using event types registered via `withEventType`.
+   * Register a message producer for a specific event type.
+   * Should be called after `withView` so that view state types are available.
+   */
+  public withMessages<TName extends TEvents["eventType"] & keyof TEventMap>(
+    eventType: TName,
+    producer: (
+      payload: Readonly<TEventMap[TName]>,
+      views: Readonly<TypedViewStates<TViews>>,
+      metadata: IEvDbEventMetadata,
+    ) => EvDbMessage[],
+  ): this {
+    const config = this.eventTypes.find(e => e.eventName === eventType);
+    if (config) {
+      config.eventMessagesProducer = (event, viewStates) => {
+        return producer(
+          event.payload as TEventMap[TName],
+          viewStates as Readonly<TypedViewStates<TViews>>,
+          event,
+        );
+      };
+    }
+    return this;
+  }
+
+  /**
+   * Build the stream factory using event types registered via `withEvent`.
    */
   public build() {
     const factory = new EvDbStreamFactory({
