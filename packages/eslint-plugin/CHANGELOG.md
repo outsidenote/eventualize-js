@@ -1,5 +1,11 @@
 # @eventualize/eslint-plugin
 
+## 5.0.0
+
+### Major Changes
+
+- e062a12: api changes, add withMessages and metadata
+
 ## 4.4.0
 
 ### Minor Changes
