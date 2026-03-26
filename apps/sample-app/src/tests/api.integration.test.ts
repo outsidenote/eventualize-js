@@ -200,7 +200,7 @@ describe("Database Integration Tests", () => {
 
           const msg = messages[0];
           assert.strictEqual(
-            msg.payload!.messageType,
+            msg.messageType,
             "Funds Captured with Balance Notification",
             "Message type should match",
           );

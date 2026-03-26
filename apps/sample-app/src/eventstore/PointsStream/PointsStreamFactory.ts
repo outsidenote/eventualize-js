@@ -13,20 +13,17 @@ const PointsStreamFactory = new StreamFactoryBuilder("PointsStream")
   .withView("Sum", { sum: 0 }, sumViewHandlers)
   .withView("Count", { count: 0 }, countViewHandlers)
   .withMessages("PointsAdded", (payload, views, metadata) => [
-    EvDbMessage.createFromMetadata(metadata, {
-      messageType: "Points Added With Sum Notification",
+    EvDbMessage.createFromMetadata(metadata, "Points Added With Sum Notification", {
       pointsAdded: payload.points,
       PointsSum: views.Sum.sum,
     }),
-    EvDbMessage.createFromMetadata(metadata, {
-      messageType: "Points Added With Count Notification",
+    EvDbMessage.createFromMetadata(metadata, "Points Added With Count Notification", {
       pointsAdded: payload.points,
       PointsCount: views.Count.count,
     }),
   ])
   .withMessages("PointsMultiplied", (payload, _views, metadata) => [
-    EvDbMessage.createFromMetadata(metadata, {
-      messageType: "Points Multiplied",
+    EvDbMessage.createFromMetadata(metadata, "Points Multiplied", {
       multiplier: payload.multiplier,
     }),
   ])

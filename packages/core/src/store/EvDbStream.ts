@@ -6,7 +6,6 @@ import EvDbStreamAddress from "@eventualize/types/stream/EvDbStreamAddress";
 import type IEvDbViewStore from "@eventualize/types/view/IEvDbViewStore";
 import type IEvDbStreamStore from "@eventualize/types/store/IEvDbStreamStore";
 import type IEvDbStreamStoreData from "@eventualize/types/store/IEvDbStreamStoreData";
-import type IEvDbEventType from "@eventualize/types/events/IEvDbEventType";
 import type { IEvDbPayloadData } from "@eventualize/types/events/IEvDbPayloadData";
 import StreamStoreAffected from "@eventualize/types/stream/StreamStoreAffected";
 import type IEvDbEventMetadata from "@eventualize/types/events/IEvDbEventMetadata";
