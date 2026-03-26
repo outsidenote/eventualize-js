@@ -1,5 +1,11 @@
 # @eventualize/types
 
+## 6.0.0
+
+### Major Changes
+
+- 48ab5e4: refine api / remove payload type
+
 ## 5.0.0
 
 ### Major Changes
