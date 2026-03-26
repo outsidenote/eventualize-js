@@ -59,7 +59,10 @@ export async function createPostgresSchema(connectionUri: string): Promise<void>
     await client.connect();
     await client.query(POSTGRES_SCHEMA_SQL);
     console.log("✓ PostgreSQL schema created successfully");
-  } catch (error: any) {
+  } catch (error: unknown | Error) {
+    if (!(error instanceof Error)) {
+      throw new Error("Unknown error occurred while creating PostgreSQL schema");
+    }
     console.error(`✗ Failed to create PostgreSQL schema: ${error.message}`);
     throw error;
   } finally {

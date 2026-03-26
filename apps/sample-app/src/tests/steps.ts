@@ -6,12 +6,12 @@ import { fileURLToPath } from "node:url";
 import StorageAdapterStub from "./StorageAdapterStub.js";
 import type { PointsStreamType } from "../eventstore/PointsStream/PointsStreamFactory.js";
 import PointsStreamFactory from "../eventstore/PointsStream/PointsStreamFactory.js";
-import { EvDbPrismaStorageAdapter } from "@eventualize/relational-storage-adapter/EvDbPrismaStorageAdapter.js";
-import EvDbPrismaStorageAdmin from "@eventualize/relational-storage-adapter/EvDbPrismaStorageAdmin.js";
-import EvDbPostgresPrismaClientFactory from "@eventualize/postgres-storage-adapter/EvDbPostgresPrismaClientFactory.js";
-import EvDbMySqlPrismaClientFactory from "@eventualize/mysql-storage-adapter/EvDbMySqlPrismaClientFactory.js";
-import EvDbDynamoDbStorageAdapter from "@eventualize/dynamodb-storage-adapter/EvDbDynamoDbStorageAdapter.js";
-import EvDbDynamoDbAdmin from "@eventualize/dynamodb-storage-adapter/EvDBDynamoDBAdmin.js";
+import { EvDbPrismaStorageAdapter } from "@eventualize/relational-storage-adapter/EvDbPrismaStorageAdapter";
+import EvDbPrismaStorageAdmin from "@eventualize/relational-storage-adapter/EvDbPrismaStorageAdmin";
+import EvDbPostgresPrismaClientFactory from "@eventualize/postgres-storage-adapter/EvDbPostgresPrismaClientFactory";
+import EvDbMySqlPrismaClientFactory from "@eventualize/mysql-storage-adapter/EvDbMySqlPrismaClientFactory";
+import EvDbDynamoDbStorageAdapter from "@eventualize/dynamodb-storage-adapter/EvDbDynamoDbStorageAdapter";
+import EvDbDynamoDbAdmin from "@eventualize/dynamodb-storage-adapter/EvDBDynamoDBAdmin";
 import type IEvDbStorageAdmin from "@eventualize/types/adapters/IEvDbStorageAdmin";
 import type { DynamoDBClientOptions } from "./DynamoDBClientOptions.js";
 import { EVENT_STORE_TYPE } from "./EVENT_STORE_TYPE.js";
@@ -57,7 +57,7 @@ export default class Steps {
 
   public static createStorageAdapter(storeType: EVENT_STORE_TYPE, storeClient: StoreClientType, dynamoDbOptions: DynamoDBClientOptions | undefined): IEvDbStorageAdapter {
     return [EVENT_STORE_TYPE.POSTGRES, EVENT_STORE_TYPE.MYSQL].includes(storeType)
-      ? new EvDbPrismaStorageAdapter(storeClient as any)
+      ? new EvDbPrismaStorageAdapter(storeClient as unknown as ConstructorParameters<typeof EvDbPrismaStorageAdapter>[0])
       : storeType === EVENT_STORE_TYPE.DYNAMODB
         ? EvDbDynamoDbStorageAdapter.withOptions(dynamoDbOptions ?? {})
         : new StorageAdapterStub();

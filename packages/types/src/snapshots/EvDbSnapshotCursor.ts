@@ -45,7 +45,7 @@ export default class EvDbSnapshotCursor {
   }
 
   // C# operator == equivalents
-  equalsAddress(address: any): boolean {
+  equalsAddress(address: EvDbStreamAddress | EvDbViewAddress): boolean {
     if ("viewName" in address) return this.equalsViewAddress(address);
     return this.equalsStreamAddress(address);
   }

@@ -1,19 +1,12 @@
-import type EvDbEvent from "../events/EvDbEvent.js";
 import type IEvDbEventMetadata from "../events/IEvDbEventMetadata.js";
 import type EvDbStreamCursor from "../stream/EvDbStreamCursor.js";
 import type { IEvDbPayloadData } from "../events/IEvDbPayloadData.js";
 
 export default class EvDbMessage {
-  public static readonly Empty: EvDbMessage = EvDbMessage.createWithId(
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
-    new Date(0),
-    "",
+  public static readonly Empty: EvDbMessage = EvDbMessage.create(
     {} as EvDbStreamCursor,
+    "",
+    "",
     undefined,
   );
 
@@ -27,49 +20,24 @@ export default class EvDbMessage {
     public readonly capturedAt: Date,
     public readonly capturedBy: string,
     public readonly streamCursor: EvDbStreamCursor,
-    public readonly payload: IEvDbPayloadData,
+    public readonly payload: IEvDbPayloadData | undefined,
     public readonly storedAt?: Date,
-  ) {}
-
-  public static createWithId(
-    id: string,
-    eventType: string,
-    channel: string,
-    shardName: string,
-    messageType: string,
-    serializeType: string,
-    capturedAt: Date,
-    capturedBy: string,
-    streamCursor: EvDbStreamCursor,
-    payload: any,
-  ): EvDbMessage {
-    return new EvDbMessage(
-      id,
-      eventType,
-      channel,
-      shardName,
-      messageType,
-      serializeType,
-      capturedAt,
-      capturedBy,
-      streamCursor,
-      payload,
-    );
-  }
+  ) { }
 
   public static create(
-    eventType: string,
-    channel: string,
-    shardName: string,
-    messageType: string,
-    serializeType: string,
-    capturedAt: Date,
-    capturedBy: string,
     streamCursor: EvDbStreamCursor,
-    payload: any,
+    eventType: string,
+    messageType: string,
+    payload: IEvDbPayloadData | undefined,
+    channel: string = "default",
+    shardName: string = "default",
+    messageId: string = crypto.randomUUID(),
+    serializeType: string = "json",
+    capturedAt: Date = new Date(),
+    capturedBy: string = "",
   ): EvDbMessage {
     return new EvDbMessage(
-      crypto.randomUUID(),
+      messageId,
       eventType,
       channel,
       shardName,
@@ -78,42 +46,25 @@ export default class EvDbMessage {
       capturedAt,
       capturedBy,
       streamCursor,
-      payload,
-    );
-  }
-
-  public static createFromEvent(
-    event: EvDbEvent,
-    payload: IEvDbPayloadData & { messageType: string },
-    channel: string = "default",
-    serializeType: string = "json",
-  ): EvDbMessage {
-    return new EvDbMessage(
-      crypto.randomUUID(),
-      event.eventType,
-      channel,
-      "default",
-      payload.messageType,
-      serializeType,
-      event.capturedAt,
-      event.capturedBy,
-      event.streamCursor,
       payload,
     );
   }
 
   public static createFromMetadata(
     metadata: IEvDbEventMetadata,
-    payload: IEvDbPayloadData & { messageType: string },
+    messageType: string,
+    payload: IEvDbPayloadData,
     channel: string = "default",
+    shardName: string = "default",
+    messageId: string = crypto.randomUUID(),
     serializeType: string = "json",
   ): EvDbMessage {
     return new EvDbMessage(
-      crypto.randomUUID(),
+      messageId,
       metadata.eventType,
       channel,
-      "default",
-      payload.messageType,
+      shardName,
+      messageType,
       serializeType,
       metadata.capturedAt,
       metadata.capturedBy,

@@ -62,7 +62,7 @@ export class PrismaQueryProvider {
 
     // Note: This assumes a dynamic table name approach
     // In Prisma, you'd typically use $queryRawUnsafe for dynamic table names
-    const whereClause: any = {
+    const whereClause: Record<string, unknown> = {
       stored_at: { gte: since_date, lt: oneSecondAgo },
     };
 

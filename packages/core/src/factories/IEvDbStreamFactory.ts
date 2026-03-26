@@ -1,6 +1,5 @@
 import type IEvDbStorageSnapshotAdapter from "@eventualize/types/adapters/IEvDbStorageSnapshotAdapter";
 import type IEvDbStorageStreamAdapter from "@eventualize/types/adapters/IEvDbStorageStreamAdapter";
-import type { EvDbView } from "../view/EvDbView.js";
 import type { StreamWithEventMethods } from "./EvDbStreamFactory.js";
 
 /**
@@ -8,22 +7,22 @@ import type { StreamWithEventMethods } from "./EvDbStreamFactory.js";
  */
 
 export interface IEvDbStreamFactory<
-  TEvents extends { eventType: string },
+  TEventMap extends Record<string, object>,
   TStreamType extends string,
-  TViews extends Record<string, EvDbView<unknown>> = {}
+  TViews extends Record<string, unknown> = {}
 > {
   create(
     streamId: string,
     streamStorageAdapter: IEvDbStorageStreamAdapter,
     snapshotStorageAdapter?: IEvDbStorageSnapshotAdapter,
     lastStreamOffset?: number
-  ): StreamWithEventMethods<TEvents, TViews>;
+  ): StreamWithEventMethods<TEventMap, TViews>;
 
   get(
     streamId: string,
     streamStorageAdapter: IEvDbStorageStreamAdapter,
     snapshotStorageAdapter?: IEvDbStorageSnapshotAdapter
-  ): Promise<StreamWithEventMethods<TEvents, TViews>>;
+  ): Promise<StreamWithEventMethods<TEventMap, TViews>>;
 
   getStreamType(): TStreamType;
 }
