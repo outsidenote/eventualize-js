@@ -1,3 +1,3 @@
 export interface IEvDbPayloadData {
-  [key: string]: unknown;
+  readonly [key: string]: unknown;
 }

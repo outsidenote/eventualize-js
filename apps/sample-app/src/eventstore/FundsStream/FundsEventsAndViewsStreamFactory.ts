@@ -20,6 +20,12 @@ const FundsEventsAndViewsStreamFactory = new StreamFactoryBuilder("funds-stream"
     FundsCaptured: (state, event) => state - event.amount,
     FundsWithdrawal: (state, event) => state - event.amount,
   })
+  .withView("count", new Map<string, number>(), {
+    FundsDeposited: (state) => state.set("deposited", (state.get("deposited") ?? 0) + 1),
+    FundsRefunded: (state) => state.set("refunded", (state.get("refunded") ?? 0) + 1),
+    FundsCaptured: (state) => state.set("captured", (state.get("captured") ?? 0) + 1),
+    FundsWithdrawal: (state) => state.set("withdrawal", (state.get("withdrawal") ?? 0) + 1),
+  })
   .withMessages("FundsCaptured", (payload, views, metadata) => [
     EvDbMessage.createFromMetadata(metadata,
       "Funds Captured with Balance Notification",

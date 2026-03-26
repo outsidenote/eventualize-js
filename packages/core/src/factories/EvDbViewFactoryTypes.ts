@@ -3,26 +3,25 @@ import type IEvDbEventMetadata from "@eventualize/types/events/IEvDbEventMetadat
 /**
  * Handler function type for applying an event to state
  */
-export type EvDbViewEventHandler<TState, TEvent extends { eventType: string }> = (
+export type EvDbViewEventHandler<TState, TEvent> = (
   oldState: TState,
   event: TEvent,
   metadata: IEvDbEventMetadata,
 ) => TState;
 
 /**
- * Map of event handlers - one handler per event type in the union
- * Key is the eventType string, value is the handler function
+ * Map of event handlers keyed by event name from TEventMap
  */
-export type EvDbStreamEventHandlersMap<TState, TEvents extends { eventType: string }> = {
-  [K in TEvents["eventType"]]: EvDbViewEventHandler<TState, Extract<TEvents, { eventType: K }>>;
+export type EvDbStreamEventHandlersMap<TState, TEventMap extends Record<string, object>> = {
+  [K in keyof TEventMap]: EvDbViewEventHandler<TState, TEventMap[K]>;
 };
 
 /**
  * Configuration for creating a view
  */
-export interface ViewConfig<TState, TEvents extends { eventType: string }> {
+export interface ViewConfig<TState, TEventMap extends Record<string, object>> {
   viewName: string;
   streamType: string;
   defaultState: TState;
-  handlers: Partial<EvDbStreamEventHandlersMap<TState, TEvents>>;
+  handlers: Partial<EvDbStreamEventHandlersMap<TState, TEventMap>>;
 }

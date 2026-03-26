@@ -5,11 +5,11 @@ import type { ViewFactory } from "./EvDbViewFactory.js";
  * Configuration for creating a stream factory
  */
 export interface EvDbStreamFactoryConfig<
-  TEvents extends { eventType: string },
+  TEventMap extends Record<string, object>,
   TStreamType extends string,
 > {
   streamType: TStreamType;
-  viewFactories: ViewFactory<unknown, TEvents>[];
+  viewFactories: ViewFactory<unknown, TEventMap>[];
   eventTypes: EventTypeConfig[];
   viewNames: string[]; // Track view names for accessor creation
 }
