@@ -57,6 +57,24 @@ export default class EvDbMessage {
     );
   }
 
+  public withTraceparent(traceparent?: string, tracestate?: string): EvDbMessage {
+    return new EvDbMessage(
+      this.id,
+      this.eventType,
+      this.channel,
+      this.shardName,
+      this.messageType,
+      this.serializeType,
+      this.capturedAt,
+      this.capturedBy,
+      this.streamCursor,
+      this.payload,
+      this.storedAt,
+      traceparent,
+      tracestate,
+    );
+  }
+
   public static createFromMetadata(
     metadata: IEvDbEventMetadata,
     messageType: string,
