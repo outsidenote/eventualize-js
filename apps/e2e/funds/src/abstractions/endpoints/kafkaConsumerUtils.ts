@@ -1,4 +1,5 @@
 import { type Kafka, type Consumer } from "kafkajs";
+import { trace, context, propagation } from "@opentelemetry/api";
 
 const RETRY_INTERVAL_MS = 5_000;
 
@@ -38,7 +39,30 @@ export function launchKafkaConsumer(opts: {
           const outboxId = extractOutboxId(message);
           const payload = parsePayload(message);
 
-          await onMessage(topic, payload, { outboxId, storedAt: new Date(Number(message.timestamp)) });
+          // Extract traceparent from payload to continue the distributed trace across CDC boundary
+          const carrier: Record<string, string> = {};
+          const p = payload as Record<string, unknown>;
+          if (typeof p["traceparent"] === "string") carrier["traceparent"] = p["traceparent"];
+          if (typeof p["tracestate"] === "string") carrier["tracestate"] = p["tracestate"];
+          const parentCtx = propagation.extract(context.active(), carrier);
+
+          const tracer = trace.getTracer("e2e-funds-kafka");
+          await context.with(parentCtx, async () => {
+            const span = tracer.startSpan(`kafka.consume ${topic}`, {
+              attributes: {
+                "messaging.system": "kafka",
+                "messaging.destination": topic,
+                "messaging.consumer.group": groupId,
+                "eventualize.outbox.id": outboxId,
+              },
+            });
+            try {
+              await onMessage(topic, payload, { outboxId, storedAt: new Date(Number(message.timestamp)) });
+            } finally {
+              span.end();
+            }
+          });
+
           await c.commitOffsets([{ topic, partition, offset: (BigInt(message.offset) + 1n).toString() }]);
         },
       });

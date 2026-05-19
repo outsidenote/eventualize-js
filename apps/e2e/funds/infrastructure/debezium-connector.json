@@ -1,0 +1,26 @@
+{
+  "name": "funds-outbox-connector",
+  "config": {
+    "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+    "database.hostname": "postgres",
+    "database.port": "5432",
+    "database.user": "funds",
+    "database.password": "funds123",
+    "database.dbname": "funds",
+    "database.server.name": "funds-server",
+    "topic.prefix": "funds",
+    "table.include.list": "public.outbox",
+    "transforms": "outbox",
+    "transforms.outbox.type": "io.debezium.transforms.outbox.EventRouter",
+    "transforms.outbox.table.field.event.id": "id",
+    "transforms.outbox.table.field.event.key": "stream_id",
+    "transforms.outbox.table.field.event.type": "message_type",
+    "transforms.outbox.table.field.event.payload": "payload",
+    "transforms.outbox.route.by.field": "message_type",
+    "transforms.outbox.route.topic.replacement": "events.${routedByValue}",
+    "transforms.outbox.table.expand.json.payload": "true",
+    "slot.name": "funds_outbox_slot",
+    "plugin.name": "pgoutput",
+    "publication.name": "funds_outbox_pub"
+  }
+}
