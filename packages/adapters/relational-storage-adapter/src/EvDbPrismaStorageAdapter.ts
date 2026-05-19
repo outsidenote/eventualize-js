@@ -13,8 +13,13 @@ import type EvDbContinuousFetchOptions from "@eventualize/types/primitives/EvDbC
 import type EvDbMessageFilter from "@eventualize/types/messages/EvDbMessageFilter";
 import type { EvDbShardName } from "@eventualize/types/primitives/EvDbShardName";
 
+import { trace, SpanStatusCode } from "@opentelemetry/api";
 import type { Prisma, PrismaClient } from "./generated/prisma/client.js";
 import { PrismaQueryProvider } from "./EvDbRelationalStorageAdapterQueries.js";
+
+const TRACER_NAME = "@eventualize/relational-adapter";
+const TRACER_VERSION = "6.0.0";
+const getTracer = () => trace.getTracer(TRACER_NAME, TRACER_VERSION);
 
 const deserializePayload = (payload: unknown): IEvDbPayloadData => {
   if (!!payload && typeof payload == "object") {
@@ -92,6 +97,29 @@ export class EvDbPrismaStorageAdapter
    * Store stream events in a transaction
    */
   async storeStreamAsync(
+    events: ReadonlyArray<EvDbEvent>,
+    messages: ReadonlyArray<EvDbMessage>,
+  ): Promise<StreamStoreAffected> {
+    return getTracer().startActiveSpan(
+      "eventualize.adapter.store",
+      { attributes: { "eventualize.adapter.kind": "relational", "eventualize.event.count": events.length } },
+      async (span) => {
+        try {
+          const result = await this._storeStreamAsync(events, messages);
+          span.setStatus({ code: SpanStatusCode.OK });
+          return result;
+        } catch (error) {
+          span.setStatus({ code: SpanStatusCode.ERROR, message: (error as Error)?.message });
+          if (error instanceof Error) span.recordException(error);
+          throw error;
+        } finally {
+          span.end();
+        }
+      },
+    );
+  }
+
+  private async _storeStreamAsync(
     events: ReadonlyArray<EvDbEvent>,
     messages: ReadonlyArray<EvDbMessage>,
   ): Promise<StreamStoreAffected> {
@@ -173,30 +201,46 @@ export class EvDbPrismaStorageAdapter
     streamCursor: EvDbStreamCursor,
     _pageSize: number = 100,
   ): AsyncGenerator<EvDbEvent, void, undefined> {
-    const { streamType, streamId } = streamCursor;
-    let currentOffset = streamCursor.offset;
-    while (true) {
-      const events = await this.queryProvider.getEvents(streamType, streamId, currentOffset);
+    const span = getTracer().startSpan("eventualize.adapter.query.stream", {
+      attributes: {
+        "eventualize.adapter.kind": "relational",
+        "eventualize.stream.id": streamCursor.streamId,
+        "eventualize.stream.type": streamCursor.streamType,
+      },
+    });
+    try {
+      const { streamType, streamId } = streamCursor;
+      let currentOffset = streamCursor.offset;
+      while (true) {
+        const events = await this.queryProvider.getEvents(streamType, streamId, currentOffset);
 
-      if (events.length === 0) {
-        break;
-      }
+        if (events.length === 0) {
+          break;
+        }
 
-      for (const event of events) {
-        yield new EvDbEvent(
-          event.event_type,
-          new EvDbStreamCursor(event.stream_type, event.stream_id, Number(event.offset)),
-          { eventType: event.event_type, payload: deserializePayload(event.payload) },
-          event.captured_at,
-          event.captured_by,
-          event.stored_at,
-        );
-        currentOffset = Math.max(currentOffset, Number(event.offset));
-      }
+        for (const event of events) {
+          yield new EvDbEvent(
+            event.event_type,
+            new EvDbStreamCursor(event.stream_type, event.stream_id, Number(event.offset)),
+            { eventType: event.event_type, payload: deserializePayload(event.payload) },
+            event.captured_at,
+            event.captured_by,
+            event.stored_at,
+          );
+          currentOffset = Math.max(currentOffset, Number(event.offset));
+        }
 
-      if (events.length < _pageSize) {
-        break;
+        if (events.length < _pageSize) {
+          break;
+        }
       }
+      span.setStatus({ code: SpanStatusCode.OK });
+    } catch (error) {
+      span.setStatus({ code: SpanStatusCode.ERROR, message: (error as Error)?.message });
+      if (error instanceof Error) span.recordException(error);
+      throw error;
+    } finally {
+      span.end();
     }
   }
 
