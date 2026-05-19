@@ -47,30 +47,36 @@ CommandHandlerOrchestrator
     fetch stream → appendEvent → store()
     │
     ▼
-Postgres
-  ├── evdb_events table      (stream events)
-  └── evdb_outbox table      (FundsChanged messages)
+Postgres (single transaction)
+  ├── events table       (stream events)
+  └── outbox table       (FundsChanged messages)
+              │
+              ├──► SQL trigger ──► pgboss.job (same transaction, exactly-once)
+              │         │
+              │         ▼
+              │    boss.work()  ─────────────────► account_leaderboard table
+              │    server.ts                       (pg.Pool, plain SQL UPSERT)
               │
               └──► Debezium CDC ──► Kafka topic: events.FundsChanged
                                            │
-                         ┌─────────────────┴─────────────────┐
-                         │                                   │
-               consumer group:                    consumer group:
-               "leaderboard.FundsChanged"          "risk.FundsChanged"
-               server.ts                           risk-server.ts
-                         │                                   │
-                         ▼                                   ▼
-               pg.Pool                             MongoClient
-               account_leaderboard table           account_risk collection
-               (plain SQL UPSERT)                  (rolling 10-tx window + risk level)
+                                  consumer group: "risk.FundsChanged"
+                                  risk-server.ts
+                                           │
+                                           ▼
+                                  MongoClient → account_risk collection
+                                  (rolling 10-tx window + risk level)
 ```
+
+**Key distinction:**
+- **Leaderboard** is triggered by a Postgres trigger that inserts into `pgboss.job` within the **same transaction** as the outbox INSERT — exactly-once, no CDC needed.
+- **Risk** is triggered by Debezium CDC → Kafka — at-least-once, idempotency handled by MongoDB `upsert`.
 
 ### 3.2 Two Processes
 
-| Process | Entry point | Kafka consumer group | Data store |
-|---------|-------------|----------------------|------------|
-| Main server | `src/server.ts` | `leaderboard.FundsChanged` | Postgres (`account_leaderboard`) |
-| Risk server | `src/risk-server.ts` | `risk.FundsChanged` | MongoDB (`account_risk`) |
+| Process | Entry point | Trigger mechanism | Data store |
+|---------|-------------|-------------------|------------|
+| Main server | `src/server.ts` | pg-boss worker (outbox SQL trigger) | Postgres (`account_leaderboard`) |
+| Risk server | `src/risk-server.ts` | Kafka consumer group `risk.FundsChanged` | MongoDB (`account_risk`) |
 
 Each process is fully independent. Neither touches the other's data store.
 
@@ -133,7 +139,7 @@ Each slice is a self-contained unit: **command** (payload shape) + **commandHand
 - `command.ts` — `UpdateAccountLeaderboard { accountId, delta, currentBalance, currency, transactionId }`
 - `commandHandler.ts` — SQL UPSERT into `account_leaderboard` via injected `pg.Pool`
 - `adapter.ts` — injects `pg.Pool`
-- `kafka/index.ts` — plain `launchKafkaConsumer` wrapper: maps `FundsChanged` → `UpdateAccountLeaderboard` → adapter. (`defineAutomationEndpoint` is not used here — it is coupled to `IEvDbStorageAdapter` and is only suitable for stream command slices.)
+- `pgboss/index.ts` — registers a `boss.work()` handler for queue `event.FundsChanged.UpdateAccountLeaderboard`; maps job data → command → adapter. The outbox SQL trigger populates this queue transactionally.
 - `http/index.ts` — `POST /api/funds/leaderboard/update` (same adapter, HTTP transport)
 
 ### 5.4 RiskAssessment (read model slice)
@@ -204,19 +210,29 @@ UPSERT on every `FundsChanged` message. Ordered by `last_balance DESC` for leade
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `postgres` | `postgres:16` | EvDb event store + leaderboard table |
-| `kafka` | `confluentinc/cp-kafka` (KRaft mode, no Zookeeper) | Message broker |
-| `debezium` | `debezium/connect:2.7` | CDC: outbox → Kafka |
+| `postgres` | `postgres:16` | EvDb event store + leaderboard table + pg-boss jobs |
+| `kafka` | `confluentinc/cp-kafka` (KRaft mode, no Zookeeper) | Message broker (risk service only) |
+| `debezium` | `debezium/connect:2.7` | CDC: outbox → Kafka (risk service only) |
 | `mongodb` | `mongo:7` | Risk assessment storage |
 
 ### 8.2 Debezium Connector
 
-Outbox event router connector watching `evdb_outbox`. Routes by `message_type` field into topic `events.{message_type}` (e.g. `events.FundsChanged`).
+Outbox event router connector watching `public.outbox`. Routes by `message_type` field into topic `events.{message_type}` (e.g. `events.FundsChanged`). Used only by `risk-server.ts`.
 
-### 8.3 init.sql
+### 8.3 Outbox → pg-boss Trigger
+
+A Postgres trigger on `public.outbox` inserts directly into `pgboss.job` within the same transaction as the outbox INSERT. This gives **exactly-once delivery** to the leaderboard worker — either both rows commit or neither does.
+
+**Trigger must be installed after `boss.start()`** (which creates the `pgboss` schema). `server.ts` installs it programmatically immediately after starting pg-boss.
+
+Relevant outbox columns (from Prisma schema):
+- `id UUID` — used as `outboxId` for tracing
+- `message_type VARCHAR(150)` — filter: `'FundsChanged'`
+- `payload JSON` — the `FundsChanged` payload
+
+### 8.4 init.sql
 
 - Create `account_leaderboard` table
-- Create the outbox trigger that inserts pg-boss jobs transactionally (copied from blueprint pattern)
 
 ---
 
@@ -229,10 +245,11 @@ Both processes initialise `@opentelemetry/sdk-node` at startup before any other 
 | EvDb `stream.get` | `eventualize.stream.get` (automatic, existing) |
 | EvDb `appendEvent` | `eventualize.stream.append` (automatic, existing) |
 | EvDb `store()` | `eventualize.stream.store` (automatic, existing) |
-| Kafka consumer `onMessage` | `funds.consumer.leaderboard` / `funds.consumer.risk` |
+| pg-boss worker (leaderboard) | `funds.worker.leaderboard` |
+| Kafka consumer `onMessage` (risk) | `funds.consumer.risk` |
 | Command handler | `funds.command.updateLeaderboard` / `funds.command.updateRisk` |
 
-Traceparent from the outbox message (`FundsChanged.traceparent`) is extracted in the Kafka consumer span to maintain the distributed trace across the CDC boundary.
+Traceparent from the outbox message (`FundsChanged.traceparent`) is extracted in the Kafka consumer span (risk server) to maintain the distributed trace across the CDC boundary.
 
 ---
 
@@ -269,21 +286,15 @@ apps/e2e/funds/
 │   ├── init.sql                         # account_leaderboard table + outbox trigger
 │   └── debezium-connector.json          # Outbox event router connector config
 └── src/
-    ├── server.ts                        # Main: REST + leaderboard Kafka consumer
+    ├── server.ts                        # Main: REST + pg-boss leaderboard worker
     ├── risk-server.ts                   # Risk: MongoDB Kafka consumer
     ├── abstractions/
     │   ├── commands/
+    │   │   ├── ICommand.ts
     │   │   ├── CommandHandlerOrchestratorFactory.ts
     │   │   └── commandHandler.ts
     │   └── endpoints/
-    │       ├── defineAutomationEndpoint.ts
-    │       ├── AutomationEndpointFactory.ts
-    │       ├── PgBossEndpointFactory.ts
-    │       ├── PgBossEndpointConfig.ts
-    │       ├── PgBossEndpointIdentity.ts
-    │       ├── kafkaConsumerUtils.ts
-    │       ├── discoverAutomations.ts
-    │       └── IdempotencyGate.ts
+    │       └── kafkaConsumerUtils.ts    # Used only by risk-server.ts
     └── BusinessCapabilities/
         └── Funds/
             ├── swimlanes/Funds/
@@ -312,7 +323,7 @@ apps/e2e/funds/
                 │   ├── command.ts
                 │   ├── commandHandler.ts
                 │   ├── adapter.ts
-                │   ├── kafka/index.ts
+                │   ├── pgboss/index.ts  # boss.work() worker binding
                 │   └── http/index.ts
                 └── RiskAssessment/
                     ├── command.ts

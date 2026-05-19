@@ -4,7 +4,7 @@
 
 **Goal:** Build `apps/e2e/funds` — a complete end-to-end demo app showing the full eventualize ecosystem: event-sourced stream → outbox → Debezium CDC → Kafka → two independent consumer processes maintaining Postgres and MongoDB read models.
 
-**Architecture:** Two processes share one stream factory. `server.ts` handles REST commands and maintains an `account_leaderboard` table via a plain pg pool Kafka consumer. `risk-server.ts` maintains per-account rolling risk windows in MongoDB via a separate Kafka consumer group. Commands are decoupled from transport — every slice exposes both a Kafka binding and an HTTP binding over the same adapter.
+**Architecture:** Two processes share one stream factory. `server.ts` handles REST commands and drives the leaderboard via a **pg-boss worker** — an outbox SQL trigger inserts jobs into `pgboss.job` transactionally, giving exactly-once delivery. `risk-server.ts` maintains per-account rolling risk windows in MongoDB via a **Kafka CDC consumer group** (Debezium). Commands are decoupled from transport — every slice exposes both its native transport binding and an HTTP binding over the same adapter.
 
 **Tech Stack:** TypeScript, Node.js ESM, eventualize-js core/types/adapters, kafkajs, mongodb, pg, pg-boss, express, Debezium CDC, Docker Compose (Kafka KRaft, no Zookeeper), @opentelemetry/sdk-node, node:test
 
@@ -64,7 +64,7 @@ apps/e2e/funds/
             │   ├── commandHandler.ts
             │   ├── commandHandler.test.ts
             │   ├── adapter.ts
-            │   ├── kafka/index.ts
+            │   ├── pgboss/index.ts
             │   └── http/index.ts
             └── RiskAssessment/
                 ├── command.ts
@@ -1095,42 +1095,47 @@ export function createLeaderboardAdapter(pool: Pool): AccountLeaderboardAdapter 
 }
 ```
 
-- [ ] **Step 7: Create `kafka/index.ts`**
+- [ ] **Step 7: Create `pgboss/index.ts`**
+
+The pg-boss worker reads jobs placed by the outbox SQL trigger and maps them to the `UpdateAccountLeaderboard` command.
 
 ```typescript
-import type { Kafka } from "kafkajs";
-import { launchKafkaConsumer } from "#abstractions/endpoints/kafkaConsumerUtils.js";
+import type { PgBoss } from "pg-boss";
 import type { AccountLeaderboardAdapter } from "../adapter.js";
 
-interface FundsChangedPayload {
-  accountId: string;
-  currentBalance: number;
-  delta: number;
-  currency: string;
-  transactionId: string;
+export const LEADERBOARD_QUEUE = "event.FundsChanged.UpdateAccountLeaderboard";
+
+interface JobData {
+  metadata: { outboxId: string };
+  payload: {
+    accountId: string;
+    currentBalance: number;
+    delta: number;
+    currency: string;
+    transactionId: string;
+  };
 }
 
-export function startLeaderboardKafkaConsumer(
-  kafka: Kafka,
+export async function registerLeaderboardWorker(
+  boss: PgBoss,
   adapter: AccountLeaderboardAdapter,
-): { stop: () => Promise<void> } {
-  return launchKafkaConsumer({
-    kafka,
-    groupId: "leaderboard.FundsChanged",
-    topics: ["events.FundsChanged"],
-    onMessage: async (_topic, payload, _meta) => {
-      const p = payload as FundsChangedPayload;
-      await adapter({
-        commandType: "UpdateAccountLeaderboard",
-        accountId: p.accountId,
-        delta: p.delta,
-        currentBalance: p.currentBalance,
-        currency: p.currency,
-        transactionId: p.transactionId,
-      });
-      console.log(`[Leaderboard] updated account=${p.accountId} balance=${p.currentBalance}`);
-    },
+): Promise<void> {
+  await boss.createQueue(LEADERBOARD_QUEUE);
+
+  await boss.work(LEADERBOARD_QUEUE, async ([job]) => {
+    const { payload } = job.data as JobData;
+    await adapter({
+      commandType: "UpdateAccountLeaderboard",
+      accountId: payload.accountId,
+      delta: payload.delta,
+      currentBalance: payload.currentBalance,
+      currency: payload.currency,
+      transactionId: payload.transactionId,
+    });
+    console.log(`[Leaderboard/pgboss] account=${payload.accountId} balance=${payload.currentBalance}`);
   });
+
+  console.log(`[Leaderboard/pgboss] worker registered for ${LEADERBOARD_QUEUE}`);
 }
 ```
 
@@ -1453,38 +1458,80 @@ git commit -m "feat(e2e-funds): add RiskAssessment slice with MongoDB rolling wi
 **Files:**
 - Create: `apps/e2e/funds/src/server.ts`
 
-This server owns: REST endpoints for deposit/withdraw, leaderboard Kafka consumer, leaderboard HTTP endpoint, and a GET leaderboard endpoint.
+This server owns: REST endpoints for deposit/withdraw, pg-boss leaderboard worker, outbox trigger installation, leaderboard HTTP endpoint, and a GET leaderboard endpoint. It does **not** need Kafka.
 
 - [ ] **Step 1: Create `src/server.ts`**
 
 ```typescript
 import express from "express";
-import { Kafka } from "kafkajs";
 import pg from "pg";
-import { createServer, type Server } from "node:http";
+import PgBoss from "pg-boss";
+import { createServer } from "node:http";
 import EvDbPostgresPrismaClientFactory from "@eventualize/postgres-storage-adapter/EvDbPostgresPrismaClientFactory";
 import EvDbPrismaStorageAdapter from "@eventualize/relational-storage-adapter/EvDbPrismaStorageAdapter";
 
 import { createDepositHttpHandler } from "#BusinessCapabilities/Funds/slices/DepositFunds/http/index.js";
 import { createWithdrawHttpHandler } from "#BusinessCapabilities/Funds/slices/WithdrawFunds/http/index.js";
 import { createLeaderboardAdapter } from "#BusinessCapabilities/Funds/slices/AccountLeaderboard/adapter.js";
-import { startLeaderboardKafkaConsumer } from "#BusinessCapabilities/Funds/slices/AccountLeaderboard/kafka/index.js";
+import { registerLeaderboardWorker, LEADERBOARD_QUEUE } from "#BusinessCapabilities/Funds/slices/AccountLeaderboard/pgboss/index.js";
 import { createLeaderboardHttpHandler } from "#BusinessCapabilities/Funds/slices/AccountLeaderboard/http/index.js";
 
 const config = {
   postgresConnection: process.env.POSTGRES_CONNECTION ?? "postgres://funds:funds123@localhost:5434/funds",
-  kafkaBootstrap: process.env.KAFKA_BOOTSTRAP ?? "localhost:9092",
   port: Number(process.env.PORT ?? 3010),
 };
+
+// Installs the outbox → pg-boss trigger. Must be called AFTER boss.start()
+// so the pgboss schema exists. Uses a dedicated client (pool.query doesn't
+// support multi-statement transactions in pg).
+async function installOutboxTrigger(pool: pg.Pool): Promise<void> {
+  const client = await pool.connect();
+  try {
+    await client.query(`
+      CREATE OR REPLACE FUNCTION insert_leaderboard_pgboss_job()
+      RETURNS TRIGGER AS $$
+      BEGIN
+        IF NEW.message_type = 'FundsChanged' THEN
+          INSERT INTO pgboss.job (name, data, priority)
+          VALUES (
+            '${LEADERBOARD_QUEUE}',
+            jsonb_build_object(
+              'metadata', jsonb_build_object('outboxId', NEW.id::text),
+              'payload',  NEW.payload::jsonb
+            ),
+            0
+          );
+        END IF;
+        RETURN NEW;
+      END;
+      $$ LANGUAGE plpgsql
+    `);
+    await client.query(`DROP TRIGGER IF EXISTS leaderboard_pgboss_trigger ON outbox`);
+    await client.query(`
+      CREATE TRIGGER leaderboard_pgboss_trigger
+        AFTER INSERT ON outbox
+        FOR EACH ROW
+        EXECUTE FUNCTION insert_leaderboard_pgboss_job()
+    `);
+    console.log("[Startup] outbox → pg-boss trigger installed");
+  } finally {
+    client.release();
+  }
+}
 
 async function main() {
   const storeClient = EvDbPostgresPrismaClientFactory.create(config.postgresConnection);
   const storageAdapter = new EvDbPrismaStorageAdapter(storeClient);
   const pool = new pg.Pool({ connectionString: config.postgresConnection });
 
-  const kafka = new Kafka({ clientId: "e2e-funds-main", brokers: [config.kafkaBootstrap] });
+  const boss = new PgBoss(config.postgresConnection);
+  await boss.start();
+  console.log("[Startup] pg-boss started");
+
+  await installOutboxTrigger(pool);
+
   const leaderboardAdapter = createLeaderboardAdapter(pool);
-  const leaderboardConsumer = startLeaderboardKafkaConsumer(kafka, leaderboardAdapter);
+  await registerLeaderboardWorker(boss, leaderboardAdapter);
 
   const app = express();
   app.use(express.json());
@@ -1518,9 +1565,11 @@ async function main() {
 
   const shutdown = async (signal: string) => {
     console.log(`[Shutdown] ${signal} received`);
-    await leaderboardConsumer.stop();
-    await new Promise<void>((resolve, reject) => { server.close((err) => err ? reject(err) : resolve()); });
-    await pool.end();
+    await Promise.allSettled([
+      boss.stop(),
+      new Promise<void>((resolve, reject) => { server.close((err) => err ? reject(err) : resolve()); }),
+      pool.end(),
+    ]);
     process.exit(0);
   };
 
@@ -1535,7 +1584,7 @@ main().catch((err) => { console.error("[Startup] failed:", err); process.exit(1)
 
 ```bash
 git add apps/e2e/funds/src/server.ts
-git commit -m "feat(e2e-funds): add main server with deposit/withdraw endpoints and leaderboard consumer"
+git commit -m "feat(e2e-funds): add main server with deposit/withdraw + pg-boss leaderboard worker"
 ```
 
 ---
