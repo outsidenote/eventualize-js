@@ -22,6 +22,8 @@ export default class EvDbMessage {
     public readonly streamCursor: EvDbStreamCursor,
     public readonly payload: IEvDbPayloadData | undefined,
     public readonly storedAt?: Date,
+    public readonly traceparent?: string,
+    public readonly tracestate?: string,
   ) { }
 
   public static create(
@@ -35,6 +37,8 @@ export default class EvDbMessage {
     serializeType: string = "json",
     capturedAt: Date = new Date(),
     capturedBy: string = "",
+    traceparent?: string,
+    tracestate?: string,
   ): EvDbMessage {
     return new EvDbMessage(
       messageId,
@@ -47,6 +51,9 @@ export default class EvDbMessage {
       capturedBy,
       streamCursor,
       payload,
+      undefined,
+      traceparent,
+      tracestate,
     );
   }
 
@@ -58,6 +65,8 @@ export default class EvDbMessage {
     shardName: string = "default",
     messageId: string = crypto.randomUUID(),
     serializeType: string = "json",
+    traceparent?: string,
+    tracestate?: string,
   ): EvDbMessage {
     return new EvDbMessage(
       messageId,
@@ -70,6 +79,9 @@ export default class EvDbMessage {
       metadata.capturedBy,
       metadata.streamCursor,
       payload,
+      undefined,
+      traceparent,
+      tracestate,
     );
   }
 }
