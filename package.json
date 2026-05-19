@@ -8,7 +8,8 @@
   "workspaces": [
     "packages/*",
     "packages/adapters/*",
-    "apps/*"
+    "apps/*",
+    "apps/e2e/*"
   ],
   "scripts": {
     "test": "TEST_CONTAINER=true DOTENV_CONFIG_PATH=.env.test dotenv -e .env.test -- node --import tsx --test packages/**/src/**/*.test.ts apps/**/src/**/*.test.ts",

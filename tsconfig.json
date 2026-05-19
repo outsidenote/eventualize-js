@@ -75,5 +75,8 @@
     {
       "path": "./packages/eslint-plugin"
     },
+    {
+      "path": "./apps/e2e/funds"
+    },
   ]
 }
