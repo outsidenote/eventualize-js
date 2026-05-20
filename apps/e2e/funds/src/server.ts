@@ -12,6 +12,12 @@ import { createWithdrawHttpHandler } from "#BusinessCapabilities/Funds/slices/Wi
 import { createLeaderboardAdapter } from "#BusinessCapabilities/Funds/slices/AccountLeaderboard/adapter.js";
 import { registerLeaderboardWorker, LEADERBOARD_QUEUE } from "#BusinessCapabilities/Funds/slices/AccountLeaderboard/pgboss/index.js";
 import { createLeaderboardHttpHandler } from "#BusinessCapabilities/Funds/slices/AccountLeaderboard/http/index.js";
+import { composeOpenApi, composeAsyncApi } from "#abstractions/catalog/composeSpecs.js";
+import { depositFundsOpenApi } from "#BusinessCapabilities/Funds/slices/DepositFunds/openapi.js";
+import { withdrawFundsOpenApi } from "#BusinessCapabilities/Funds/slices/WithdrawFunds/openapi.js";
+import { accountLeaderboardOpenApi } from "#BusinessCapabilities/Funds/slices/AccountLeaderboard/openapi.js";
+import { fundsOutboxAsyncApi } from "#BusinessCapabilities/Funds/swimlanes/Funds/asyncapi.js";
+import { leaderboardAsyncApi } from "#BusinessCapabilities/Funds/slices/AccountLeaderboard/asyncapi.js";
 
 const config = {
   postgresConnection: process.env.POSTGRES_CONNECTION ?? "postgres://funds:funds123@localhost:5434/funds",
@@ -73,6 +79,24 @@ async function main() {
   app.use(express.json());
 
   app.get("/health", (_req, res) => res.json({ status: "ok", service: "funds-main" }));
+
+  app.get("/openapi.json", (_req, res) => {
+    res.json(composeOpenApi({
+      title: "funds-main",
+      version: "1.0.0",
+      description: "REST endpoints for the funds main server (deposits, withdrawals, leaderboard view).",
+      paths: [depositFundsOpenApi, withdrawFundsOpenApi, accountLeaderboardOpenApi],
+    }));
+  });
+
+  app.get("/asyncapi.json", (_req, res) => {
+    res.json(composeAsyncApi({
+      title: "funds-main async",
+      version: "1.0.0",
+      description: "Async channels owned by funds-main: outbox 'send' (broadcast) + pg-boss 'receive' (P2P consumer).",
+      fragments: [fundsOutboxAsyncApi, leaderboardAsyncApi],
+    }));
+  });
 
   app.post("/api/funds/deposit", createDepositHttpHandler(storageAdapter));
   app.post("/api/funds/withdraw", createWithdrawHttpHandler(storageAdapter));
