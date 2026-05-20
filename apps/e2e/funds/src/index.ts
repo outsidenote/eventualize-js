@@ -7,6 +7,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const servers = [
   { name: "main", file: join(__dirname, "server.ts"), color: "\x1b[36m" },
   { name: "risk", file: join(__dirname, "risk-server.ts"), color: "\x1b[35m" },
+  { name: "catalog", file: join(__dirname, "../catalog/src/server.ts"), color: "\x1b[33m" },
 ];
 
 const reset = "\x1b[0m";
