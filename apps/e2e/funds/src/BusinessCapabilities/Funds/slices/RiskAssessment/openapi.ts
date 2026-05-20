@@ -58,6 +58,7 @@ export const riskAssessmentOpenApi: OpenAPIV3_1.PathsObject = {
       responses: {
         "200": { description: "Risk upserted" },
         "400": { description: "Validation error" },
+        "500": { description: "Internal error" },
       },
     },
   },

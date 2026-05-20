@@ -26,9 +26,20 @@ export const depositFundsOpenApi: OpenAPIV3_1.PathsObject = {
       responses: {
         "200": {
           description: "Deposit recorded",
-          content: { "application/json": { schema: { type: "object", properties: { ok: { type: "boolean" } } } } },
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  streamId: { type: "string" },
+                  emittedEventTypes: { type: "array", items: { type: "string" } },
+                },
+              },
+            },
+          },
         },
-        "400": { description: "Validation error" },
+        "400": { description: "Validation error (accountId or amount missing)" },
+        "409": { description: "Concurrent modification — retry the operation" },
         "500": { description: "Internal error" },
       },
     },
