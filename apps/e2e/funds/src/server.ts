@@ -15,7 +15,7 @@ import { createLeaderboardHttpHandler } from "#BusinessCapabilities/Funds/slices
 
 const config = {
   postgresConnection: process.env.POSTGRES_CONNECTION ?? "postgres://funds:funds123@localhost:5434/funds",
-  port: Number(process.env.PORT ?? 3010),
+  port: Number(process.env.PORT ?? 3014),
 };
 
 // Installs the outbox → pg-boss trigger. Must be called AFTER boss.start()

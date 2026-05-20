@@ -80,6 +80,7 @@ apps/e2e/funds/
 ## Task 1: Monorepo Registration & Package Scaffold
 
 **Files:**
+
 - Modify: `package.json` (root) — add `apps/e2e/*` to workspaces
 - Modify: `tsconfig.json` (root) — add `apps/e2e/funds` reference
 - Create: `apps/e2e/funds/package.json`
@@ -88,6 +89,7 @@ apps/e2e/funds/
 - [ ] **Step 1: Add workspace glob and tsconfig reference**
 
 Edit root `package.json` — change `"workspaces"` from:
+
 ```json
 "workspaces": [
   "packages/*",
@@ -95,7 +97,9 @@ Edit root `package.json` — change `"workspaces"` from:
   "apps/*"
 ]
 ```
+
 to:
+
 ```json
 "workspaces": [
   "packages/*",
@@ -106,6 +110,7 @@ to:
 ```
 
 Edit root `tsconfig.json` — add to `"references"` array:
+
 ```json
 {
   "path": "./apps/e2e/funds"
@@ -202,6 +207,7 @@ git commit -m "chore(e2e-funds): scaffold workspace package"
 ## Task 2: Copy Shared Testing Infrastructure & Abstractions
 
 **Files:**
+
 - Create: `apps/e2e/funds/src/tests/StorageAdapterStub.ts`
 - Create: `apps/e2e/funds/src/abstractions/commands/ICommand.ts`
 - Create: `apps/e2e/funds/src/abstractions/commands/commandHandler.ts`
@@ -230,16 +236,60 @@ import type StreamStoreAffected from "@eventualize/types/stream/StreamStoreAffec
 export default class StorageAdapterStub
   implements IEvDbStorageSnapshotAdapter, IEvDbStorageStreamAdapter
 {
-  close(): Promise<void> { throw new Error("Not implemented"); }
-  getEventsAsync(_cursor: EvDbStreamCursor): AsyncGenerator<EvDbEvent, void, undefined> { throw new Error("Not implemented"); }
-  getLastOffsetAsync(_address: EvDbStreamAddress): Promise<number> { throw new Error("Not implemented"); }
-  storeStreamAsync(_events: ReadonlyArray<EvDbEvent>, _messages: ReadonlyArray<EvDbMessage>): Promise<StreamStoreAffected> { throw new Error("Not implemented"); }
-  getFromOutbox(_filter: EvDbMessageFilter, _options?: EvDbContinuousFetchOptions | null): Promise<AsyncIterable<EvDbMessage>> { throw new Error("Not implemented"); }
-  getFromOutboxAsync(_shard: EvDbShardName, _filter: EvDbMessageFilter, _options?: EvDbContinuousFetchOptions | null, _cancellation?: AbortSignal): AsyncIterable<EvDbMessage> { throw new Error("Not implemented"); }
-  getRecordsFromOutboxAsync(_shard: unknown, _filter?: unknown, _options?: unknown, _cancellation?: unknown): AsyncIterable<EvDbMessage> { throw new Error("Not implemented"); }
-  subscribeToMessageAsync(_handler: unknown, _shard: unknown, _filter?: unknown, _options?: unknown): Promise<void> { throw new Error("Not implemented"); }
-  getSnapshotAsync(_viewAddress: EvDbViewAddress, _signal?: AbortSignal): Promise<EvDbStoredSnapshotResultRaw> { throw new Error("Not implemented"); }
-  storeSnapshotAsync(_snapshotData: EvDbStoredSnapshotData, _signal?: AbortSignal): Promise<void> { throw new Error("Not implemented"); }
+  close(): Promise<void> {
+    throw new Error("Not implemented");
+  }
+  getEventsAsync(_cursor: EvDbStreamCursor): AsyncGenerator<EvDbEvent, void, undefined> {
+    throw new Error("Not implemented");
+  }
+  getLastOffsetAsync(_address: EvDbStreamAddress): Promise<number> {
+    throw new Error("Not implemented");
+  }
+  storeStreamAsync(
+    _events: ReadonlyArray<EvDbEvent>,
+    _messages: ReadonlyArray<EvDbMessage>,
+  ): Promise<StreamStoreAffected> {
+    throw new Error("Not implemented");
+  }
+  getFromOutbox(
+    _filter: EvDbMessageFilter,
+    _options?: EvDbContinuousFetchOptions | null,
+  ): Promise<AsyncIterable<EvDbMessage>> {
+    throw new Error("Not implemented");
+  }
+  getFromOutboxAsync(
+    _shard: EvDbShardName,
+    _filter: EvDbMessageFilter,
+    _options?: EvDbContinuousFetchOptions | null,
+    _cancellation?: AbortSignal,
+  ): AsyncIterable<EvDbMessage> {
+    throw new Error("Not implemented");
+  }
+  getRecordsFromOutboxAsync(
+    _shard: unknown,
+    _filter?: unknown,
+    _options?: unknown,
+    _cancellation?: unknown,
+  ): AsyncIterable<EvDbMessage> {
+    throw new Error("Not implemented");
+  }
+  subscribeToMessageAsync(
+    _handler: unknown,
+    _shard: unknown,
+    _filter?: unknown,
+    _options?: unknown,
+  ): Promise<void> {
+    throw new Error("Not implemented");
+  }
+  getSnapshotAsync(
+    _viewAddress: EvDbViewAddress,
+    _signal?: AbortSignal,
+  ): Promise<EvDbStoredSnapshotResultRaw> {
+    throw new Error("Not implemented");
+  }
+  storeSnapshotAsync(_snapshotData: EvDbStoredSnapshotData, _signal?: AbortSignal): Promise<void> {
+    throw new Error("Not implemented");
+  }
 }
 ```
 
@@ -257,24 +307,34 @@ export interface ICommand {
 import type EvDbStream from "@eventualize/core/store/EvDbStream";
 import type EvDbEvent from "@eventualize/types/events/EvDbEvent";
 
-export type CommandHandler<TStream extends EvDbStream, TCommand> =
-  (stream: TStream, command: TCommand) => void;
+export type CommandHandler<TStream extends EvDbStream, TCommand> = (
+  stream: TStream,
+  command: TCommand,
+) => void;
 
 export interface CommandHandlerOrchestratorResult {
   readonly streamId: string;
   readonly events: readonly EvDbEvent[];
 }
 
-export type CommandHandlerOrchestrator<TCommand> =
-  (command: TCommand) => Promise<CommandHandlerOrchestratorResult>;
+export type CommandHandlerOrchestrator<TCommand> = (
+  command: TCommand,
+) => Promise<CommandHandlerOrchestratorResult>;
 ```
 
 - [ ] **Step 4: Create `src/abstractions/commands/CommandHandlerOrchestratorFactory.ts`**
 
 ```typescript
-import type { CommandHandler, CommandHandlerOrchestrator, CommandHandlerOrchestratorResult } from "./commandHandler.js";
+import type {
+  CommandHandler,
+  CommandHandlerOrchestrator,
+  CommandHandlerOrchestratorResult,
+} from "./commandHandler.js";
 import type { IEvDbStorageAdapter } from "@eventualize/core/adapters/IEvDbStorageAdapter";
-import type { EvDbStreamFactory, StreamWithEventMethods } from "@eventualize/core/factories/EvDbStreamFactory";
+import type {
+  EvDbStreamFactory,
+  StreamWithEventMethods,
+} from "@eventualize/core/factories/EvDbStreamFactory";
 
 export class CommandHandlerOrchestratorFactory {
   static create<
@@ -290,11 +350,11 @@ export class CommandHandlerOrchestratorFactory {
   ): CommandHandlerOrchestrator<TCommand> {
     return async (command: TCommand): Promise<CommandHandlerOrchestratorResult> => {
       const streamId = getStreamId(command);
-      const stream = await streamFactory.get(
+      const stream = (await streamFactory.get(
         streamId,
         storageAdapter,
         storageAdapter,
-      ) as StreamWithEventMethods<TEventMap, TViews>;
+      )) as StreamWithEventMethods<TEventMap, TViews>;
 
       commandHandler(stream, command);
 
@@ -333,7 +393,9 @@ export function launchKafkaConsumer(opts: {
 
   const scheduleRetry = () => {
     if (stopped) return;
-    const timer = setTimeout(() => { if (!stopped) void attempt(); }, RETRY_INTERVAL_MS);
+    const timer = setTimeout(() => {
+      if (!stopped) void attempt();
+    }, RETRY_INTERVAL_MS);
     retryTimers.push(timer);
   };
 
@@ -351,18 +413,34 @@ export function launchKafkaConsumer(opts: {
           void heartbeat();
           const outboxId = extractOutboxId(message);
           const payload = parsePayload(message);
-          await onMessage(topic, payload, { outboxId, storedAt: new Date(Number(message.timestamp)) });
-          await c.commitOffsets([{ topic, partition, offset: (BigInt(message.offset) + 1n).toString() }]);
+          await onMessage(topic, payload, {
+            outboxId,
+            storedAt: new Date(Number(message.timestamp)),
+          });
+          await c.commitOffsets([
+            { topic, partition, offset: (BigInt(message.offset) + 1n).toString() },
+          ]);
         },
       });
     } catch (err) {
-      const isMissing = err instanceof Error && (err as Error & { type?: string }).type === "UNKNOWN_TOPIC_OR_PARTITION";
+      const isMissing =
+        err instanceof Error &&
+        (err as Error & { type?: string }).type === "UNKNOWN_TOPIC_OR_PARTITION";
       if (isMissing) {
-        console.info(`[KafkaConsumer] ${groupId} topic not yet available, retrying in ${RETRY_INTERVAL_MS / 1000}s`);
+        console.info(
+          `[KafkaConsumer] ${groupId} topic not yet available, retrying in ${RETRY_INTERVAL_MS / 1000}s`,
+        );
       } else {
-        console.error(`[KafkaConsumer] ${groupId} crashed, retrying in ${RETRY_INTERVAL_MS / 1000}s`, err);
+        console.error(
+          `[KafkaConsumer] ${groupId} crashed, retrying in ${RETRY_INTERVAL_MS / 1000}s`,
+          err,
+        );
       }
-      try { await c.disconnect(); } catch { /* best-effort */ }
+      try {
+        await c.disconnect();
+      } catch {
+        /* best-effort */
+      }
       consumer = null;
       scheduleRetry();
     }
@@ -376,13 +454,23 @@ export function launchKafkaConsumer(opts: {
       for (const timer of retryTimers) clearTimeout(timer);
       retryTimers.length = 0;
       if (consumer) {
-        try { await consumer.disconnect(); } catch (err) { console.warn("[KafkaConsumer] disconnect failed", err); } finally { consumer = null; }
+        try {
+          await consumer.disconnect();
+        } catch (err) {
+          console.warn("[KafkaConsumer] disconnect failed", err);
+        } finally {
+          consumer = null;
+        }
       }
     },
   };
 }
 
-export function extractOutboxId(message: { key: Buffer | null; value: Buffer | null; headers?: Record<string, unknown> }): string {
+export function extractOutboxId(message: {
+  key: Buffer | null;
+  value: Buffer | null;
+  headers?: Record<string, unknown>;
+}): string {
   if (message.headers) {
     const idHeader = message.headers["id"];
     if (idHeader) return Buffer.isBuffer(idHeader) ? idHeader.toString() : String(idHeader);
@@ -391,10 +479,15 @@ export function extractOutboxId(message: { key: Buffer | null; value: Buffer | n
     try {
       const parsed = JSON.parse(message.value.toString());
       const value = parsed.payload ?? parsed;
-      if (value && typeof value === "object" && "outboxId" in value) return String((value as Record<string, unknown>).outboxId);
-    } catch { /* best-effort */ }
+      if (value && typeof value === "object" && "outboxId" in value)
+        return String((value as Record<string, unknown>).outboxId);
+    } catch {
+      /* best-effort */
+    }
   }
-  throw new Error("[KafkaConsumer] Cannot extract outboxId — header 'id' missing and payload has no outboxId.");
+  throw new Error(
+    "[KafkaConsumer] Cannot extract outboxId — header 'id' missing and payload has no outboxId.",
+  );
 }
 
 export function parsePayload(message: { value: Buffer | null }): Record<string, unknown> {
@@ -410,7 +503,9 @@ export function parsePayload(message: { value: Buffer | null }): Record<string, 
     if (!isRecord(inner)) throw new Error("payload is not an object");
     return inner;
   } catch (err) {
-    throw new Error(`[KafkaConsumer] payload parse failed: ${err instanceof Error ? err.message : String(err)}`);
+    throw new Error(
+      `[KafkaConsumer] payload parse failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
@@ -439,6 +534,7 @@ git commit -m "feat(e2e-funds): add abstractions and test infrastructure"
 ## Task 3: Stream Events & Balance View
 
 **Files:**
+
 - Create: `apps/e2e/funds/src/BusinessCapabilities/Funds/swimlanes/Funds/events/FundsDeposited.ts`
 - Create: `apps/e2e/funds/src/BusinessCapabilities/Funds/swimlanes/Funds/events/FundsWithdrawn.ts`
 - Create: `apps/e2e/funds/src/BusinessCapabilities/Funds/swimlanes/Funds/views/Balance/state.ts`
@@ -468,18 +564,30 @@ const meta: IEvDbEventMetadata = {
 
 describe(`View: ${viewName}`, () => {
   test("FundsDeposited increases balance", () => {
-    const s = handlers.FundsDeposited(defaultState, { accountId: "a1", amount: 100, currency: "USD" }, meta);
+    const s = handlers.FundsDeposited(
+      defaultState,
+      { accountId: "a1", amount: 100, currency: "USD" },
+      meta,
+    );
     assert.strictEqual(s, 100);
   });
 
   test("FundsWithdrawn decreases balance", () => {
-    const s0 = handlers.FundsDeposited(defaultState, { accountId: "a1", amount: 200, currency: "USD" }, meta);
+    const s0 = handlers.FundsDeposited(
+      defaultState,
+      { accountId: "a1", amount: 200, currency: "USD" },
+      meta,
+    );
     const s1 = handlers.FundsWithdrawn(s0, { accountId: "a1", amount: 75, currency: "USD" }, meta);
     assert.strictEqual(s1, 125);
   });
 
   test("balance cannot go below zero (withdrawal clamped)", () => {
-    const s = handlers.FundsWithdrawn(defaultState, { accountId: "a1", amount: 50, currency: "USD" }, meta);
+    const s = handlers.FundsWithdrawn(
+      defaultState,
+      { accountId: "a1", amount: 50, currency: "USD" },
+      meta,
+    );
     assert.strictEqual(s, -50); // we track raw balance — business guard is in commandHandler
   });
 });
@@ -496,6 +604,7 @@ Expected: Error — module not found for `./handlers.js` or `./state.js`.
 - [ ] **Step 3: Create event types**
 
 `apps/e2e/funds/src/BusinessCapabilities/Funds/swimlanes/Funds/events/FundsDeposited.ts`:
+
 ```typescript
 export interface FundsDeposited {
   readonly accountId: string;
@@ -505,6 +614,7 @@ export interface FundsDeposited {
 ```
 
 `apps/e2e/funds/src/BusinessCapabilities/Funds/swimlanes/Funds/events/FundsWithdrawn.ts`:
+
 ```typescript
 export interface FundsWithdrawn {
   readonly accountId: string;
@@ -516,6 +626,7 @@ export interface FundsWithdrawn {
 - [ ] **Step 4: Create Balance view state and handlers**
 
 `apps/e2e/funds/src/BusinessCapabilities/Funds/swimlanes/Funds/views/Balance/state.ts`:
+
 ```typescript
 export type BalanceViewState = number;
 export const viewName = "balance" as const;
@@ -523,6 +634,7 @@ export const defaultState: BalanceViewState = 0;
 ```
 
 `apps/e2e/funds/src/BusinessCapabilities/Funds/swimlanes/Funds/views/Balance/handlers.ts`:
+
 ```typescript
 import type { FundsDeposited } from "../../events/FundsDeposited.js";
 import type { FundsWithdrawn } from "../../events/FundsWithdrawn.js";
@@ -530,11 +642,17 @@ import type { BalanceViewState } from "./state.js";
 import type IEvDbEventMetadata from "@eventualize/types/events/IEvDbEventMetadata";
 
 export const handlers = {
-  FundsDeposited: (state: BalanceViewState, event: FundsDeposited, _meta: IEvDbEventMetadata): BalanceViewState =>
-    state + event.amount,
+  FundsDeposited: (
+    state: BalanceViewState,
+    event: FundsDeposited,
+    _meta: IEvDbEventMetadata,
+  ): BalanceViewState => state + event.amount,
 
-  FundsWithdrawn: (state: BalanceViewState, event: FundsWithdrawn, _meta: IEvDbEventMetadata): BalanceViewState =>
-    state - event.amount,
+  FundsWithdrawn: (
+    state: BalanceViewState,
+    event: FundsWithdrawn,
+    _meta: IEvDbEventMetadata,
+  ): BalanceViewState => state - event.amount,
 };
 ```
 
@@ -558,6 +676,7 @@ git commit -m "feat(e2e-funds): add stream events and balance view with tests"
 ## Task 4: FundsChanged Message & Stream Factory
 
 **Files:**
+
 - Create: `apps/e2e/funds/src/BusinessCapabilities/Funds/swimlanes/Funds/messages/fundsChangedMessages.ts`
 - Create: `apps/e2e/funds/src/BusinessCapabilities/Funds/swimlanes/Funds/index.ts`
 
@@ -608,8 +727,10 @@ import { viewName, defaultState, handlers } from "./views/Balance/index.js";
 import { depositedMessages, withdrawnMessages } from "./messages/fundsChangedMessages.js";
 
 const FundsStreamFactory = new StreamFactoryBuilder("funds-stream")
-  .withEvent("FundsDeposited").asType<FundsDeposited>()
-  .withEvent("FundsWithdrawn").asType<FundsWithdrawn>()
+  .withEvent("FundsDeposited")
+  .asType<FundsDeposited>()
+  .withEvent("FundsWithdrawn")
+  .asType<FundsWithdrawn>()
   .withView(viewName, defaultState, handlers)
   .withMessages("FundsDeposited", depositedMessages)
   .withMessages("FundsWithdrawn", withdrawnMessages)
@@ -620,6 +741,7 @@ export type FundsStreamType = typeof FundsStreamFactory.StreamType;
 ```
 
 Also create `views/Balance/index.ts` to re-export:
+
 ```typescript
 export { viewName, defaultState } from "./state.js";
 export { handlers } from "./handlers.js";
@@ -645,6 +767,7 @@ git commit -m "feat(e2e-funds): add FundsChanged message and stream factory"
 ## Task 5: DepositFunds Slice
 
 **Files:**
+
 - Create: `apps/e2e/funds/src/BusinessCapabilities/Funds/slices/DepositFunds/command.ts`
 - Create: `apps/e2e/funds/src/BusinessCapabilities/Funds/slices/DepositFunds/commandHandler.ts`
 - Create: `apps/e2e/funds/src/BusinessCapabilities/Funds/slices/DepositFunds/commandHandler.test.ts`
@@ -654,6 +777,7 @@ git commit -m "feat(e2e-funds): add FundsChanged message and stream factory"
 - [ ] **Step 1: Write the failing test**
 
 Create `commandHandler.test.ts`:
+
 ```typescript
 import { test, describe } from "node:test";
 import * as assert from "node:assert";
@@ -736,7 +860,9 @@ import FundsStreamFactory from "../../swimlanes/Funds/index.js";
 import { handleDeposit } from "./commandHandler.js";
 import type { DepositFunds } from "./command.js";
 
-export function createDepositAdapter(storageAdapter: IEvDbStorageAdapter): CommandHandlerOrchestrator<DepositFunds> {
+export function createDepositAdapter(
+  storageAdapter: IEvDbStorageAdapter,
+): CommandHandlerOrchestrator<DepositFunds> {
   return CommandHandlerOrchestratorFactory.create(
     storageAdapter,
     FundsStreamFactory,
@@ -770,10 +896,16 @@ export function createDepositHttpHandler(storageAdapter: IEvDbStorageAdapter) {
         amount: Number(amount),
         currency: String(currency ?? "USD"),
       });
-      res.json({ streamId: result.streamId, emittedEventTypes: result.events.map((e) => e.eventType) });
+      res.json({
+        streamId: result.streamId,
+        emittedEventTypes: result.events.map((e) => e.eventType),
+      });
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      if (msg === "OPTIMISTIC_CONCURRENCY_VIOLATION") { res.status(409).json({ error: "Concurrent modification" }); return; }
+      if (msg === "OPTIMISTIC_CONCURRENCY_VIOLATION") {
+        res.status(409).json({ error: "Concurrent modification" });
+        return;
+      }
       console.error("[DepositFunds] error:", err);
       res.status(500).json({ error: msg });
     }
@@ -793,6 +925,7 @@ git commit -m "feat(e2e-funds): add DepositFunds slice with HTTP transport"
 ## Task 6: WithdrawFunds Slice
 
 **Files:**
+
 - Create: `apps/e2e/funds/src/BusinessCapabilities/Funds/slices/WithdrawFunds/command.ts`
 - Create: `apps/e2e/funds/src/BusinessCapabilities/Funds/slices/WithdrawFunds/commandHandler.ts`
 - Create: `apps/e2e/funds/src/BusinessCapabilities/Funds/slices/WithdrawFunds/commandHandler.test.ts`
@@ -802,6 +935,7 @@ git commit -m "feat(e2e-funds): add DepositFunds slice with HTTP transport"
 - [ ] **Step 1: Write failing tests**
 
 Create `commandHandler.test.ts`:
+
 ```typescript
 import { test, describe } from "node:test";
 import * as assert from "node:assert";
@@ -815,12 +949,21 @@ describe("WithdrawFunds commandHandler", () => {
     const stream = FundsStreamFactory.create("acc-1", storageAdapter, storageAdapter);
     stream.appendEventFundsDeposited({ accountId: "acc-1", amount: 200, currency: "USD" });
 
-    handleWithdraw(stream, { commandType: "WithdrawFunds", accountId: "acc-1", amount: 50, currency: "USD" });
+    handleWithdraw(stream, {
+      commandType: "WithdrawFunds",
+      accountId: "acc-1",
+      amount: 50,
+      currency: "USD",
+    });
 
     const events = stream.getEvents();
     const withdrawn = events.filter((e) => e.eventType === "FundsWithdrawn");
     assert.strictEqual(withdrawn.length, 1);
-    assert.deepStrictEqual(withdrawn[0].payload, { accountId: "acc-1", amount: 50, currency: "USD" });
+    assert.deepStrictEqual(withdrawn[0].payload, {
+      accountId: "acc-1",
+      amount: 50,
+      currency: "USD",
+    });
   });
 
   test("throws INSUFFICIENT_FUNDS when balance is too low", async () => {
@@ -828,7 +971,13 @@ describe("WithdrawFunds commandHandler", () => {
     const stream = FundsStreamFactory.create("acc-1", storageAdapter, storageAdapter);
 
     assert.throws(
-      () => handleWithdraw(stream, { commandType: "WithdrawFunds", accountId: "acc-1", amount: 50, currency: "USD" }),
+      () =>
+        handleWithdraw(stream, {
+          commandType: "WithdrawFunds",
+          accountId: "acc-1",
+          amount: 50,
+          currency: "USD",
+        }),
       { message: "INSUFFICIENT_FUNDS" },
     );
   });
@@ -893,7 +1042,9 @@ import FundsStreamFactory from "../../swimlanes/Funds/index.js";
 import { handleWithdraw } from "./commandHandler.js";
 import type { WithdrawFunds } from "./command.js";
 
-export function createWithdrawAdapter(storageAdapter: IEvDbStorageAdapter): CommandHandlerOrchestrator<WithdrawFunds> {
+export function createWithdrawAdapter(
+  storageAdapter: IEvDbStorageAdapter,
+): CommandHandlerOrchestrator<WithdrawFunds> {
   return CommandHandlerOrchestratorFactory.create(
     storageAdapter,
     FundsStreamFactory,
@@ -926,11 +1077,20 @@ export function createWithdrawHttpHandler(storageAdapter: IEvDbStorageAdapter) {
         amount: Number(amount),
         currency: String(currency ?? "USD"),
       });
-      res.json({ streamId: result.streamId, emittedEventTypes: result.events.map((e) => e.eventType) });
+      res.json({
+        streamId: result.streamId,
+        emittedEventTypes: result.events.map((e) => e.eventType),
+      });
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      if (msg === "INSUFFICIENT_FUNDS") { res.status(422).json({ error: "Insufficient funds" }); return; }
-      if (msg === "OPTIMISTIC_CONCURRENCY_VIOLATION") { res.status(409).json({ error: "Concurrent modification" }); return; }
+      if (msg === "INSUFFICIENT_FUNDS") {
+        res.status(422).json({ error: "Insufficient funds" });
+        return;
+      }
+      if (msg === "OPTIMISTIC_CONCURRENCY_VIOLATION") {
+        res.status(409).json({ error: "Concurrent modification" });
+        return;
+      }
       console.error("[WithdrawFunds] error:", err);
       res.status(500).json({ error: msg });
     }
@@ -950,6 +1110,7 @@ git commit -m "feat(e2e-funds): add WithdrawFunds slice with balance guard and H
 ## Task 7: AccountLeaderboard Slice
 
 **Files:**
+
 - Create: `apps/e2e/funds/src/BusinessCapabilities/Funds/slices/AccountLeaderboard/command.ts`
 - Create: `apps/e2e/funds/src/BusinessCapabilities/Funds/slices/AccountLeaderboard/commandHandler.ts`
 - Create: `apps/e2e/funds/src/BusinessCapabilities/Funds/slices/AccountLeaderboard/commandHandler.test.ts`
@@ -960,6 +1121,7 @@ git commit -m "feat(e2e-funds): add WithdrawFunds slice with balance guard and H
 - [ ] **Step 1: Write failing test**
 
 Create `commandHandler.test.ts`:
+
 ```typescript
 import { test, describe } from "node:test";
 import * as assert from "node:assert";
@@ -989,10 +1151,10 @@ describe("AccountLeaderboard commandHandler", () => {
 
     assert.strictEqual(queries.length, 1);
     assert.ok(queries[0].sql.includes("INSERT INTO account_leaderboard"));
-    assert.strictEqual(queries[0].params[0], "acc-1");   // accountId
-    assert.strictEqual(queries[0].params[2], 100);        // total_deposited increment
-    assert.strictEqual(queries[0].params[3], 0);          // total_withdrawn increment
-    assert.strictEqual(queries[0].params[4], 100);        // last_balance
+    assert.strictEqual(queries[0].params[0], "acc-1"); // accountId
+    assert.strictEqual(queries[0].params[2], 100); // total_deposited increment
+    assert.strictEqual(queries[0].params[3], 0); // total_withdrawn increment
+    assert.strictEqual(queries[0].params[4], 100); // last_balance
   });
 
   test("executes SQL UPSERT with correct withdrawal params", async () => {
@@ -1015,8 +1177,8 @@ describe("AccountLeaderboard commandHandler", () => {
 
     await handleUpdateLeaderboard(cmd, mockPool as never);
 
-    assert.strictEqual(queries[0].params[2], 0);    // total_deposited increment = 0
-    assert.strictEqual(queries[0].params[3], 50);   // total_withdrawn increment = abs(delta)
+    assert.strictEqual(queries[0].params[2], 0); // total_deposited increment = 0
+    assert.strictEqual(queries[0].params[3], 50); // total_withdrawn increment = abs(delta)
   });
 });
 ```
@@ -1050,7 +1212,10 @@ export interface UpdateAccountLeaderboard extends ICommand {
 import type { Pool } from "pg";
 import type { UpdateAccountLeaderboard } from "./command.js";
 
-export async function handleUpdateLeaderboard(cmd: UpdateAccountLeaderboard, pool: Pool): Promise<void> {
+export async function handleUpdateLeaderboard(
+  cmd: UpdateAccountLeaderboard,
+  pool: Pool,
+): Promise<void> {
   const isDeposit = cmd.delta > 0;
   const deposited = isDeposit ? cmd.delta : 0;
   const withdrawn = isDeposit ? 0 : Math.abs(cmd.delta);
@@ -1068,7 +1233,15 @@ export async function handleUpdateLeaderboard(cmd: UpdateAccountLeaderboard, poo
        deposit_count    = account_leaderboard.deposit_count    + $6,
        withdrawal_count = account_leaderboard.withdrawal_count + $7,
        last_activity    = NOW()`,
-    [cmd.accountId, cmd.currency, deposited, withdrawn, cmd.currentBalance, depositCount, withdrawalCount],
+    [
+      cmd.accountId,
+      cmd.currency,
+      deposited,
+      withdrawn,
+      cmd.currentBalance,
+      depositCount,
+      withdrawalCount,
+    ],
   );
 }
 ```
@@ -1132,7 +1305,9 @@ export async function registerLeaderboardWorker(
       currency: payload.currency,
       transactionId: payload.transactionId,
     });
-    console.log(`[Leaderboard/pgboss] account=${payload.accountId} balance=${payload.currentBalance}`);
+    console.log(
+      `[Leaderboard/pgboss] account=${payload.accountId} balance=${payload.currentBalance}`,
+    );
   });
 
   console.log(`[Leaderboard/pgboss] worker registered for ${LEADERBOARD_QUEUE}`);
@@ -1148,7 +1323,10 @@ import type { AccountLeaderboardAdapter } from "../adapter.js";
 
 export function createLeaderboardHttpHandler(adapter: AccountLeaderboardAdapter) {
   return async (req: Request, res: Response) => {
-    const { accountId, delta, currentBalance, currency, transactionId } = req.body as Record<string, unknown>;
+    const { accountId, delta, currentBalance, currency, transactionId } = req.body as Record<
+      string,
+      unknown
+    >;
     if (!accountId || delta == null || currentBalance == null) {
       res.status(400).json({ error: "accountId, delta, and currentBalance are required" });
       return;
@@ -1183,6 +1361,7 @@ git commit -m "feat(e2e-funds): add AccountLeaderboard slice with Kafka and HTTP
 ## Task 8: RiskAssessment Slice
 
 **Files:**
+
 - Create: `apps/e2e/funds/src/BusinessCapabilities/Funds/slices/RiskAssessment/command.ts`
 - Create: `apps/e2e/funds/src/BusinessCapabilities/Funds/slices/RiskAssessment/commandHandler.ts`
 - Create: `apps/e2e/funds/src/BusinessCapabilities/Funds/slices/RiskAssessment/commandHandler.test.ts`
@@ -1193,6 +1372,7 @@ git commit -m "feat(e2e-funds): add AccountLeaderboard slice with Kafka and HTTP
 - [ ] **Step 1: Write failing test**
 
 Create `commandHandler.test.ts`:
+
 ```typescript
 import { test, describe } from "node:test";
 import * as assert from "node:assert";
@@ -1302,7 +1482,10 @@ interface AccountRiskDoc {
   assessedAt: Date;
 }
 
-export function computeRiskLevel(transactions: Array<{ delta: number }>, currentBalance: number): RiskLevel {
+export function computeRiskLevel(
+  transactions: Array<{ delta: number }>,
+  currentBalance: number,
+): RiskLevel {
   if (transactions.length < 10) return "none";
   const avgDelta = transactions.reduce((sum, t) => sum + t.delta, 0) / transactions.length;
   if (avgDelta >= 0) return "low";
@@ -1312,7 +1495,10 @@ export function computeRiskLevel(transactions: Array<{ delta: number }>, current
   return "high";
 }
 
-export async function handleUpdateRisk(cmd: UpdateAccountRisk, collection: Collection<AccountRiskDoc>): Promise<void> {
+export async function handleUpdateRisk(
+  cmd: UpdateAccountRisk,
+  collection: Collection<AccountRiskDoc>,
+): Promise<void> {
   const existing = await collection.findOne({ accountId: cmd.accountId });
   const prev: TxEntry[] = existing?.transactions ?? [];
 
@@ -1363,6 +1549,7 @@ export function createRiskAdapter(collection: Collection<AccountRiskDoc>): RiskA
 ```
 
 Also export `AccountRiskDoc` from `commandHandler.ts` by adding `export` to the interface:
+
 ```typescript
 export interface AccountRiskDoc {
   accountId: string;
@@ -1421,7 +1608,10 @@ import type { RiskAssessmentAdapter } from "../adapter.js";
 
 export function createRiskHttpHandler(adapter: RiskAssessmentAdapter) {
   return async (req: Request, res: Response) => {
-    const { accountId, delta, currentBalance, currency, transactionId } = req.body as Record<string, unknown>;
+    const { accountId, delta, currentBalance, currency, transactionId } = req.body as Record<
+      string,
+      unknown
+    >;
     if (!accountId || delta == null || currentBalance == null) {
       res.status(400).json({ error: "accountId, delta, and currentBalance are required" });
       return;
@@ -1456,6 +1646,7 @@ git commit -m "feat(e2e-funds): add RiskAssessment slice with MongoDB rolling wi
 ## Task 9: Main Server (`server.ts`)
 
 **Files:**
+
 - Create: `apps/e2e/funds/src/server.ts`
 
 This server owns: REST endpoints for deposit/withdraw, pg-boss leaderboard worker, outbox trigger installation, leaderboard HTTP endpoint, and a GET leaderboard endpoint. It does **not** need Kafka.
@@ -1473,12 +1664,16 @@ import EvDbPrismaStorageAdapter from "@eventualize/relational-storage-adapter/Ev
 import { createDepositHttpHandler } from "#BusinessCapabilities/Funds/slices/DepositFunds/http/index.js";
 import { createWithdrawHttpHandler } from "#BusinessCapabilities/Funds/slices/WithdrawFunds/http/index.js";
 import { createLeaderboardAdapter } from "#BusinessCapabilities/Funds/slices/AccountLeaderboard/adapter.js";
-import { registerLeaderboardWorker, LEADERBOARD_QUEUE } from "#BusinessCapabilities/Funds/slices/AccountLeaderboard/pgboss/index.js";
+import {
+  registerLeaderboardWorker,
+  LEADERBOARD_QUEUE,
+} from "#BusinessCapabilities/Funds/slices/AccountLeaderboard/pgboss/index.js";
 import { createLeaderboardHttpHandler } from "#BusinessCapabilities/Funds/slices/AccountLeaderboard/http/index.js";
 
 const config = {
-  postgresConnection: process.env.POSTGRES_CONNECTION ?? "postgres://funds:funds123@localhost:5434/funds",
-  port: Number(process.env.PORT ?? 3010),
+  postgresConnection:
+    process.env.POSTGRES_CONNECTION ?? "postgres://funds:funds123@localhost:5434/funds",
+  port: Number(process.env.PORT ?? 3014),
 };
 
 // Installs the outbox → pg-boss trigger. Must be called AFTER boss.start()
@@ -1558,7 +1753,10 @@ async function main() {
   });
 
   const server = createServer(app);
-  await new Promise<void>((resolve, reject) => { server.once("error", reject); server.listen(config.port, resolve); });
+  await new Promise<void>((resolve, reject) => {
+    server.once("error", reject);
+    server.listen(config.port, resolve);
+  });
   console.log(`[Startup] funds server running at http://localhost:${config.port}`);
   console.log(`[Startup] POST /api/funds/deposit | POST /api/funds/withdraw`);
   console.log(`[Startup] GET  /api/funds/leaderboard`);
@@ -1567,7 +1765,9 @@ async function main() {
     console.log(`[Shutdown] ${signal} received`);
     await Promise.allSettled([
       boss.stop(),
-      new Promise<void>((resolve, reject) => { server.close((err) => err ? reject(err) : resolve()); }),
+      new Promise<void>((resolve, reject) => {
+        server.close((err) => (err ? reject(err) : resolve()));
+      }),
       pool.end(),
     ]);
     process.exit(0);
@@ -1577,7 +1777,10 @@ async function main() {
   process.on("SIGINT", () => void shutdown("SIGINT"));
 }
 
-main().catch((err) => { console.error("[Startup] failed:", err); process.exit(1); });
+main().catch((err) => {
+  console.error("[Startup] failed:", err);
+  process.exit(1);
+});
 ```
 
 - [ ] **Step 2: Commit**
@@ -1592,6 +1795,7 @@ git commit -m "feat(e2e-funds): add main server with deposit/withdraw + pg-boss 
 ## Task 10: Risk Server (`risk-server.ts`)
 
 **Files:**
+
 - Create: `apps/e2e/funds/src/risk-server.ts`
 
 - [ ] **Step 1: Create `src/risk-server.ts`**
@@ -1611,7 +1815,7 @@ const config = {
   mongoUri: process.env.MONGO_URI ?? "mongodb://localhost:27017",
   mongoDb: process.env.MONGO_DB ?? "funds_risk",
   kafkaBootstrap: process.env.KAFKA_BOOTSTRAP ?? "localhost:9092",
-  port: Number(process.env.PORT ?? 3011),
+  port: Number(process.env.PORT ?? 3013),
 };
 
 async function main() {
@@ -1634,7 +1838,10 @@ async function main() {
   app.get("/api/risk/:accountId", async (req, res) => {
     try {
       const doc = await collection.findOne({ accountId: req.params.accountId });
-      if (!doc) { res.status(404).json({ error: "Account not found" }); return; }
+      if (!doc) {
+        res.status(404).json({ error: "Account not found" });
+        return;
+      }
       res.json({
         accountId: doc.accountId,
         riskLevel: doc.riskLevel,
@@ -1648,14 +1855,19 @@ async function main() {
   });
 
   const server = createServer(app);
-  await new Promise<void>((resolve, reject) => { server.once("error", reject); server.listen(config.port, resolve); });
+  await new Promise<void>((resolve, reject) => {
+    server.once("error", reject);
+    server.listen(config.port, resolve);
+  });
   console.log(`[Startup] risk server running at http://localhost:${config.port}`);
   console.log(`[Startup] GET  /api/risk/:accountId`);
 
   const shutdown = async (signal: string) => {
     console.log(`[Shutdown] ${signal} received`);
     await riskConsumer.stop();
-    await new Promise<void>((resolve, reject) => { server.close((err) => err ? reject(err) : resolve()); });
+    await new Promise<void>((resolve, reject) => {
+      server.close((err) => (err ? reject(err) : resolve()));
+    });
     await mongoClient.close();
     process.exit(0);
   };
@@ -1664,7 +1876,10 @@ async function main() {
   process.on("SIGINT", () => void shutdown("SIGINT"));
 }
 
-main().catch((err) => { console.error("[Startup] failed:", err); process.exit(1); });
+main().catch((err) => {
+  console.error("[Startup] failed:", err);
+  process.exit(1);
+});
 ```
 
 - [ ] **Step 2: Commit**
@@ -1679,6 +1894,7 @@ git commit -m "feat(e2e-funds): add risk server with MongoDB consumer and risk e
 ## Task 11: Infrastructure
 
 **Files:**
+
 - Create: `apps/e2e/funds/infrastructure/init.sql`
 - Create: `apps/e2e/funds/infrastructure/debezium-connector.json`
 - Create: `apps/e2e/funds/docker-compose.yml`
@@ -1832,7 +2048,7 @@ volumes:
 
 Add to `apps/e2e/funds/README.md` (create it):
 
-```markdown
+````markdown
 # E2E Funds Demo
 
 ## Start infrastructure
@@ -1841,6 +2057,7 @@ Add to `apps/e2e/funds/README.md` (create it):
 cd apps/e2e/funds
 docker compose up -d
 ```
+````
 
 ## Register Debezium connector (after stack is healthy)
 
@@ -1865,7 +2082,7 @@ npm run start:risk -w e2e-funds
 ## Test deposit
 
 ```bash
-curl -X POST http://localhost:3010/api/funds/deposit \
+curl -X POST http://localhost:3014/api/funds/deposit \
   -H "Content-Type: application/json" \
   -d '{"accountId":"alice","amount":500,"currency":"USD"}'
 ```
@@ -1873,28 +2090,30 @@ curl -X POST http://localhost:3010/api/funds/deposit \
 ## Check leaderboard
 
 ```bash
-curl http://localhost:3010/api/funds/leaderboard
+curl http://localhost:3014/api/funds/leaderboard
 ```
 
 ## Check risk
 
 ```bash
-curl http://localhost:3011/api/risk/alice
+curl http://localhost:3013/api/risk/alice
 ```
-```
+
+````
 
 - [ ] **Step 5: Commit**
 
 ```bash
 git add apps/e2e/funds/infrastructure/ apps/e2e/funds/docker-compose.yml apps/e2e/funds/README.md
 git commit -m "feat(e2e-funds): add Docker Compose stack and Debezium connector config"
-```
+````
 
 ---
 
 ## Task 12: OpenTelemetry Instrumentation
 
 **Files:**
+
 - Create: `apps/e2e/funds/src/otel.ts`
 - Modify: `apps/e2e/funds/src/server.ts` — import otel before other imports
 - Modify: `apps/e2e/funds/src/risk-server.ts` — import otel before other imports
@@ -1918,10 +2137,17 @@ const sdk = new NodeSDK({
 });
 
 sdk.start();
-console.log("[OTEL] SDK started — traces → " + (process.env.OTEL_EXPORTER_OTLP_ENDPOINT ?? "http://localhost:4318"));
+console.log(
+  "[OTEL] SDK started — traces → " +
+    (process.env.OTEL_EXPORTER_OTLP_ENDPOINT ?? "http://localhost:4318"),
+);
 
-process.on("SIGTERM", () => { sdk.shutdown().catch(console.error); });
-process.on("SIGINT", () => { sdk.shutdown().catch(console.error); });
+process.on("SIGTERM", () => {
+  sdk.shutdown().catch(console.error);
+});
+process.on("SIGINT", () => {
+  sdk.shutdown().catch(console.error);
+});
 ```
 
 - [ ] **Step 2: Add span wrapping to `kafkaConsumerUtils.ts`**
@@ -1968,6 +2194,7 @@ eachMessage: async ({ topic, partition, message, heartbeat }) => {
 - [ ] **Step 3: Import OTEL at the top of `server.ts` and `risk-server.ts`**
 
 Add as the **very first line** in both files (before any other import):
+
 ```typescript
 import "./otel.js";
 ```

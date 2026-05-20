@@ -32,12 +32,12 @@
   "type": "module",
   "dependencies": {
     "@eventualize/relational-storage-adapter": "^6.0.0",
-    "@prisma/adapter-pg": "^7.1.0"
+    "@prisma/adapter-pg": "~7.3.0"
   },
   "devDependencies": {
     "@prisma/client": "^7.1.0",
     "dotenv": "^17.2.3",
-    "prisma": "^6.19.2"
+    "prisma": "^7.3.0"
   },
   "files": [
     "dist"

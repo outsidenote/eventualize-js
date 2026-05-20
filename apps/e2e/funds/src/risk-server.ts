@@ -14,7 +14,7 @@ const config = {
   mongoUri: process.env.MONGO_URI ?? "mongodb://localhost:27017",
   mongoDb: process.env.MONGO_DB ?? "funds_risk",
   kafkaBootstrap: process.env.KAFKA_BOOTSTRAP ?? "localhost:9092",
-  port: Number(process.env.PORT ?? 3011),
+  port: Number(process.env.PORT ?? 3013),
 };
 
 async function main() {

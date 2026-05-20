@@ -11,7 +11,8 @@
   "scripts": {
     "build": "tsc --build",
     "clean": "rimraf dist tsconfig.tsbuildinfo",
-    "start": "node --import tsx src/server.ts",
+    "start": "node --import tsx src/index.ts",
+    "start:main": "node --import tsx src/server.ts",
     "start:risk": "node --import tsx src/risk-server.ts",
     "test:unit": "node --import tsx --test 'src/**/*.test.ts'"
   },
@@ -22,9 +23,9 @@
     "@eventualize/types": "^6.0.0",
     "@opentelemetry/api": "^1.9.0",
     "@opentelemetry/auto-instrumentations-node": "^0.76.0",
-    "@opentelemetry/exporter-trace-otlp-http": "^0.57.0",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.218.0",
     "@opentelemetry/sdk-node": "^0.218.0",
-    "@prisma/adapter-pg": "^7.1.0",
+    "@prisma/adapter-pg": "~7.3.0",
     "express": "^4.21.0",
     "kafkajs": "^2.2.4",
     "mongodb": "^6.0.0",
