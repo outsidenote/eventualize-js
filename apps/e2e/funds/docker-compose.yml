@@ -2,7 +2,7 @@ version: "3.9"
 
 services:
   postgres:
-    image: postgres:16
+    image: postgres:17
     environment:
       POSTGRES_USER: funds
       POSTGRES_PASSWORD: funds123
@@ -24,16 +24,16 @@ services:
       retries: 10
 
   kafka:
-    image: confluentinc/cp-kafka:7.6.0
+    image: confluentinc/cp-kafka:7.8.0
     environment:
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker,controller
-      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_INTERNAL://0.0.0.0:29092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://kafka:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT_INTERNAL
       CLUSTER_ID: "funds-cluster-01"
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
@@ -48,14 +48,14 @@ services:
       retries: 10
 
   debezium:
-    image: debezium/connect:2.7
+    image: quay.io/debezium/connect:3.1
     depends_on:
       postgres:
         condition: service_healthy
       kafka:
         condition: service_healthy
     environment:
-      BOOTSTRAP_SERVERS: kafka:9092
+      BOOTSTRAP_SERVERS: kafka:29092
       GROUP_ID: 1
       CONFIG_STORAGE_TOPIC: debezium_configs
       OFFSET_STORAGE_TOPIC: debezium_offsets
@@ -69,7 +69,7 @@ services:
       retries: 15
 
   mongodb:
-    image: mongo:7
+    image: mongo:8
     environment:
       MONGO_INITDB_DATABASE: funds_risk
     ports:
@@ -78,6 +78,21 @@ services:
       - mongo_data:/data/db
     healthcheck:
       test: ["CMD", "mongosh", "--eval", "db.runCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  aspire-dashboard:
+    image: mcr.microsoft.com/dotnet/aspire-dashboard:9.2
+    environment:
+      DASHBOARD__FRONTEND__AUTHMODE: Unsecured
+      DASHBOARD__OTLP__AUTHMODE: Unsecured
+    ports:
+      - "18888:18888"   # Dashboard UI
+      - "18889:18889"   # OTLP gRPC
+      - "18890:18890"   # OTLP HTTP
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:18888/health"]
       interval: 10s
       timeout: 5s
       retries: 5

@@ -1,4 +1,4 @@
-import type PgBoss from "pg-boss";
+import type { PgBoss } from "pg-boss";
 import type { AccountLeaderboardAdapter } from "../adapter.js";
 
 export const LEADERBOARD_QUEUE = "event.FundsChanged.UpdateAccountLeaderboard";
@@ -20,7 +20,7 @@ export async function registerLeaderboardWorker(
 ): Promise<void> {
   await boss.createQueue(LEADERBOARD_QUEUE);
 
-  await boss.work(LEADERBOARD_QUEUE, async ([job]) => {
+  await boss.work<JobData>(LEADERBOARD_QUEUE, async ([job]) => {
     const { payload } = job.data as JobData;
     await adapter({
       commandType: "UpdateAccountLeaderboard",

@@ -2,7 +2,7 @@ import "./otel.js";
 
 import express from "express";
 import pg from "pg";
-import PgBoss from "pg-boss";
+import { PgBoss } from "pg-boss";
 import { createServer } from "node:http";
 import EvDbPostgresPrismaClientFactory from "@eventualize/postgres-storage-adapter/EvDbPostgresPrismaClientFactory";
 import EvDbPrismaStorageAdapter from "@eventualize/relational-storage-adapter/EvDbPrismaStorageAdapter";

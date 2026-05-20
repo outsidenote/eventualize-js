@@ -19,7 +19,7 @@ export function startRiskKafkaConsumer(
     groupId: "risk.FundsChanged",
     topics: ["events.FundsChanged"],
     onMessage: async (_topic, payload, _meta) => {
-      const p = payload as FundsChangedPayload;
+      const p = payload as unknown as FundsChangedPayload;
       await adapter({
         commandType: "UpdateAccountRisk",
         accountId: p.accountId,
