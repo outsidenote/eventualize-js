@@ -9,7 +9,8 @@
     "packages/*",
     "packages/adapters/*",
     "apps/*",
-    "apps/e2e/*"
+    "apps/e2e/*",
+    "apps/e2e/funds/*"
   ],
   "scripts": {
     "test": "TEST_CONTAINER=true DOTENV_CONFIG_PATH=.env.test dotenv -e .env.test -- node --import tsx --test packages/**/src/**/*.test.ts apps/**/src/**/*.test.ts",
