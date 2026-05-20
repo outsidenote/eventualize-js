@@ -9,6 +9,9 @@ import { createRiskAdapter } from "#BusinessCapabilities/Funds/slices/RiskAssess
 import { startRiskKafkaConsumer } from "#BusinessCapabilities/Funds/slices/RiskAssessment/kafka/index.js";
 import { createRiskHttpHandler } from "#BusinessCapabilities/Funds/slices/RiskAssessment/http/index.js";
 import type { AccountRiskDoc } from "#BusinessCapabilities/Funds/slices/RiskAssessment/commandHandler.js";
+import { composeOpenApi, composeAsyncApi } from "#abstractions/catalog/composeSpecs.js";
+import { riskAssessmentOpenApi } from "#BusinessCapabilities/Funds/slices/RiskAssessment/openapi.js";
+import { riskAssessmentAsyncApi } from "#BusinessCapabilities/Funds/slices/RiskAssessment/asyncapi.js";
 
 const config = {
   mongoUri: process.env.MONGO_URI ?? "mongodb://localhost:27017",
@@ -31,6 +34,24 @@ async function main() {
   app.use(express.json());
 
   app.get("/health", (_req, res) => res.json({ status: "ok", service: "funds-risk" }));
+
+  app.get("/openapi.json", (_req, res) => {
+    res.json(composeOpenApi({
+      title: "funds-risk",
+      version: "1.0.0",
+      description: "REST endpoints for the funds risk-assessment server.",
+      paths: [riskAssessmentOpenApi],
+    }));
+  });
+
+  app.get("/asyncapi.json", (_req, res) => {
+    res.json(composeAsyncApi({
+      title: "funds-risk async",
+      version: "1.0.0",
+      description: "Async channels owned by funds-risk: kafka 'receive' for funds.outbox subscription.",
+      fragments: [riskAssessmentAsyncApi],
+    }));
+  });
 
   app.post("/api/risk/update", createRiskHttpHandler(riskAdapter));
 
