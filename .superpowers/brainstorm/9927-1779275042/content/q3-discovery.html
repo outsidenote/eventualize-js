@@ -1,0 +1,63 @@
+<h2>How does the catalog discover its content?</h2>
+<p class="subtitle">The catalog server needs to know about REST endpoints, commands, events, and Kafka/pg-boss channels. How should it get that information?</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Static manifest file (catalog.yaml / catalog.ts)</h3>
+      <p>Each e2e app ships a hand-written or code-generated manifest that lists all HTTP routes, commands, events, and async channels with their schemas. The catalog server just reads this file at startup.</p>
+      <div class="mockup" style="margin-top:8px">
+        <div class="mockup-header">funds/catalog.ts</div>
+        <div class="mockup-body" style="font-size:11px">
+          <pre style="background:#1e1e2e;color:#cdd6f4;padding:8px;border-radius:4px">export default {
+  http: [
+    { method: "POST", path: "/api/funds/deposit",
+      command: "DepositFunds", schema: DepositFundsSchema },
+  ],
+  async: [
+    { channel: "kafka:funds.outbox",
+      message: "FundsChanged", direction: "publish" },
+  ]
+}</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Runtime self-registration via catalog SDK</h3>
+      <p>Each server calls a <code>catalog.register()</code> function when it starts up. The catalog server aggregates registrations over HTTP. Servers declare themselves — catalog doesn't need to know about them ahead of time.</p>
+      <div class="mockup" style="margin-top:8px">
+        <div class="mockup-header">server.ts — startup</div>
+        <div class="mockup-body" style="font-size:11px">
+          <pre style="background:#1e1e2e;color:#cdd6f4;padding:8px;border-radius:4px">await catalog.register({
+  service: "funds-main",
+  baseUrl: "http://localhost:3014",
+  routes: [...],
+  asyncChannels: [...],
+})</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Crawl OpenAPI + static async spec</h3>
+      <p>Each server exposes a <code>GET /openapi.json</code> endpoint (auto-generated from routes). The catalog server crawls all known services at startup to fetch their specs. Async channels are declared in a separate static AsyncAPI YAML.</p>
+      <div class="mockup" style="margin-top:8px">
+        <div class="mockup-header">Catalog startup flow</div>
+        <div class="mockup-body" style="font-size:11px;color:#cdd6f4">
+          1. Fetch <strong>localhost:3014/openapi.json</strong> → REST spec<br/>
+          2. Fetch <strong>localhost:3013/openapi.json</strong> → REST spec<br/>
+          3. Load <strong>asyncapi.yaml</strong> → async channels<br/>
+          4. Merge → render UI
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

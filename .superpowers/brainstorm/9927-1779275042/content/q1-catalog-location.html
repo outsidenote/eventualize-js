@@ -1,0 +1,40 @@
+<h2>Where should the service catalog live?</h2>
+<p class="subtitle">The funds e2e app currently runs two servers (main :3014, risk :3013). Where should the catalog UI be hosted?</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Dedicated catalog server (e.g. :3099)</h3>
+      <p>A 3rd server process in each e2e app, serving only the catalog UI. Reads routes/events from other servers at startup. Clean separation — catalog doesn't pollute business servers.</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul><li>Zero coupling to business code</li><li>Can restart independently</li><li>Works even if main/risk servers are down</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Another process to manage</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Mounted on one existing server (e.g. GET /catalog)</h3>
+      <p>The main server (or a new "gateway" server) serves the catalog UI at a sub-path. Routes from both servers are aggregated and served from one place.</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul><li>Single URL to remember</li><li>No extra process</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Catalog tied to one server lifecycle</li><li>Mixed concerns in server.ts</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Shared package — each e2e app wires it in</h3>
+      <p>A reusable <code>@eventualize/dev-catalog</code> package that any e2e app can install and mount. Each app registers its own routes/events, the package serves the UI. Designed to scale across multiple e2e apps.</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul><li>Reusable across all future e2e apps</li><li>Consistent DX everywhere</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>More upfront work</li><li>Package versioning overhead</li></ul></div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -244,7 +244,7 @@ export type OutboxGroupByOutputType = {
   _max: OutboxMaxAggregateOutputType | null
 }
 
-type GetOutboxGroupByPayload<T extends outboxGroupByArgs> = Prisma.PrismaPromise<
+export type GetOutboxGroupByPayload<T extends outboxGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<OutboxGroupByOutputType, T['by']> &
       {
@@ -1230,6 +1230,11 @@ export type outboxFindManyArgs<ExtArgs extends runtime.Types.Extensions.Internal
    * Skip the first `n` outboxes.
    */
   skip?: number
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+   * 
+   * Filter by unique combinations of outboxes.
+   */
   distinct?: Prisma.OutboxScalarFieldEnum | Prisma.OutboxScalarFieldEnum[]
 }
 
