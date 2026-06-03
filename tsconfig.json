@@ -78,5 +78,8 @@
     {
       "path": "./apps/e2e/funds"
     },
+    {
+      "path": "./apps/otel-sample-app"
+    },
   ]
 }

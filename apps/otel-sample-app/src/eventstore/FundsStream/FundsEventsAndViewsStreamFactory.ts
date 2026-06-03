@@ -1,0 +1,40 @@
+// Funds stream factory with balance and count views
+import { StreamFactoryBuilder } from "@eventualize/core/factories/StreamFactoryBuilder";
+import type { FundsCaptured } from "./FundsEvents/FundsCaptured.js";
+import type { FundsDenied } from "./FundsEvents/FundsDenied.js";
+import type { FundsDeposited } from "./FundsEvents/FundsDeposited.js";
+import type { FundsRefunded } from "./FundsEvents/FundsRefunded.js";
+import type { FundsWithdrawal } from "./FundsEvents/FundsWithdrawal.js";
+import EvDbMessage from "@eventualize/types/messages/EvDbMessage";
+
+const FundsEventsAndViewsStreamFactory = new StreamFactoryBuilder("funds-stream")
+  .withEvent("FundsCaptured").asType<FundsCaptured>()
+  .withEvent("FundsDenied").asType<FundsDenied>()
+  .withEvent("FundsDeposited").asType<FundsDeposited>()
+  .withEvent("FundsRefunded").asType<FundsRefunded>()
+  .withEvent("FundsWithdrawal").asType<FundsWithdrawal>()
+  .withView("balance", 0, {
+    FundsDeposited: (state, event) => state + event.amount,
+    FundsRefunded: (state, event) => state - event.amount,
+    FundsCaptured: (state, event) => state - event.amount,
+    FundsWithdrawal: (state, event) => state - event.amount,
+  })
+  .withView("count", new Map<string, number>(), {
+    FundsDeposited: (state) => state.set("deposited", (state.get("deposited") ?? 0) + 1),
+    FundsRefunded: (state) => state.set("refunded", (state.get("refunded") ?? 0) + 1),
+    FundsCaptured: (state) => state.set("captured", (state.get("captured") ?? 0) + 1),
+    FundsWithdrawal: (state) => state.set("withdrawal", (state.get("withdrawal") ?? 0) + 1),
+  })
+  .withMessages("FundsCaptured", (payload, views, metadata) => [
+    EvDbMessage.createFromMetadata(metadata,
+      "Funds Captured with Balance Notification",
+      {
+        amountCaptured: payload.amount,
+        balanceAfterCapture: views.balance,
+      }),
+  ])
+  .build();
+
+export default FundsEventsAndViewsStreamFactory;
+
+export type FundsEventsAndViewsStreamType = typeof FundsEventsAndViewsStreamFactory.StreamType;

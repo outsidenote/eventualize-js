@@ -89,10 +89,26 @@ services:
       DASHBOARD__OTLP__AUTHMODE: Unsecured
     ports:
       - "18888:18888"   # Dashboard UI
-      - "18889:18889"   # OTLP gRPC
-      - "18890:18890"   # OTLP HTTP
+      - "18889:18889"   # OTLP gRPC (direct, kept for debugging)
+      - "18890:18890"   # OTLP HTTP (direct, kept for debugging)
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:18888/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.123.0
+    depends_on:
+      aspire-dashboard:
+        condition: service_started
+    volumes:
+      - ./infrastructure/otel-collector-config.yaml:/etc/otelcol-contrib/config.yaml
+    ports:
+      - "4317:4317"   # OTLP gRPC receiver
+      - "4318:4318"   # OTLP HTTP receiver
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:13133/"]
       interval: 10s
       timeout: 5s
       retries: 5

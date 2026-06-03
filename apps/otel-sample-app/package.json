@@ -1,0 +1,34 @@
+{
+  "name": "otel-sample-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "OTEL instrumentation sample: appends FundsStream events to Postgres and exports traces to Aspire Dashboard via OTel Collector",
+  "type": "module",
+  "scripts": {
+    "build": "tsc --build",
+    "clean": "rimraf dist tsconfig.tsbuildinfo",
+    "start": "node --env-file=.env --import tsx src/index.ts"
+  },
+  "dependencies": {
+    "@eventualize/core": "^6.0.0",
+    "@eventualize/postgres-storage-adapter": "^6.0.0",
+    "@eventualize/relational-storage-adapter": "^6.0.0",
+    "@eventualize/types": "^6.0.0",
+    "@opentelemetry/api": "^1.9.0",
+    "@opentelemetry/api-logs": "^0.218.0",
+    "@opentelemetry/auto-instrumentations-node": "^0.76.0",
+    "@opentelemetry/exporter-logs-otlp-proto": "^0.218.0",
+    "@opentelemetry/exporter-metrics-otlp-proto": "^0.218.0",
+    "@opentelemetry/exporter-trace-otlp-proto": "^0.218.0",
+    "@opentelemetry/sdk-logs": "^0.218.0",
+    "@opentelemetry/sdk-node": "^0.218.0",
+    "pg": "^8.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/pg": "^8.18.0",
+    "rimraf": "^6.1.3",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.2"
+  }
+}
