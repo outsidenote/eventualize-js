@@ -25,7 +25,7 @@
   "scripts": {
     "build": "tsc --build",
     "clean": "rimraf dist",
-    "rebuild": "npm run clean && npm run build",
+    "rebuild": "pnpm run clean && pnpm run build",
     "test": "echo not tests implemented yet."
   },
   "license": "ISC",
@@ -37,7 +37,7 @@
     "dist"
   ],
   "dependencies": {
-    "@eventualize/types": "^6.0.0",
+    "@eventualize/types": "workspace:*",
     "@aws-sdk/client-dynamodb": "^3.948.0",
     "@aws-sdk/util-dynamodb": "^3.948.0"
   }
