@@ -8,7 +8,7 @@
   "scripts": {
     "build": "tsc --build",
     "clean": "rimraf dist",
-    "rebuild": "npm run clean && npm run build",
+    "rebuild": "pnpm run clean && pnpm run build",
     "test": "node --import tsx --test 'src/tests/**/*.test.ts'",
     "test:integration": "TEST_CONTAINER=true TEST_DATABASES=MySQL,Postgres,DynamoDB node --import tsx --test 'src/tests/integration.test.ts'",
     "test:integration:bare": "TEST_DATABASES=MySQL,Postgres,DynamoDB node --import tsx --test 'src/tests/integration.test.ts'",
@@ -21,16 +21,18 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
-    "@eventualize/core": "^6.0.0",
-    "@eventualize/dynamodb-storage-adapter": "^6.0.0",
-    "@eventualize/mysql-storage-adapter": "^6.0.0",
-    "@eventualize/postgres-storage-adapter": "^6.0.0",
-    "@eventualize/relational-storage-adapter": "^6.0.0",
-    "@eventualize/types": "^6.0.0",
+    "@eventualize/core": "workspace:*",
+    "@eventualize/dynamodb-storage-adapter": "workspace:*",
+    "@eventualize/mysql-storage-adapter": "workspace:*",
+    "@eventualize/postgres-storage-adapter": "workspace:*",
+    "@eventualize/relational-storage-adapter": "workspace:*",
+    "@eventualize/types": "workspace:*",
     "@prisma/adapter-pg": "^7.1.0",
     "dotenv": "^17.2.3"
   },
   "devDependencies": {
+    "@aws-sdk/client-dynamodb": "^3.948.0",
+    "@prisma/client": "^7.1.0",
     "@testcontainers/localstack": "^11.11.0",
     "@testcontainers/mysql": "^11.11.0",
     "@testcontainers/postgresql": "^11.11.0",

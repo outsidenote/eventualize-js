@@ -1,0 +1,19 @@
+packages:
+  - "packages/*"
+  - "packages/adapters/*"
+  - "apps/*"
+
+onlyBuiltDependencies:
+  - "@prisma/engines"
+  - prisma
+  - esbuild
+
+# The Prisma client code checked into this repo was generated with Prisma 7.3.0.
+# Newer 7.x runtimes can't read that generated code and crash at startup
+# ("Cannot read properties of undefined (reading 'graph')").
+# So we force these packages to stay on 7.3.0 until the client is regenerated
+# with a newer Prisma version — then this block can be removed.
+overrides:
+  "@prisma/client": "7.3.0"
+  "@prisma/adapter-pg": "7.3.0"
+  "@prisma/adapter-mariadb": "7.3.0"

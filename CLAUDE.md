@@ -26,24 +26,13 @@ pnpm exec eslint . 2>&1 | grep -c " error "  # must not exceed baseline
 - A build fix must never increase the lint error count
 - If either count increases vs baseline, revert the change and re-approach
 
-## Warning: Symlink Fragility
+## Package Manager: pnpm only
 
-The `@eventualize/*` symlinks in package-level and app-level `node_modules/` must point to
-local workspace packages (e.g. `packages/types`), **not** the pnpm cache
-(`node_modules/.pnpm/@eventualize+types@4.x.x/...`).
+This repo is a pnpm workspace (see `pnpm-workspace.yaml`). Always use `pnpm` —
+never `npm install` or `yarn` (a preinstall guard blocks them).
 
-Running `pnpm install` will reset these. If the build breaks with type errors about
-`separate declarations of a private property`, run:
-
-```bash
-BASE=$(pwd)
-ln -sfn "$BASE/packages/types" "$BASE/apps/sample-app/node_modules/@eventualize/types"
-ln -sfn "$BASE/packages/core" "$BASE/apps/sample-app/node_modules/@eventualize/core"
-ln -sfn "$BASE/packages/adapters/relational-storage-adapter" "$BASE/apps/sample-app/node_modules/@eventualize/relational-storage-adapter"
-ln -sfn "$BASE/packages/adapters/dynamodb-storage-adapter" "$BASE/apps/sample-app/node_modules/@eventualize/dynamodb-storage-adapter"
-ln -sfn "$BASE/packages/adapters/mysql-storage-adapter" "$BASE/apps/sample-app/node_modules/@eventualize/mysql-storage-adapter"
-ln -sfn "$BASE/packages/adapters/postgres-storage-adapter" "$BASE/apps/sample-app/node_modules/@eventualize/postgres-storage-adapter"
-ln -sfn "$BASE/packages/types" "$BASE/packages/core/node_modules/@eventualize/types"
-ln -sfn "$BASE/packages/types" "$BASE/packages/adapters/relational-storage-adapter/node_modules/@eventualize/types"
-ln -sfn "$BASE/packages/types" "$BASE/packages/adapters/dynamodb-storage-adapter/node_modules/@eventualize/types"
-```
+- Install dependencies: `pnpm install`
+- Internal `@eventualize/*` dependencies use `workspace:*`, so they always
+  link to the local `packages/` folders automatically.
+- Prisma packages are pinned in `pnpm-workspace.yaml` (see the comment there)
+  because the checked-in generated Prisma client only works with that version.

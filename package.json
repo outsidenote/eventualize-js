@@ -5,11 +5,7 @@
   "type": "module",
   "main": "src/index.ts",
   "private": true,
-  "workspaces": [
-    "packages/*",
-    "packages/adapters/*",
-    "apps/*"
-  ],
+  "packageManager": "pnpm@10.11.0",
   "scripts": {
     "test": "TEST_CONTAINER=true DOTENV_CONFIG_PATH=.env.test dotenv -e .env.test -- node --import tsx --test packages/**/src/**/*.test.ts apps/**/src/**/*.test.ts",
     "test:mysql": "TEST_CONTAINER=true TEST_DATABASES=MySQL dotenv -e .env.test -- node --import tsx --test packages/**/src/**/*.test.ts apps/**/src/tests/*integration.test.ts",
@@ -26,21 +22,23 @@
     "lint:fix": "eslint --fix packages/ apps/ && prettier --write \"packages/**/*.ts\" \"apps/**/*.ts\"",
     "build": "tsc --build",
     "clean": "rimraf tsconfig.tsbuildinfo",
-    "clear": " npm run clean && npm run clean --workspaces --if-present",
+    "clear": "pnpm run clean && pnpm -r run clean",
     "cleanbuild": "tsc --build --clean && tsc --build",
-    "rebuild": "npm run clear && npm run cleanbuild",
+    "rebuild": "pnpm run clear && pnpm run cleanbuild",
     "changeset": "changeset",
     "version": "changeset version",
-    "release": "npm run build && changeset publish"
+    "release": "pnpm run build && changeset publish",
+    "preinstall": "npx only-allow pnpm"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@aws-sdk/client-dynamodb": "^3.948.0",
     "@changesets/cli": "^2.29.8",
     "@eslint/js": "^10.0.1",
     "@eventualize/eslint-plugin": "workspace:*",
     "@types/node": "^24.10.1",
-    "dotenv-cli": "^11.0.0",
+    "dotenv-cli": "^11.0.0", 
     "eslint": "^10.0.0",
     "eslint-config-prettier": "^10.1.8",
     "prettier": "^2.8.8",
