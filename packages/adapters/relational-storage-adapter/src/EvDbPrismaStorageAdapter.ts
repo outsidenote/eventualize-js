@@ -33,7 +33,8 @@ const deserializePayload = (payload: unknown): IEvDbPayloadData => {
  * Replaces SQL Server-specific adapter with database-agnostic Prisma implementation
  */
 export class EvDbPrismaStorageAdapter
-  implements IEvDbStorageSnapshotAdapter, IEvDbStorageStreamAdapter {
+  implements IEvDbStorageSnapshotAdapter, IEvDbStorageStreamAdapter
+{
   private readonly queryProvider: PrismaQueryProvider;
   protected readonly databaseType: string = "prisma";
 
@@ -102,7 +103,12 @@ export class EvDbPrismaStorageAdapter
   ): Promise<StreamStoreAffected> {
     return getTracer().startActiveSpan(
       "eventualize.adapter.store",
-      { attributes: { "eventualize.adapter.kind": "relational", "eventualize.event.count": events.length } },
+      {
+        attributes: {
+          "eventualize.adapter.kind": "relational",
+          "eventualize.event.count": events.length,
+        },
+      },
       async (span) => {
         try {
           const result = await this._storeStreamAsync(events, messages);
@@ -132,6 +138,8 @@ export class EvDbPrismaStorageAdapter
           stream_id: streamCursor.streamId,
           offset: streamCursor.offset,
           event_type: event.eventType,
+          traceparent: event.traceparent,
+          tracestate: event.tracestate,
           captured_by: event.capturedBy,
           captured_at: event.capturedAt,
           payload: event.payload as unknown as Prisma.InputJsonValue,
@@ -148,6 +156,8 @@ export class EvDbPrismaStorageAdapter
           event_type: message.eventType,
           channel: message.channel,
           message_type: message.messageType,
+          traceparent: message.traceparent,
+          tracestate: message.tracestate,
           captured_by: message.capturedBy,
           captured_at: message.capturedAt,
           stored_at: message.storedAt,
@@ -226,6 +236,8 @@ export class EvDbPrismaStorageAdapter
             event.captured_at,
             event.captured_by,
             event.stored_at,
+            event.traceparent ?? undefined,
+            event.tracestate ?? undefined,
           );
           currentOffset = Math.max(currentOffset, Number(event.offset));
         }

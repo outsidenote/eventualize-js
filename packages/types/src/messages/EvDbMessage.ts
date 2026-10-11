@@ -1,6 +1,7 @@
 import type IEvDbEventMetadata from "../events/IEvDbEventMetadata.js";
 import type EvDbStreamCursor from "../stream/EvDbStreamCursor.js";
 import type { IEvDbPayloadData } from "../events/IEvDbPayloadData.js";
+import { context, propagation } from "@opentelemetry/api";
 
 export default class EvDbMessage {
   public static readonly Empty: EvDbMessage = EvDbMessage.create(
@@ -24,7 +25,13 @@ export default class EvDbMessage {
     public readonly storedAt?: Date,
     public readonly traceparent?: string,
     public readonly tracestate?: string,
-  ) { }
+  ) {}
+
+  private static captureTraceparent(): { traceparent?: string; tracestate?: string } {
+    const carrier: Record<string, string> = {};
+    propagation.inject(context.active(), carrier);
+    return { traceparent: carrier["traceparent"], tracestate: carrier["tracestate"] };
+  }
 
   public static create(
     streamCursor: EvDbStreamCursor,
@@ -40,6 +47,13 @@ export default class EvDbMessage {
     traceparent?: string,
     tracestate?: string,
   ): EvDbMessage {
+    // Capture trace context if not provided
+    if (traceparent === undefined || tracestate === undefined) {
+      const { traceparent: capturedTP, tracestate: capturedTS } = this.captureTraceparent();
+      traceparent = traceparent ?? capturedTP;
+      tracestate = tracestate ?? capturedTS;
+    }
+
     return new EvDbMessage(
       messageId,
       eventType,
@@ -58,6 +72,13 @@ export default class EvDbMessage {
   }
 
   public withTraceparent(traceparent?: string, tracestate?: string): EvDbMessage {
+    // Capture current trace context if not provided
+    if (traceparent === undefined || tracestate === undefined) {
+      const { traceparent: capturedTP, tracestate: capturedTS } = EvDbMessage.captureTraceparent();
+      traceparent = traceparent ?? capturedTP;
+      tracestate = tracestate ?? capturedTS;
+    }
+
     return new EvDbMessage(
       this.id,
       this.eventType,
@@ -86,6 +107,13 @@ export default class EvDbMessage {
     traceparent?: string,
     tracestate?: string,
   ): EvDbMessage {
+    // Capture trace context if not provided
+    if (traceparent === undefined || tracestate === undefined) {
+      const { traceparent: capturedTP, tracestate: capturedTS } = this.captureTraceparent();
+      traceparent = traceparent ?? capturedTP;
+      tracestate = tracestate ?? capturedTS;
+    }
+
     return new EvDbMessage(
       messageId,
       metadata.eventType,

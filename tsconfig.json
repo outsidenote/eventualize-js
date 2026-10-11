@@ -50,6 +50,8 @@
       ],
     }
   },
+  // Solution-style root: only builds the referenced projects below.
+  "files": [],
   "references": [
     {
       "path": "./packages/types"

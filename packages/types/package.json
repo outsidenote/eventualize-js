@@ -30,7 +30,16 @@
   },
   "license": "ISC",
   "type": "module",
+  "peerDependencies": {
+    "@opentelemetry/api": "^1.7.0"
+  },
+  "peerDependenciesMeta": {
+    "@opentelemetry/api": {
+      "optional": true
+    }
+  },
   "devDependencies": {
+    "@opentelemetry/api": "^1.9.1",
     "@prisma/client": "^7.1.0",
     "dotenv": "^17.2.3",
     "prisma": "^6.12.0"

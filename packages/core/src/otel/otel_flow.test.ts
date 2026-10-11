@@ -4,11 +4,12 @@ import { NodeTracerProvider } from "@opentelemetry/sdk-trace-node";
 import { InMemorySpanExporter, SimpleSpanProcessor } from "@opentelemetry/sdk-trace-base";
 import { SpanStatusCode, context, propagation, trace } from "@opentelemetry/api";
 
-import EvDbEvent from "@eventualize/types/events/EvDbEvent.js";
-import EvDbStreamCursor from "@eventualize/types/stream/EvDbStreamCursor.js";
-import EvDbMessage from "@eventualize/types/messages/EvDbMessage.js";
-import type IEvDbStorageStreamAdapter from "@eventualize/types/adapters/IEvDbStorageStreamAdapter.js";
-import type StreamStoreAffected from "@eventualize/types/stream/StreamStoreAffected.js";
+import EvDbEvent from "@eventualize/types/events/EvDbEvent";
+import EvDbStreamCursor from "@eventualize/types/stream/EvDbStreamCursor";
+import EvDbMessage from "@eventualize/types/messages/EvDbMessage";
+import StreamStoreAffected from "@eventualize/types/stream/StreamStoreAffected";
+
+import type IEvDbStorageStreamAdapter from "@eventualize/types/adapters/IEvDbStorageStreamAdapter";
 
 // Custom storage adapter that captures events and messages for inspection
 class RecordingStorageAdapter implements IEvDbStorageStreamAdapter {
@@ -21,7 +22,7 @@ class RecordingStorageAdapter implements IEvDbStorageStreamAdapter {
   ): Promise<StreamStoreAffected> {
     this.recordedEvents = [...events];
     this.recordedMessages = [...messages];
-    return { numEvents: events.length, numMessagesByType: new Map() };
+    return new StreamStoreAffected(events.length, undefined);
   }
 
   close(): Promise<void> {
@@ -37,7 +38,12 @@ class RecordingStorageAdapter implements IEvDbStorageStreamAdapter {
   getFromOutbox(_filter: any, _options?: any): Promise<AsyncIterable<EvDbMessage>> {
     throw new Error("Method not implemented.");
   }
-  getFromOutboxAsync(_shard: any, _filter: any, _options?: any, _cancellation?: any): AsyncIterable<EvDbMessage> {
+  getFromOutboxAsync(
+    _shard: any,
+    _filter: any,
+    _options?: any,
+    _cancellation?: any,
+  ): AsyncIterable<EvDbMessage> {
     throw new Error("Method not implemented.");
   }
   getRecordsFromOutboxAsync(
@@ -92,7 +98,10 @@ describe("otel_flow_test", () => {
       assert.ok(event.traceparent, "Event should have traceparent");
 
       // Verify the traceparent is in valid W3C format
-      assert.ok(event.traceparent.match(/^00-[0-9a-f]{32}-[0-9a-f]{16}-01$/), "traceparent should be valid W3C format");
+      assert.ok(
+        event.traceparent.match(/^00-[0-9a-f]{32}-[0-9a-f]{16}-01$/),
+        "traceparent should be valid W3C format",
+      );
 
       // Similarly for message inside same span
       const message = context.with(trace.setSpan(context.active(), parentSpan), () => {
@@ -101,7 +110,10 @@ describe("otel_flow_test", () => {
       });
 
       assert.ok(message.traceparent, "Message should have traceparent");
-      assert.ok(message.traceparent.match(/^00-[0-9a-f]{32}-[0-9a-f]{16}-01$/), "traceparent should be valid W3C format");
+      assert.ok(
+        message.traceparent.match(/^00-[0-9a-f]{32}-[0-9a-f]{16}-01$/),
+        "traceparent should be valid W3C format",
+      );
     } finally {
       parentSpan.setStatus({ code: SpanStatusCode.OK });
       parentSpan.end();
@@ -135,12 +147,11 @@ describe("otel_flow_test", () => {
         "test",
       );
 
-      const message = EvDbMessage.create(
-        cursor,
-        "FundsDeposited",
-        "funds-deposited-notice",
-        { accountId: "acc-1", amount: 100, currency: "USD" },
-      );
+      const message = EvDbMessage.create(cursor, "FundsDeposited", "funds-deposited-notice", {
+        accountId: "acc-1",
+        amount: 100,
+        currency: "USD",
+      });
 
       // Store via adapter
       storageAdapter.storeStreamAsync([event], [message]);
@@ -233,7 +244,7 @@ describe("otel_flow_test", () => {
     });
 
     // Create event with explicit trace context from carrier within the span
-    let event: EvDbEvent;
+    let event: EvDbEvent | undefined;
     context.with(trace.setSpan(context.active(), span), () => {
       const cursor = new EvDbStreamCursor("funds-stream", "acc-1", 1);
       event = new EvDbEvent(
@@ -248,17 +259,23 @@ describe("otel_flow_test", () => {
       );
     });
 
+    assert.ok(event, "Event should be defined");
     assert.strictEqual(event.traceparent, carrierTP);
     if (carrierTS !== undefined) {
       assert.strictEqual(event.tracestate, carrierTS);
     }
 
     // Message created from event metadata should capture context
-    let message: EvDbMessage;
+    let message: EvDbMessage | undefined;
     context.with(trace.setSpan(context.active(), span), () => {
-      message = EvDbMessage.createFromMetadata(event, "funds-deposited-notice", { accountId: "acc-1", amount: 50, currency: "USD" });
+      message = EvDbMessage.createFromMetadata(event!, "funds-deposited-notice", {
+        accountId: "acc-1",
+        amount: 50,
+        currency: "USD",
+      });
     });
 
+    assert.ok(message, "Message should be defined");
     assert.strictEqual(message.traceparent, carrierTP);
     if (carrierTS !== undefined) {
       assert.strictEqual(message.tracestate, carrierTS);

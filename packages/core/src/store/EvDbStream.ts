@@ -10,7 +10,6 @@ import type { IEvDbPayloadData } from "@eventualize/types/events/IEvDbPayloadDat
 import StreamStoreAffected from "@eventualize/types/stream/StreamStoreAffected";
 import type IEvDbEventMetadata from "@eventualize/types/events/IEvDbEventMetadata";
 import EvDbStreamCursor from "@eventualize/types/stream/EvDbStreamCursor";
-import OCCException from "@eventualize/types/primitives/OCCException";
 import type { EvDbStreamType } from "@eventualize/types/primitives/EvDbStreamType";
 import type EVDbMessagesProducer from "@eventualize/types/messages/EvDbMessagesProducer";
 import type { EvDbView } from "../view/EvDbView.js";
@@ -167,7 +166,17 @@ export default class EvDbStream implements IEvDbStreamStore, IEvDbStreamStoreDat
 
     try {
       const cursor = this.getNextCursor(this._pendingEvents);
-      const e = new EvDbEvent(eventType, cursor, payload, new Date(), capturedBy);
+      const { traceparent, tracestate } = this.captureTraceparent();
+      const e = new EvDbEvent(
+        eventType,
+        cursor,
+        payload,
+        new Date(),
+        capturedBy,
+        undefined,
+        traceparent,
+        tracestate,
+      );
       this._pendingEvents = [...this._pendingEvents, e];
 
       // Apply to views
@@ -181,7 +190,6 @@ export default class EvDbStream implements IEvDbStreamStore, IEvDbStreamStoreDat
           return [k, (v as EvDbView<unknown>).state];
         }),
       );
-      const { traceparent, tracestate } = this.captureTraceparent();
       const producedMessages = this.messagesProducer(e, viewsStates).map((m) =>
         traceparent ? m.withTraceparent(traceparent, tracestate) : m,
       );
@@ -238,34 +246,30 @@ export default class EvDbStream implements IEvDbStreamStore, IEvDbStreamStoreDat
    *          outbox messages were written.
    */
   public async store(): Promise<StreamStoreAffected> {
-    return withSpan(
-      getCoreTracer(),
-      "eventualize.stream.store",
-      async (span) => {
-        span.setAttribute("eventualize.stream.id", this.streamAddress.streamId);
-        span.setAttribute("eventualize.stream.type", this.streamAddress.streamType);
-        span.setAttribute("eventualize.event.count", this._pendingEvents.length);
+    return withSpan(getCoreTracer(), "eventualize.stream.store", async (span) => {
+      span.setAttribute("eventualize.stream.id", this.streamAddress.streamId);
+      span.setAttribute("eventualize.stream.type", this.streamAddress.streamType);
+      span.setAttribute("eventualize.event.count", this._pendingEvents.length);
 
-        if (this._pendingEvents.length === 0) {
-          return StreamStoreAffected.Empty;
-        }
+      if (this._pendingEvents.length === 0) {
+        return StreamStoreAffected.Empty;
+      }
 
-        const affected = await this._storageAdapter.storeStreamAsync(
-          this._pendingEvents,
-          this._pendingMessages,
-        );
+      const affected = await this._storageAdapter.storeStreamAsync(
+        this._pendingEvents,
+        this._pendingMessages,
+      );
 
-        const lastEvent = this._pendingEvents[this._pendingEvents.length - 1];
-        this.storedOffset = lastEvent.streamCursor.offset;
-        this._pendingEvents = [];
-        this._pendingMessages = [];
+      const lastEvent = this._pendingEvents[this._pendingEvents.length - 1];
+      this.storedOffset = lastEvent.streamCursor.offset;
+      this._pendingEvents = [];
+      this._pendingMessages = [];
 
-        const viewSaveTasks = Object.values(this._views).map((v) => v.store());
-        await Promise.all(viewSaveTasks);
+      const viewSaveTasks = Object.values(this._views).map((v) => v.store());
+      await Promise.all(viewSaveTasks);
 
-        return affected;
-      },
-    );
+      return affected;
+    });
   }
 
   /**

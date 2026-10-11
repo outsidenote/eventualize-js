@@ -112,7 +112,12 @@ export default class EvDbDynamoDbStorageAdapter
   ): Promise<StreamStoreAffected> {
     return getTracer().startActiveSpan(
       "eventualize.adapter.store",
-      { attributes: { "eventualize.adapter.kind": "dynamodb", "eventualize.event.count": events.length } },
+      {
+        attributes: {
+          "eventualize.adapter.kind": "dynamodb",
+          "eventualize.event.count": events.length,
+        },
+      },
       async (span) => {
         try {
           const eventsToInsert: EventRecord[] = events.map((event) =>
@@ -126,6 +131,8 @@ export default class EvDbDynamoDbStorageAdapter
               channel: message.channel,
               message_type: message.messageType,
               event_type: message.eventType,
+              traceparent: message.traceparent,
+              tracestate: message.tracestate,
               captured_by: message.capturedBy,
               captured_at: message.capturedAt,
               payload: message.payload as IEvDbPayloadData,

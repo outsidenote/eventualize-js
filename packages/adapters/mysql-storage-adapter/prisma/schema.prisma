@@ -13,7 +13,8 @@ model events {
   stream_id         String   @db.VarChar(150)
   offset            BigInt
   event_type        String   @db.VarChar(150)
-  telemetry_context Json?
+  traceparent       String?  @db.VarChar(255)
+  tracestate        String?  @db.VarChar(255)
   captured_by       String   @db.VarChar(150)
   captured_at       DateTime @db.DateTime(6)
   stored_at         DateTime @default(now()) @db.DateTime(6)
@@ -33,7 +34,8 @@ model outbox {
   channel           String   @db.VarChar(150)
   message_type      String   @db.VarChar(150)
   serialize_type    String   @db.VarChar(150)
-  telemetry_context Bytes?   @db.Blob
+  traceparent       String?  @db.VarChar(255)
+  tracestate        String?  @db.VarChar(255)
   captured_by       String   @db.VarChar(150)
   captured_at       DateTime @db.DateTime(6)
   stored_at         DateTime @default(now()) @db.DateTime(6)

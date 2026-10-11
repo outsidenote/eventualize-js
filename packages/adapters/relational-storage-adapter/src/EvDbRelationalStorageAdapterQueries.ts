@@ -43,6 +43,8 @@ export class PrismaQueryProvider {
         captured_by: true,
         payload: true,
         stored_at: true,
+        traceparent: true,
+        tracestate: true,
       },
       take: pageSize,
     });

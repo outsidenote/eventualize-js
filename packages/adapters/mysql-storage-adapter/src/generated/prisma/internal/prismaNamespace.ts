@@ -649,7 +649,8 @@ export const EventsScalarFieldEnum = {
   stream_id: 'stream_id',
   offset: 'offset',
   event_type: 'event_type',
-  telemetry_context: 'telemetry_context',
+  traceparent: 'traceparent',
+  tracestate: 'tracestate',
   captured_by: 'captured_by',
   captured_at: 'captured_at',
   stored_at: 'stored_at',
@@ -668,7 +669,8 @@ export const OutboxScalarFieldEnum = {
   channel: 'channel',
   message_type: 'message_type',
   serialize_type: 'serialize_type',
-  telemetry_context: 'telemetry_context',
+  traceparent: 'traceparent',
+  tracestate: 'tracestate',
   captured_by: 'captured_by',
   captured_at: 'captured_at',
   stored_at: 'stored_at',
@@ -697,14 +699,6 @@ export const SortOrder = {
 } as const
 
 export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
-
-
-export const NullableJsonNullValueInput = {
-  DbNull: DbNull,
-  JsonNull: JsonNull
-} as const
-
-export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
 
 
 export const JsonNullValueInput = {
@@ -744,6 +738,8 @@ export const eventsOrderByRelevanceFieldEnum = {
   stream_type: 'stream_type',
   stream_id: 'stream_id',
   event_type: 'event_type',
+  traceparent: 'traceparent',
+  tracestate: 'tracestate',
   captured_by: 'captured_by'
 } as const
 
@@ -758,6 +754,8 @@ export const outboxOrderByRelevanceFieldEnum = {
   channel: 'channel',
   message_type: 'message_type',
   serialize_type: 'serialize_type',
+  traceparent: 'traceparent',
+  tracestate: 'tracestate',
   captured_by: 'captured_by'
 } as const
 
@@ -795,6 +793,13 @@ export type BigIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 
 
 
 /**
+ * Reference to a field of type 'DateTime'
+ */
+export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime'>
+    
+
+
+/**
  * Reference to a field of type 'Json'
  */
 export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
@@ -805,20 +810,6 @@ export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'J
  * Reference to a field of type 'QueryMode'
  */
 export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'QueryMode'>
-    
-
-
-/**
- * Reference to a field of type 'DateTime'
- */
-export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime'>
-    
-
-
-/**
- * Reference to a field of type 'Bytes'
- */
-export type BytesFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Bytes'>
     
 
 

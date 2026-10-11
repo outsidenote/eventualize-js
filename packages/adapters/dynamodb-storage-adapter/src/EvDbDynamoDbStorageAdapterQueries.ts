@@ -21,7 +21,7 @@ export class EventRecord {
     public readonly captured_at: Date,
     public readonly payload: IEvDbPayloadData,
     public readonly stored_at?: Date,
-  ) { }
+  ) {}
 
   public static createFromEvent(e: EvDbEvent): EventRecord {
     return new EventRecord(
@@ -53,6 +53,8 @@ export type MessageRecord = {
   channel: string;
   message_type: string;
   event_type: string;
+  traceparent?: string;
+  tracestate?: string;
   captured_by: string;
   captured_at: Date;
   payload: IEvDbPayloadData;
@@ -108,26 +110,37 @@ export default class EvDbDynamoDbStorageAdapterQueries {
   }
 
   public static saveMessages(messages: MessageRecord[]): TransactWriteItem[] {
-    const TransactItems = messages.map((m) => ({
-      Put: {
-        TableName: "messages",
-        Item: {
-          message_address: { S: serializeMessageAddress(m) },
-          stream_address: { S: serializeStreamAddress(m.stream_cursor) },
-          offset: { N: m.stream_cursor.offset.toString() },
-          event_type: { S: m.event_type },
-          captured_by: { S: m.captured_by },
-          captured_at: { S: `${m.captured_at.getTime().toString()}::${crypto.randomUUID()}` },
-          payload: {
-            M: marshall(m.payload, {
-              convertClassInstanceToMap: true,
-              removeUndefinedValues: true,
-            }),
-          },
-          stored_at: { S: Date.now().toString() },
+    const TransactItems = messages.map((m) => {
+      const item: Record<string, AttributeValue> = {
+        message_address: { S: serializeMessageAddress(m) },
+        stream_address: { S: serializeStreamAddress(m.stream_cursor) },
+        offset: { N: m.stream_cursor.offset.toString() },
+        event_type: { S: m.event_type },
+        captured_by: { S: m.captured_by },
+        captured_at: { S: `${m.captured_at.getTime().toString()}::${crypto.randomUUID()}` },
+        payload: {
+          M: marshall(m.payload, {
+            convertClassInstanceToMap: true,
+            removeUndefinedValues: true,
+          }),
         },
-      },
-    }));
+        stored_at: { S: Date.now().toString() },
+      };
+
+      if (m.traceparent !== undefined) {
+        item.traceparent = { S: m.traceparent };
+      }
+      if (m.tracestate !== undefined) {
+        item.tracestate = { S: m.tracestate };
+      }
+
+      return {
+        Put: {
+          TableName: "messages",
+          Item: item,
+        },
+      };
+    });
 
     return TransactItems;
   }
@@ -203,10 +216,13 @@ export default class EvDbDynamoDbStorageAdapterQueries {
         view_address: { S: serializeViewAddress(viewAddress) },
         offset: { N: snapshot.offset.toString() },
         state: {
-          M: marshall({ __state: snapshot.state }, {
-            convertClassInstanceToMap: true,
-            removeUndefinedValues: true,
-          }),
+          M: marshall(
+            { __state: snapshot.state },
+            {
+              convertClassInstanceToMap: true,
+              removeUndefinedValues: true,
+            },
+          ),
         },
         stored_at: { S: Date.now().toString() },
       },

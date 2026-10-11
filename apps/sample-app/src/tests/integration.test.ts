@@ -6,6 +6,10 @@ import { TestManager } from "./TestContainerManager/TestManager.js";
 import PointsStreamFactory from "../eventstore/PointsStream/PointsStreamFactory.js";
 import type { PointsStreamType } from "../eventstore/PointsStream/PointsStreamFactory.js";
 import type { IEvDbStorageAdapter } from "@eventualize/core/adapters/IEvDbStorageAdapter";
+import EvDbStreamCursor from "@eventualize/types/stream/EvDbStreamCursor";
+import type EvDbEvent from "@eventualize/types/events/EvDbEvent";
+import { context, propagation, trace } from "@opentelemetry/api";
+import { NodeTracerProvider } from "@opentelemetry/sdk-trace-node";
 
 type StoreClientType = ReturnType<typeof Steps.createStoreClient>;
 
@@ -23,14 +27,19 @@ interface IntegrationTestData {
 // Start containers before all tests
 describe("Database Integration Tests", () => {
   const testManager: TestManager = new TestManager();
+  // Registers the W3C propagator and an async context manager, so events
+  // capture the active span's trace context.
+  const tracerProvider = new NodeTracerProvider();
 
   before(async () => {
+    tracerProvider.register();
     await testManager.start();
   });
 
   // Stop containers after all tests
   after(async () => {
     await testManager.stop();
+    await tracerProvider.shutdown();
   });
 
   test("start integration tests", async () => {
@@ -58,7 +67,10 @@ describe("Database Integration Tests", () => {
 
         await t.test("Given: local stream with events", () => {
           testData.streamId = "pointsStream1";
-          testData.pointsStream = Steps.createPointsStream(testData.streamId, testData.storageAdapter!);
+          testData.pointsStream = Steps.createPointsStream(
+            testData.streamId,
+            testData.storageAdapter!,
+          );
           Steps.addPointsEventsToStream(testData.pointsStream);
           Steps.assertStreamStateIsCorrect(testData.pointsStream);
         });
@@ -106,6 +118,37 @@ describe("Database Integration Tests", () => {
           ]);
           assert.strictEqual(results.filter((r) => r.status === "fulfilled").length, 1);
           assert.strictEqual(results.filter((r) => r.status === "rejected").length, 1);
+        });
+
+        await t.test("AND: trace context is stored and fetched with events", async (t) => {
+          if (storeType === EVENT_STORE_TYPE.DYNAMODB) {
+            t.skip("DynamoDB adapter does not persist event trace context");
+            return;
+          }
+          const streamId = "pointsStreamTraced";
+          const span = trace.getTracer("integration-test").startSpan("store-traced-stream");
+          const spanContext = trace.setSpan(context.active(), span);
+          const carrier: Record<string, string> = {};
+          propagation.inject(spanContext, carrier);
+          const expectedTraceparent = carrier["traceparent"];
+          assert.ok(expectedTraceparent, "active span should produce a traceparent");
+
+          const stream = Steps.createPointsStream(streamId, testData.storageAdapter!);
+          await context.with(spanContext, async () => {
+            Steps.addPointsEventsToStream(stream);
+            await stream.store();
+          });
+          span.end();
+
+          const fetched: EvDbEvent[] = [];
+          const cursor = new EvDbStreamCursor("PointsStream", streamId, 0);
+          for await (const event of testData.storageAdapter!.getEventsAsync(cursor)) {
+            fetched.push(event);
+          }
+          assert.strictEqual(fetched.length, 11);
+          for (const event of fetched) {
+            assert.strictEqual(event.traceparent, expectedTraceparent);
+          }
         });
 
         t.after(async () => {

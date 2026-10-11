@@ -22,9 +22,7 @@ beforeEach(() => {
 
 describe("eventualizeInstrumentation", () => {
   test("returns all tracer names and resource attributes", async () => {
-    const { eventualizeInstrumentation, EVDB_TRACER_NAMES } = await import(
-      "./tracers.ts"
-    );
+    const { eventualizeInstrumentation, EVDB_TRACER_NAMES } = await import("./tracers.js");
     const info = eventualizeInstrumentation();
     assert.ok(Array.isArray(info.tracerNames));
     assert.deepStrictEqual(
@@ -38,8 +36,8 @@ describe("eventualizeInstrumentation", () => {
 
 describe("withSpan", () => {
   test("sets OK status on success", async () => {
-    const { withSpan } = await import("./withSpan.ts");
-    const { getCoreTracer } = await import("./tracers.ts");
+    const { withSpan } = await import("./withSpan.js");
+    const { getCoreTracer } = await import("./tracers.js");
     const tracer = getCoreTracer();
 
     await withSpan(tracer, "test.ok", async () => "result");
@@ -51,8 +49,8 @@ describe("withSpan", () => {
   });
 
   test("sets ERROR status and records exception on throw", async () => {
-    const { withSpan } = await import("./withSpan.ts");
-    const { getCoreTracer } = await import("./tracers.ts");
+    const { withSpan } = await import("./withSpan.js");
+    const { getCoreTracer } = await import("./tracers.js");
     const tracer = getCoreTracer();
 
     const err = new Error("oops");
@@ -69,8 +67,8 @@ describe("withSpan", () => {
   });
 
   test("always calls span.end()", async () => {
-    const { withSpan } = await import("./withSpan.ts");
-    const { getCoreTracer } = await import("./tracers.ts");
+    const { withSpan } = await import("./withSpan.js");
+    const { getCoreTracer } = await import("./tracers.js");
     const tracer = getCoreTracer();
 
     await withSpan(tracer, "test.end", async () => "done");
@@ -81,8 +79,8 @@ describe("withSpan", () => {
   });
 
   test("passes attributes to span", async () => {
-    const { withSpan } = await import("./withSpan.ts");
-    const { getCoreTracer } = await import("./tracers.ts");
+    const { withSpan } = await import("./withSpan.js");
+    const { getCoreTracer } = await import("./tracers.js");
     const tracer = getCoreTracer();
 
     await withSpan(tracer, "test.attrs", async () => {}, { "custom.key": "value" });
@@ -94,8 +92,8 @@ describe("withSpan", () => {
 
 describe("startScopedSpan", () => {
   test("calls span.end() when scope exits via Symbol.dispose", async () => {
-    const { startScopedSpan } = await import("./startScopedSpan.ts");
-    const { getCoreTracer } = await import("./tracers.ts");
+    const { startScopedSpan } = await import("./startScopedSpan.js");
+    const { getCoreTracer } = await import("./tracers.js");
     const tracer = getCoreTracer();
 
     {
@@ -111,8 +109,8 @@ describe("startScopedSpan", () => {
   });
 
   test("span attributes set before dispose are visible in finished span", async () => {
-    const { startScopedSpan } = await import("./startScopedSpan.ts");
-    const { getCoreTracer } = await import("./tracers.ts");
+    const { startScopedSpan } = await import("./startScopedSpan.js");
+    const { getCoreTracer } = await import("./tracers.js");
     const tracer = getCoreTracer();
 
     {
