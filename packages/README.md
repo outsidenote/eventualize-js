@@ -16,17 +16,17 @@ A TypeScript event-sourcing library with multiple storage adapters.
 ## Prerequisites
 
 - Node.js (with native test runner support)
-- npm
+- pnpm (this repo is a pnpm workspace — npm and yarn are blocked)
 - Docker (for integration tests)
 
 ## Getting Started
 
 ```bash
 # Install dependencies
-npm install
+pnpm install
 
 # Build all packages
-npm run build
+pnpm run build
 ```
 
 ## Running Tests
@@ -34,7 +34,7 @@ npm run build
 ### Unit Tests
 
 ```bash
-npm run test:unit
+pnpm run test:unit
 ```
 
 ### Integration Tests
@@ -50,16 +50,10 @@ Start the local databases, run tests, then stop:
 docker compose up -d
 
 # Run all integration tests
-npm run test:integration
+pnpm run test:integration
 
 # Stop databases when done
-npm run stop-local-dbs
-```
-
-Or use the combined command:
-
-```bash
-npm run test:integration:local
+pnpm run stop-local-dbs
 ```
 
 #### Option 2: Per-database Tests
@@ -67,9 +61,9 @@ npm run test:integration:local
 Run integration tests against a specific database:
 
 ```bash
-npm run test:mysql
-npm run test:postgres
-npm run test:dynamodb
+pnpm run test:mysql
+pnpm run test:postgres
+pnpm run test:dynamodb
 ```
 
 ### All Tests
@@ -77,7 +71,7 @@ npm run test:dynamodb
 Run both unit and integration tests:
 
 ```bash
-npm test
+pnpm test
 ```
 
 ## Environment Configuration
@@ -95,10 +89,10 @@ Default connection strings for local Docker services:
 ## Build Commands
 
 ```bash
-npm run build          # Build all packages
-npm run clean          # Remove root build info
-npm run clear          # Clean all workspaces
-npm run rebuild        # Full clean + rebuild
+pnpm run build          # Build all packages
+pnpm run clean          # Remove root build info
+pnpm run clear          # Clean all workspaces
+pnpm run rebuild        # Full clean + rebuild
 ```
 
 ## License

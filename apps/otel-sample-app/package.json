@@ -10,10 +10,10 @@
     "start": "node --env-file=.env --import tsx src/index.ts"
   },
   "dependencies": {
-    "@eventualize/core": "^6.0.0",
-    "@eventualize/postgres-storage-adapter": "^6.0.0",
-    "@eventualize/relational-storage-adapter": "^6.0.0",
-    "@eventualize/types": "^6.0.0",
+    "@eventualize/core": "workspace:*",
+    "@eventualize/postgres-storage-adapter": "workspace:*",
+    "@eventualize/relational-storage-adapter": "workspace:*",
+    "@eventualize/types": "workspace:*",
     "@opentelemetry/api": "^1.9.0",
     "@opentelemetry/api-logs": "^0.218.0",
     "@opentelemetry/auto-instrumentations-node": "^0.76.0",

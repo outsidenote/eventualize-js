@@ -202,7 +202,7 @@ export type SnapshotGroupByOutputType = {
   _max: SnapshotMaxAggregateOutputType | null
 }
 
-export type GetSnapshotGroupByPayload<T extends snapshotGroupByArgs> = Prisma.PrismaPromise<
+type GetSnapshotGroupByPayload<T extends snapshotGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<SnapshotGroupByOutputType, T['by']> &
       {
@@ -1056,11 +1056,6 @@ export type snapshotFindManyArgs<ExtArgs extends runtime.Types.Extensions.Intern
    * Skip the first `n` snapshots.
    */
   skip?: number
-  /**
-   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
-   * 
-   * Filter by unique combinations of snapshots.
-   */
   distinct?: Prisma.SnapshotScalarFieldEnum | Prisma.SnapshotScalarFieldEnum[]
 }
 
