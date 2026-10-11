@@ -1,0 +1,18 @@
+packages:
+  - "packages/*"
+  - "packages/adapters/*"
+  - "apps/*"
+  - "apps/e2e/*"
+  - "apps/e2e/funds/*"
+allowBuilds:
+  '@prisma/engines': set this to true or false
+  '@scarf/scarf': set this to true or false
+  '@tree-sitter-grammars/tree-sitter-yaml': set this to true or false
+  core-js-pure: set this to true or false
+  cpu-features: set this to true or false
+  esbuild: set this to true or false
+  prisma: set this to true or false
+  protobufjs: set this to true or false
+  ssh2: set this to true or false
+  tree-sitter: set this to true or false
+  tree-sitter-json: set this to true or false

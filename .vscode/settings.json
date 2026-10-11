@@ -1,26 +1,30 @@
 {
     "npm.scriptExplorerAction": "run",
-    "testExplorer.onStart": "expand",
-    "testExplorer.showInlineError": true,
     "debug.console.closeOnEnd": false,
-    // Node.js Test Runner (connor4312.nodejs-testing) configuration
-    "nodeTesting.rootDir": ".",
-    "nodeTesting.nodeArgs": [
-        "--import",
-        "tsx"
+    // Node.js Test Runner (connor4312.nodejs-testing).
+    // Run the TypeScript sources through tsx, the same way `pnpm test` does.
+    // Compiled `.js` tests (dist/ and stale outputs in src/) are not test files:
+    // running them executes old build output and duplicates the tree.
+    "nodejs-testing.include": [
+        "./packages",
+        "./apps"
     ],
-    "nodeTesting.testFilePattern": "**/*.test.ts",
-    // Legacy configurations for compatibility
-    "nodeTestRunner.nodeArgs": [
-        "--import",
-        "tsx"
+    "nodejs-testing.exclude": [
+        "**/node_modules/**",
+        "**/dist/**"
     ],
-    "nodeTestRunner.testFilePatterns": [
-        "apps/**/src/**/*.test.ts",
-        "packages/**/src/**/*.test.ts"
+    "nodejs-testing.extensions": [
+        {
+            "extensions": ["ts", "mts", "cts"],
+            "filePatterns": ["**/*.test.ts", "**/*.test.mts", "**/*.test.cts"],
+            "parameters": ["--import", "tsx"]
+        }
     ],
-    "nodeTestRunner.envFile": ".env.test",
+    "nodejs-testing.envFile": "${workspaceFolder}/.env.test",
+    "nodejs-testing.env": {
+        "TEST_CONTAINER": "true"
+    },
     "[typescript]": {
       "editor.defaultFormatter": "vscode.typescript-language-features"
     }
-}  
+}
