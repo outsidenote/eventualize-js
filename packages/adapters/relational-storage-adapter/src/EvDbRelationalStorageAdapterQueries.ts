@@ -46,6 +46,7 @@ export class PrismaQueryProvider {
         traceparent: true,
         tracestate: true,
       },
+      orderBy: { offset: "asc" },
       take: pageSize,
     });
   }
@@ -101,12 +102,13 @@ export class PrismaQueryProvider {
   /**
    * Get snapshot using Prisma
    */
-  async getSnapshot(streamType: string, streamId: string, viewName: string) {
+  async getSnapshot(streamType: string, streamId: string, viewName: string, maxOffset?: number) {
     return this.prisma.snapshot.findFirst({
       where: {
         stream_type: streamType,
         stream_id: streamId,
         view_name: viewName,
+        ...(maxOffset === undefined ? {} : { offset: { lte: maxOffset } }),
       },
       select: {
         state: true,

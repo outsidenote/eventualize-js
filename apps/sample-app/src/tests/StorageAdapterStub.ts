@@ -84,7 +84,7 @@ export default class StorageAdapterStub
   }
   getSnapshotAsync(
     _viewAddress: EvDbViewAddress,
-    _signal?: AbortSignal,
+    _maxOffset?: number,
   ): Promise<EvDbStoredSnapshotResultRaw> {
     throw new Error("Method not implemented.");
   }

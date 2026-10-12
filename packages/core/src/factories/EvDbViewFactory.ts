@@ -5,6 +5,7 @@ import type IEvDbStorageSnapshotAdapter from "@eventualize/types/adapters/IEvDbS
 import EvDbViewAddress from "@eventualize/types/view/EvDbViewAddress";
 import EvDbStreamAddress from "@eventualize/types/stream/EvDbStreamAddress";
 import { EvDbStoredSnapshotResult } from "@eventualize/types/snapshots/EvDbStoredSnapshotResult";
+import { EvDbStoredSnapshotResultRaw } from "@eventualize/types/snapshots/EvDbStoredSnapshotResultRaw";
 import type { ViewConfig } from "./EvDbViewFactoryTypes.js";
 
 /**
@@ -24,7 +25,11 @@ class GenericView<TState, TEventMap extends Record<string, object>> extends EvDb
   /**
    * Dynamically applies events based on the handlers map
    */
-  public handleOnApply(oldState: TState, event: IEvDbPayloadData, metadata: IEvDbEventMetadata): TState {
+  public handleOnApply(
+    oldState: TState,
+    event: IEvDbPayloadData,
+    metadata: IEvDbEventMetadata,
+  ): TState {
     const eventType = metadata.eventType as keyof typeof this.config.handlers;
     const handler = this.config.handlers[eventType];
 
@@ -32,7 +37,11 @@ class GenericView<TState, TEventMap extends Record<string, object>> extends EvDb
       return oldState;
     }
 
-    return (handler as (s: TState, e: IEvDbPayloadData, m: IEvDbEventMetadata) => TState)(oldState, event, metadata);
+    return (handler as (s: TState, e: IEvDbPayloadData, m: IEvDbEventMetadata) => TState)(
+      oldState,
+      event,
+      metadata,
+    );
   }
 }
 
@@ -40,7 +49,7 @@ class GenericView<TState, TEventMap extends Record<string, object>> extends EvDb
  * View Factory - creates view instances with the handlers map
  */
 export class ViewFactory<TState, TEventMap extends Record<string, object>> {
-  constructor(private readonly config: ViewConfig<TState, TEventMap>) { }
+  constructor(private readonly config: ViewConfig<TState, TEventMap>) {}
 
   /**
    * Creates a view instance
@@ -58,16 +67,24 @@ export class ViewFactory<TState, TEventMap extends Record<string, object>> {
   }
 
   /**
-   * Get a view instance from event store
+   * Get a view instance from event store.
+   * @param maxOffset - Optional: load the latest snapshot at or before this offset.
+   *   A snapshot newer than `maxOffset` (from an adapter that ignores the bound)
+   *   is discarded, so the view starts from its default state.
    */
   public async get(
     streamId: string,
     storageAdapter: IEvDbStorageSnapshotAdapter,
+    maxOffset?: number,
   ): Promise<EvDbView<TState>> {
     const streamAddress = new EvDbStreamAddress(this.config.streamType, streamId);
     const viewAddress = new EvDbViewAddress(streamAddress, this.config.viewName);
 
-    const snapshot = await storageAdapter.getSnapshotAsync(viewAddress);
+    const loaded = await storageAdapter.getSnapshotAsync(viewAddress, maxOffset);
+    const snapshot =
+      maxOffset !== undefined && loaded.offset > maxOffset
+        ? EvDbStoredSnapshotResultRaw.Empty
+        : loaded;
 
     return new GenericView<TState, TEventMap>(
       viewAddress,

@@ -7,11 +7,16 @@ import type IEvDbChangeStream from "../stream/IEvDbChangeStream.js";
 
 export default interface IEvDbStorageStreamAdapter extends IEvDbChangeStream {
   /**
-   * Gets stored events.
-   * @param streamCursor - The streamCursor.
+   * Gets stored events, in ascending offset order, starting at
+   * `streamCursor.offset` (inclusive). Each event is yielded exactly once.
+   * @param streamCursor - The stream address and the first offset to read.
+   * @param pageSize - Rows fetched per storage query (default 100).
    * @returns Async iterable of EvDbEvent
    */
-  getEventsAsync(streamCursor: EvDbStreamCursor): AsyncGenerator<EvDbEvent, void, undefined>;
+  getEventsAsync(
+    streamCursor: EvDbStreamCursor,
+    pageSize?: number,
+  ): AsyncGenerator<EvDbEvent, void, undefined>;
 
   /**
    * Gets last stored event's offset.

@@ -13,6 +13,33 @@ A TypeScript event-sourcing library with multiple storage adapters.
 | `@eventualize/mysql-storage-adapter` | MySQL/MariaDB storage adapter |
 | `@eventualize/dynamodb-storage-adapter` | DynamoDB storage adapter |
 
+## Replay: inspect a stream at a past offset
+
+`goToOffset` opens a **read-only** stream positioned on a stored event. Views
+start from the latest snapshot at or before that offset and fold forward. The
+stream cannot append or store.
+
+```ts
+const stream = await PointsStreamFactory.goToOffset(
+  "points-1", // stream id
+  15,         // offset to position on
+  storageAdapter,
+  snapshotAdapter, // optional; without it views fold from their default state
+  100,             // optional page size
+);
+
+stream.event;    // the stored event at offset 15
+stream.views;    // view states after that event
+stream.messages; // outbox messages recomputed for that event (not the stored outbox)
+
+while (!stream.isHead) {
+  await stream.forward(); // mutates `stream` and returns it
+}
+```
+
+Navigation is forward-only (see `docs/adr/0001-replay-forward-only-navigation.md`).
+To go back, call `goToOffset` again with a smaller offset.
+
 ## Prerequisites
 
 - Node.js (with native test runner support)

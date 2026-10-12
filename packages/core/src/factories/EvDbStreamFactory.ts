@@ -4,22 +4,34 @@ import EvDbStreamCursor from "@eventualize/types/stream/EvDbStreamCursor";
 import EvDbStreamAddress from "@eventualize/types/stream/EvDbStreamAddress";
 import type EVDbMessagesProducer from "@eventualize/types/messages/EvDbMessagesProducer";
 import type EvDbEvent from "@eventualize/types/events/EvDbEvent";
+import type EvDbMessage from "@eventualize/types/messages/EvDbMessage";
+import type IEvDbReadOnlyStream from "@eventualize/types/store/IEvDbReadOnlyStream";
 
 import EvDbStream from "../store/EvDbStream.js";
+import { EvDbReadOnlyStream } from "../store/EvDbReadOnlyStream.js";
+import type { IEvDbReplayTarget } from "../store/EvDbReadOnlyStream.js";
+import EvDbEmptySnapshotAdapter from "../store/EvDbEmptySnapshotAdapter.js";
 import type { EvDbView } from "../view/EvDbView.js";
 import type { EvDbStreamFactoryConfig } from "./EvDbStreamFactoryTypes.js";
 import type { IEvDbStreamFactory } from "./IEvDbStreamFactory.js";
 import { getCoreTracer } from "../otel/tracers.js";
 import { withSpan } from "../otel/withSpan.js";
 
+const EMPTY_SNAPSHOT_ADAPTER = new EvDbEmptySnapshotAdapter();
+
+type StreamCtorArgs = [
+  streamType: string,
+  views: EvDbView<unknown>[],
+  streamStorageAdapter: IEvDbStorageStreamAdapter,
+  streamId: string,
+  lastStreamOffset: number,
+];
 
 /**
  * Type helper to extract event methods from TEventMap
  */
 type EventMethods<TEventMap extends Record<string, object>> = {
-  [K in string & keyof TEventMap as `appendEvent${K}`]: (
-    event: TEventMap[K],
-  ) => Promise<void>;
+  [K in string & keyof TEventMap as `appendEvent${K}`]: (event: TEventMap[K]) => Promise<void>;
 };
 
 /**
@@ -44,23 +56,25 @@ export class EvDbStreamFactory<
   TEventMap extends Record<string, object>,
   TStreamType extends string,
   TViews extends Record<string, unknown> = {},
-> implements IEvDbStreamFactory<TEventMap, TStreamType, TViews> {
-  private DynamicStreamClass: new (
-    streamType: string,
-    views: EvDbView<unknown>[],
-    streamStorageAdapter: IEvDbStorageStreamAdapter,
-    streamId: string,
-    lastStreamOffset: number,
-  ) => StreamWithEventMethods<TEventMap, TViews>;
+> implements IEvDbStreamFactory<TEventMap, TStreamType, TViews>
+{
+  private DynamicStreamClass: new (...args: StreamCtorArgs) => StreamWithEventMethods<
+    TEventMap,
+    TViews
+  >;
+  private ReplayStreamClass: new (...args: StreamCtorArgs) => IEvDbReplayTarget<TViews>;
 
   constructor(private readonly config: EvDbStreamFactoryConfig<TEventMap, TStreamType>) {
-    this.DynamicStreamClass = this.createDynamicStreamClass();
+    const classes = this.createDynamicStreamClasses();
+    this.DynamicStreamClass = classes.stream;
+    this.ReplayStreamClass = classes.replay;
   }
 
   /**
-   * Creates a dynamic stream class with event-specific methods and view accessors
+   * Creates the dynamic stream class (event-specific methods and view accessors)
+   * and the internal replay stream class used by goToOffset
    */
-  private createDynamicStreamClass() {
+  private createDynamicStreamClasses() {
     const eventTypes = this.config.eventTypes;
     const viewNames = this.config.viewNames;
 
@@ -114,13 +128,23 @@ export class EvDbStreamFactory<
       (DynamicStream.prototype as unknown as Record<string, unknown>)[methodName] = async function (
         this: EvDbStream,
         event: Record<string, unknown>,
-        capturedBy?: string | null
+        capturedBy?: string | null,
       ) {
         return this.appendEvent(eventName, event, capturedBy);
       };
     });
 
-    return DynamicStream as unknown as typeof this.DynamicStreamClass;
+    /** Internal stream used by goToOffset: exposes applyEvent for stored events. */
+    class ReplayStream extends DynamicStream {
+      replayEvent(e: EvDbEvent): ReadonlyArray<EvDbMessage> {
+        return this.applyEvent(e);
+      }
+    }
+
+    return {
+      stream: DynamicStream as unknown as typeof this.DynamicStreamClass,
+      replay: ReplayStream as unknown as typeof this.ReplayStreamClass,
+    };
   }
 
   /**
@@ -173,63 +197,117 @@ export class EvDbStreamFactory<
     streamStorageAdapter: IEvDbStorageStreamAdapter,
     snapshotStorageAdapter: IEvDbStorageSnapshotAdapter | undefined = undefined,
   ): Promise<StreamWithEventMethods<TEventMap, TViews>> {
-    return withSpan(
-      getCoreTracer(),
-      "eventualize.stream.get",
-      async (span) => {
-        span.setAttribute("eventualize.stream.id", streamId);
-        span.setAttribute("eventualize.stream.type", this.config.streamType);
+    return withSpan(getCoreTracer(), "eventualize.stream.get", async (span) => {
+      span.setAttribute("eventualize.stream.id", streamId);
+      span.setAttribute("eventualize.stream.type", this.config.streamType);
 
-        const streamAddress = new EvDbStreamAddress(this.config.streamType, streamId);
+      const streamAddress = new EvDbStreamAddress(this.config.streamType, streamId);
 
-        const views = snapshotStorageAdapter
-          ? await Promise.all(this.getViews(streamId, snapshotStorageAdapter))
-          : [];
+      const views = snapshotStorageAdapter
+        ? await Promise.all(this.getViews(streamId, snapshotStorageAdapter))
+        : [];
 
-        if (!views.length) {
-          const lastStreamOffset = await streamStorageAdapter.getLastOffsetAsync(streamAddress);
-          return this.create(
-            streamId,
-            streamStorageAdapter,
-            snapshotStorageAdapter,
-            lastStreamOffset,
-          );
-        }
-
-        const lowestViewOffset = views.reduce(
-          (lowestOffset: number, currentView: EvDbView<unknown>) =>
-            Math.min(lowestOffset, currentView.storeOffset),
-          Number.MAX_VALUE,
-        );
-
-        let streamOffset: number;
-        if (snapshotStorageAdapter) {
-          // lowestViewOffset < 0 means no real snapshot exists yet (empty sentinel = -1).
-          // In that case start the cursor at 0 so event at offset 0 is not skipped.
-          const fromOffset = lowestViewOffset < 0 ? 0 : lowestViewOffset + 1;
-          const streamCursor = new EvDbStreamCursor(streamAddress, fromOffset);
-          const events = await streamStorageAdapter.getEventsAsync(streamCursor);
-
-          // Only advance streamOffset from -1 if there is at least one real snapshot.
-          streamOffset = lowestViewOffset;
-          for await (const event of events) {
-            views.forEach((view) => view.applyEvent(event));
-            streamOffset = event.streamCursor.offset;
-          }
-        } else {
-          // If no snapshot adapter (no views), we can only get the last offset of the events stream
-          streamOffset = await streamStorageAdapter.getLastOffsetAsync(streamAddress);
-        }
-
-        return new this.DynamicStreamClass(
-          this.config.streamType,
-          views,
-          streamStorageAdapter,
+      if (!views.length) {
+        const lastStreamOffset = await streamStorageAdapter.getLastOffsetAsync(streamAddress);
+        return this.create(
           streamId,
-          streamOffset,
+          streamStorageAdapter,
+          snapshotStorageAdapter,
+          lastStreamOffset,
         );
-      },
-    );
+      }
+
+      const lowestViewOffset = views.reduce(
+        (lowestOffset: number, currentView: EvDbView<unknown>) =>
+          Math.min(lowestOffset, currentView.storeOffset),
+        Number.MAX_VALUE,
+      );
+
+      let streamOffset: number;
+      if (snapshotStorageAdapter) {
+        // lowestViewOffset < 0 means no real snapshot exists yet (empty sentinel = -1).
+        // In that case start the cursor at 0 so event at offset 0 is not skipped.
+        const fromOffset = lowestViewOffset < 0 ? 0 : lowestViewOffset + 1;
+        const streamCursor = new EvDbStreamCursor(streamAddress, fromOffset);
+        const events = await streamStorageAdapter.getEventsAsync(streamCursor);
+
+        // Only advance streamOffset from -1 if there is at least one real snapshot.
+        streamOffset = lowestViewOffset;
+        for await (const event of events) {
+          views.forEach((view) => view.applyEvent(event));
+          streamOffset = event.streamCursor.offset;
+        }
+      } else {
+        // If no snapshot adapter (no views), we can only get the last offset of the events stream
+        streamOffset = await streamStorageAdapter.getLastOffsetAsync(streamAddress);
+      }
+
+      return new this.DynamicStreamClass(
+        this.config.streamType,
+        views,
+        streamStorageAdapter,
+        streamId,
+        streamOffset,
+      );
+    });
+  }
+
+  /**
+   * Opens a read-only stream positioned on the event at `offset`.
+   *
+   * Views start from their latest snapshot at or before `offset` (or from the
+   * default state) and fold the stored events up to `offset`. Nothing is
+   * stored. Navigate with `forward()`; to go back, call `goToOffset` again.
+   *
+   * @throws RangeError when `offset` or `pageSize` is invalid, or when the
+   *   stream has no event at `offset`.
+   */
+  public async goToOffset(
+    streamId: string,
+    offset: number,
+    streamStorageAdapter: IEvDbStorageStreamAdapter,
+    snapshotStorageAdapter?: IEvDbStorageSnapshotAdapter,
+    pageSize: number = 100,
+  ): Promise<IEvDbReadOnlyStream<TViews>> {
+    return withSpan(getCoreTracer(), "eventualize.stream.goToOffset", async (span) => {
+      span.setAttribute("eventualize.stream.id", streamId);
+      span.setAttribute("eventualize.stream.type", this.config.streamType);
+      span.setAttribute("eventualize.stream.offset", offset);
+
+      if (!Number.isInteger(offset) || offset < 0) {
+        throw new RangeError(`offset must be a non-negative integer, got ${offset}`);
+      }
+      if (!Number.isInteger(pageSize) || pageSize < 1) {
+        throw new RangeError(`pageSize must be a positive integer, got ${pageSize}`);
+      }
+
+      const snapshotAdapter = snapshotStorageAdapter ?? EMPTY_SNAPSHOT_ADAPTER;
+      const views = await Promise.all(
+        this.config.viewFactories.map((vf) => vf.get(streamId, snapshotAdapter, offset)),
+      );
+
+      // Views with no snapshot have storeOffset -1, so this yields 0 for them.
+      // min(..., offset) makes sure the event at `offset` itself is fetched.
+      const lowestViewOffset = Math.min(...views.map((v) => v.storeOffset));
+      const fromOffset = Math.min(lowestViewOffset + 1, offset);
+
+      const target = new this.ReplayStreamClass(
+        this.config.streamType,
+        views,
+        streamStorageAdapter,
+        streamId,
+        offset,
+      );
+
+      return EvDbReadOnlyStream.open<TViews>({
+        target,
+        streamStorageAdapter,
+        streamAddress: new EvDbStreamAddress(this.config.streamType, streamId),
+        fromOffset,
+        offset,
+        pageSize,
+      });
+    });
   }
 
   public getStreamType(): TStreamType {

@@ -178,27 +178,39 @@ export default class EvDbStream implements IEvDbStreamStore, IEvDbStreamStoreDat
         tracestate,
       );
       this._pendingEvents = [...this._pendingEvents, e];
-
-      // Apply to views
-      for (const view of Object.values(this._views)) {
-        view.applyEvent(e);
-      }
-
-      // Outbox producer — stamp produced messages with current trace context
-      const viewsStates = Object.fromEntries(
-        Object.entries(this._views).map(([k, v]) => {
-          return [k, (v as EvDbView<unknown>).state];
-        }),
-      );
-      const producedMessages = this.messagesProducer(e, viewsStates).map((m) =>
-        traceparent ? m.withTraceparent(traceparent, tracestate) : m,
-      );
+      const producedMessages = this.applyEvent(e);
       this._pendingMessages = [...this._pendingMessages, ...producedMessages];
 
       return e;
     } finally {
       span.end();
     }
+  }
+
+  /**
+   * Applies an event to every view and derives its outbox messages, without
+   * adding anything to the pending buffers.
+   *
+   * `appendEvent` uses this for new events. Replay uses it for events loaded
+   * from storage, so view handlers see the stored metadata (cursor,
+   * `capturedAt`, `capturedBy`, trace context) instead of new values.
+   *
+   * @param e - The event to apply.
+   * @returns The messages produced for `e`, stamped with `e`'s trace context.
+   */
+  protected applyEvent(e: EvDbEvent): ReadonlyArray<EvDbMessage> {
+    for (const view of Object.values(this._views)) {
+      view.applyEvent(e);
+    }
+
+    const viewsStates = Object.fromEntries(
+      Object.entries(this._views).map(([k, v]) => {
+        return [k, (v as EvDbView<unknown>).state];
+      }),
+    );
+    return this.messagesProducer(e, viewsStates).map((m) =>
+      e.traceparent ? m.withTraceparent(e.traceparent, e.tracestate) : m,
+    );
   }
 
   private captureTraceparent(): { traceparent?: string; tracestate?: string } {

@@ -193,7 +193,7 @@ export default class EvDbDynamoDbStorageAdapter
    */
   async *getEventsAsync(
     streamCursor: EvDbStreamCursor,
-    _pageSize: number = 100,
+    pageSize: number = 100,
   ): AsyncGenerator<EvDbEvent, void, undefined> {
     const span = getTracer().startSpan("eventualize.adapter.query.stream", {
       attributes: {
@@ -206,7 +206,7 @@ export default class EvDbDynamoDbStorageAdapter
       let queryCursor: Record<string, AttributeValue> | undefined = undefined;
 
       do {
-        const getEventsCommand = QueryProvider.getEvents(streamCursor);
+        const getEventsCommand = QueryProvider.getEvents(streamCursor, queryCursor, pageSize);
         const response = await this.dynamoDbClient.send(getEventsCommand);
 
         if (response.Items && response.Items.length > 0) {
@@ -241,8 +241,11 @@ export default class EvDbDynamoDbStorageAdapter
   /**
    * Get snapshot for a stream view
    */
-  async getSnapshotAsync(viewAddress: EvDbViewAddress): Promise<EvDbStoredSnapshotResultRaw> {
-    const query = QueryProvider.getSnapshot(viewAddress);
+  async getSnapshotAsync(
+    viewAddress: EvDbViewAddress,
+    maxOffset?: number,
+  ): Promise<EvDbStoredSnapshotResultRaw> {
+    const query = QueryProvider.getSnapshot(viewAddress, maxOffset);
     const response = await this.dynamoDbClient.send(query);
 
     if (!response.Items || response.Items.length === 0) {
