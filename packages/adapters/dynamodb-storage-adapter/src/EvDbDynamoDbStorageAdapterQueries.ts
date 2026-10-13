@@ -184,6 +184,12 @@ export default class EvDbDynamoDbStorageAdapterQueries {
     return new QueryCommand(queryParams);
   }
 
+  /**
+   * Builds the query for the latest snapshot of a view.
+   * @param viewAddress - The view address.
+   * @param maxOffset - Optional upper bound: only snapshots with offset `<= maxOffset` match.
+   * @returns A `QueryCommand` that returns at most one item: the latest matching snapshot.
+   */
   public static getSnapshot(viewAddress: EvDbViewAddress, maxOffset?: number) {
     const hasMax = maxOffset !== undefined;
     const queryParams = {

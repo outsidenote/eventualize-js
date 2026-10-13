@@ -29,6 +29,8 @@ export default interface IEvDbReadOnlyStream<TViews> {
    *
    * Mutates this instance and returns it (for chaining). It does not create a copy.
    * Not safe for concurrent calls: await each call before the next.
+   * @param steps - How many events to move forward. A positive integer. Default 1.
+   * @returns This stream, now positioned on the new event.
    * @throws RangeError when `steps` is not a positive integer.
    */
   forward(steps?: number): Promise<IEvDbReadOnlyStream<TViews>>;

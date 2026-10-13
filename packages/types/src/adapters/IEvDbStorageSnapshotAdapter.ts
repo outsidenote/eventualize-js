@@ -10,8 +10,9 @@ export default interface IEvDbStorageSnapshotAdapter {
    * Gets the latest stored view snapshot or an empty snapshot if none exists.
    * @param viewAddress The view address
    * @param maxOffset Optional upper bound: return the latest snapshot whose
-   *                  offset is `<= maxOffset`.
-   * @returns The stored snapshot result
+   *                  offset is `<= maxOffset`. Newer snapshots are ignored.
+   *                  Without it, the latest snapshot is returned.
+   * @returns The stored snapshot result, or an empty snapshot when none matches
    */
   getSnapshotAsync(
     viewAddress: EvDbViewAddress,

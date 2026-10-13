@@ -68,9 +68,12 @@ export class ViewFactory<TState, TEventMap extends Record<string, object>> {
 
   /**
    * Get a view instance from event store.
+   * @param streamId - The id of the stream that the view belongs to.
+   * @param storageAdapter - The adapter that the snapshot is read from.
    * @param maxOffset - Optional: load the latest snapshot at or before this offset.
    *   A snapshot newer than `maxOffset` (from an adapter that ignores the bound)
    *   is discarded, so the view starts from its default state.
+   * @returns The view, loaded from its snapshot, or in its default state when there is none.
    */
   public async get(
     streamId: string,

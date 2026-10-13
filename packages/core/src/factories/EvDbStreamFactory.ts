@@ -32,6 +32,7 @@ const EMPTY_SNAPSHOT_ADAPTER = new EvDbEmptySnapshotAdapter();
 /** Max events + messages per clone store() — DynamoDB TransactWriteItems accepts at most 100 items. */
 const MAX_ITEMS_PER_STORE = 100;
 
+/** Constructor arguments shared by the dynamic, replay and clone stream classes. */
 type StreamCtorArgs = [
   streamType: string,
   views: EvDbView<unknown>[],
@@ -48,10 +49,13 @@ interface StagedClonedEvent {
 
 /** The internal clone stream, as seen by `clone()`. */
 interface IEvDbCloneTarget {
+  /** Offset of the last event stored in the target; -1 while the target is empty. */
   readonly storedOffset: number;
+  /** Events waiting for the next store(). */
   readonly countOfPendingEvents: number;
   /** Events + messages waiting for the next store(). */
   readonly pendingItemCount: number;
+  /** Builds a cloned event and its kept messages, without adding them to the target. */
   stageCloned(
     eventType: string,
     payload: IEvDbPayloadData,
@@ -59,7 +63,9 @@ interface IEvDbCloneTarget {
     capturedBy: string,
     projectMessage: EvDbCloneMessageProjection | undefined,
   ): StagedClonedEvent;
+  /** Adds a staged event and its messages to the pending buffers and applies the event to the views. */
   commitCloned(staged: StagedClonedEvent): void;
+  /** Stores the pending events and messages, then saves the view snapshots. */
   store(): Promise<StreamStoreAffected>;
 }
 
@@ -222,6 +228,7 @@ export class EvDbStreamFactory<
 
     /** Internal stream used by goToOffset: exposes applyEvent for stored events. */
     class ReplayStream extends DynamicStream {
+      /** Applies a stored event to the views and returns the messages produced for it. */
       replayEvent(e: EvDbEvent): ReadonlyArray<EvDbMessage> {
         return this.applyEvent(e);
       }
@@ -229,6 +236,7 @@ export class EvDbStreamFactory<
 
     /** Internal stream used by clone: appends copied events with given metadata. */
     class CloneStream extends DynamicStream {
+      /** Events + messages waiting for the next store(). */
       get pendingItemCount(): number {
         return this._pendingEvents.length + this._pendingMessages.length;
       }
@@ -237,7 +245,8 @@ export class EvDbStreamFactory<
        * Builds a cloned event and its kept messages without changing the views or the
        * pending buffers, so the caller can store the pending batch first when this event
        * would not fit. The producer sees the view states as they will be once the event is
-       * applied; they are computed with the views' handlers, which must be pure.
+       * applied; they are computed with the views' handlers, which must be pure. Without
+       * `projectMessage` there are no messages and the producer is not called.
        */
       stageCloned(
         eventType: string,
@@ -268,6 +277,7 @@ export class EvDbStreamFactory<
         return { event, messages };
       }
 
+      /** Adds a staged event and its messages to the pending buffers and applies the event to the views. */
       commitCloned({ event, messages }: StagedClonedEvent): void {
         this._pendingEvents = [...this._pendingEvents, event];
         this.applyToViews(event);
@@ -394,6 +404,13 @@ export class EvDbStreamFactory<
    * default state) and fold the stored events up to `offset`. Nothing is
    * stored. Navigate with `forward()`; to go back, call `goToOffset` again.
    *
+   * @param streamId - The id of the stream to inspect.
+   * @param offset - The offset of the event to position on. A non-negative integer.
+   * @param streamStorageAdapter - The adapter that events are read from.
+   * @param snapshotStorageAdapter - Optional. Snapshots are only read, never written.
+   *   Without it, views fold from their default state.
+   * @param pageSize - Events read per storage query. A positive integer. Default 100.
+   * @returns A read-only stream positioned on the event at `offset`.
    * @throws RangeError when `offset` or `pageSize` is invalid, or when the
    *   stream has no event at `offset`.
    */
@@ -449,15 +466,39 @@ export class EvDbStreamFactory<
    * Copies a stream, up to `options.offsetLimit` (inclusive), into a new,
    * empty stream of the same type.
    *
-   * Events are read in pages and stored after each page. `projectEvent` can
-   * change or drop events (default: copy as is, keeping `capturedAt` and
-   * `capturedBy`). `projectMessage` can change or drop produced outbox
-   * messages (default: drop all, and the producer is not called).
+   * Events are read in pages of `options.pageSize`. Writes are stored at the
+   * end of each page, and earlier, before an event that would push the pending
+   * events + messages past 100 (the DynamoDB transaction limit). An event and
+   * its messages are always stored together.
    *
+   * `projectEvent` can change or drop events (default: copy as is, keeping
+   * `capturedAt` and `capturedBy`). `projectMessage` can change or drop produced
+   * outbox messages (default: drop all, and the producer is not called). When
+   * `projectMessage` is set, view handlers run twice per cloned event: a preview
+   * that gives the producer its view states, then the real apply. So view
+   * handlers must be pure: return a new state, do not mutate.
+   *
+   * Target offsets start at 0 and have no gaps, so they can differ from the
+   * source offsets when events are dropped.
+   *
+   * Progress is per store. If the copy fails part-way, the events stored before
+   * the failure stay in the target, and `EvDbCloneError.lastSourceOffset` is the
+   * last source offset fully handled (its events stored, or dropped by
+   * `projectEvent`; -1 when none).
+   *
+   * @param streamId - The id of the source stream.
+   * @param targetStreamId - The id of the new stream. It must be empty and differ from `streamId`.
+   * @param streamStorageAdapter - The adapter that events are read from and written to.
+   * @param snapshotStorageAdapter - Optional. When given, the target has the configured views,
+   *   and their snapshots are saved on each store. Without it, the target has no views and
+   *   the messages producer sees no view states.
+   * @param options - See `EvDbCloneOptions`: `offsetLimit`, `pageSize`, `projectEvent`,
+   *   `projectMessage`.
    * @returns The target as a normal writable stream at its head.
-   * @throws RangeError for invalid arguments.
-   * @throws EvDbCloneError when the target is not empty, or when the copy fails
-   *   part-way (pages stored before the failure stay in the target).
+   * @throws RangeError when `streamId` equals `targetStreamId`, or when `offsetLimit`
+   *   or `pageSize` is invalid.
+   * @throws EvDbCloneError when the target is not empty, or when reading, projecting or
+   *   storing fails part-way (events stored before the failure stay in the target).
    */
   public async clone(
     streamId: string,

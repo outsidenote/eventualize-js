@@ -189,7 +189,13 @@ export default class EvDbDynamoDbStorageAdapter
   }
 
   /**
-   * Get events for a stream since a specific offset
+   * Get events for a stream since a specific offset, in ascending offset order.
+   *
+   * Reads `pageSize` items per DynamoDB query and keeps paging until the end of the
+   * stream, so stop iterating early when you need only a part of it.
+   * @param streamCursor - The stream address and the first offset to read (inclusive).
+   * @param pageSize - Items fetched per query (the DynamoDB `Limit`). Default 100.
+   * @returns Async iterable of EvDbEvent
    */
   async *getEventsAsync(
     streamCursor: EvDbStreamCursor,
@@ -240,6 +246,10 @@ export default class EvDbDynamoDbStorageAdapter
 
   /**
    * Get snapshot for a stream view
+   * @param viewAddress - The view address.
+   * @param maxOffset - Optional upper bound: return the latest snapshot whose offset
+   *   is `<= maxOffset`.
+   * @returns The stored snapshot, or an empty snapshot when none matches.
    */
   async getSnapshotAsync(
     viewAddress: EvDbViewAddress,

@@ -37,8 +37,10 @@ while (!stream.isHead) {
 }
 ```
 
-Navigation is forward-only (see `docs/adr/0001-replay-forward-only-navigation.md`).
+Navigation is forward-only (see [ADR 0001](../docs/adr/0001-replay-forward-only-navigation.md)).
 To go back, call `goToOffset` again with a smaller offset.
+
+Full guide: [docs/REPLAY.md](../docs/REPLAY.md).
 
 ## Replay: clone a stream
 
@@ -76,6 +78,8 @@ try {
   }
 }
 ```
+
+Full guide, options, recipes and limits: [docs/REPLAY.md](../docs/REPLAY.md#2-copy-a-stream--clone).
 
 ## Prerequisites
 

@@ -9,8 +9,12 @@ export default interface IEvDbStorageStreamAdapter extends IEvDbChangeStream {
   /**
    * Gets stored events, in ascending offset order, starting at
    * `streamCursor.offset` (inclusive). Each event is yielded exactly once.
+   *
+   * The generator keeps paging until the end of the stream. `pageSize` only sets how
+   * many rows one storage query fetches; it does not limit how many events are
+   * yielded. Stop iterating early when you need just a part of the stream.
    * @param streamCursor - The stream address and the first offset to read.
-   * @param pageSize - Rows fetched per storage query (default 100).
+   * @param pageSize - Rows fetched per storage query. The built-in adapters default to 100.
    * @returns Async iterable of EvDbEvent
    */
   getEventsAsync(

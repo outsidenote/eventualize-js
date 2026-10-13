@@ -213,11 +213,18 @@ iterator.
 class EvDbCloneError extends Error {
   readonly sourceStreamId: string;
   readonly targetStreamId: string;
-  /** Last source offset whose page was fully handled: its events were stored, or dropped by `projectEvent`. -1 when no page was handled. */
+  /**
+   * Last source offset fully handled: its events were stored (at the last
+   * successful store), or dropped by `projectEvent`. -1 when none.
+   * Progress is per store, and a store can happen mid-page (see §3.1).
+   */
   readonly lastSourceOffset: number;
-  /** `storedOffset` of the target when the error happened; -1 when nothing was stored. */
+  /**
+   * `storedOffset` of the target when the error happened: -1 when nothing was
+   * stored; for a non-empty target, its existing last offset.
+   */
   readonly targetStoredOffset: number;
-  /** The original error. */
+  /** The original error; `undefined` for a non-empty target. */
   readonly cause: unknown;
 }
 ```

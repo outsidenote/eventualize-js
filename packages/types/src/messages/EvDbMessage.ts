@@ -99,6 +99,8 @@ export default class EvDbMessage {
   /**
    * Returns a copy of this message on another channel. All other fields are kept.
    * Use it to reroute messages, e.g. in a clone `projectMessage`.
+   * @param channel - The channel of the new message.
+   * @returns A new `EvDbMessage`. This message is not changed.
    */
   public withChannel(channel: string): EvDbMessage {
     return new EvDbMessage(

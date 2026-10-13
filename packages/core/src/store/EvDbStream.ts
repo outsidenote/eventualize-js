@@ -142,6 +142,8 @@ export default class EvDbStream implements IEvDbStreamStore, IEvDbStreamStoreDat
    * called, so multiple `appendEvent` calls can be batched into a single atomic
    * write.
    *
+   * @param eventType  - Event type name; must be registered on this stream's
+   *                     factory.
    * @param payload    - Typed event payload; `eventType` must match a type
    *                     registered on this stream's factory.
    * @param capturedBy - Optional label identifying who/what produced this event
@@ -181,7 +183,15 @@ export default class EvDbStream implements IEvDbStreamStore, IEvDbStreamStoreDat
    * context. It does not add the event to the pending events and does not apply
    * it to the views.
    *
-   * `appendEvent` passes `new Date()`; clone passes the source event's values.
+   * The cursor is the offset after the last pending event, or `storedOffset + 1`
+   * when nothing is pending. `appendEvent` passes `new Date()`; clone passes the
+   * source event's values.
+   *
+   * @param eventType - The event type name.
+   * @param payload - The event payload.
+   * @param capturedAt - When the event was captured.
+   * @param capturedBy - Who or what produced the event.
+   * @returns The new event, not yet pending and not yet applied.
    */
   protected buildEvent(
     eventType: string,
@@ -219,7 +229,11 @@ export default class EvDbStream implements IEvDbStreamStore, IEvDbStreamStoreDat
     return this.produceMessages(e);
   }
 
-  /** Applies an event to every view. Does not produce messages. */
+  /**
+   * Applies an event to every view. Does not produce messages.
+   * A view skips an event whose offset it has already applied.
+   * @param e - The event to apply.
+   */
   protected applyToViews(e: EvDbEvent): void {
     for (const view of Object.values(this._views)) {
       view.applyEvent(e);
@@ -230,7 +244,9 @@ export default class EvDbStream implements IEvDbStreamStore, IEvDbStreamStoreDat
    * Runs the messages producer for `e` and stamps the messages with `e`'s trace
    * context. Does not touch the pending buffers.
    *
+   * @param e - The event to derive messages from.
    * @param viewsStates - The view states the producer sees (default: the current ones).
+   * @returns The produced messages, stamped when `e` has a trace context.
    */
   protected produceMessages(
     e: EvDbEvent,
@@ -241,7 +257,10 @@ export default class EvDbStream implements IEvDbStreamStore, IEvDbStreamStoreDat
     );
   }
 
-  /** The current state of every view, keyed by view name. */
+  /**
+   * The current state of every view, keyed by view name.
+   * @returns A new object on each call.
+   */
   protected getViewStates(): Record<string, unknown> {
     return Object.fromEntries(
       Object.entries(this._views).map(([k, v]) => {
