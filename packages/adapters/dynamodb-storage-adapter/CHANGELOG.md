@@ -1,5 +1,39 @@
 # @eventualize/dynamodb-storage-adapter
 
+## 7.0.0
+
+### Major Changes
+
+- 9634936: `@aws-sdk/client-dynamodb` is now a peer dependency (`>=3.1111.0`) instead of a regular dependency.
+
+  `EvDbDynamoDbStorageAdapter` accepts a `DynamoDBClient` that your app creates. As a peer, your app and the adapter now share one copy of the AWS SDK client, so the types always match. The range has no upper limit, so newer SDK versions do not cause install conflicts.
+
+  Migration: if your package manager does not install peers automatically, add the client to your app:
+
+      pnpm add @aws-sdk/client-dynamodb
+
+### Minor Changes
+
+- 9634936: Dependency update (October 2026).
+
+  - The optional `@opentelemetry/api` peer range is now `>=1.7.0` (was `^1.7.0`), so newer API versions do not cause install conflicts.
+  - Internal `@eventualize/*` dependencies now use `^` ranges, so your app and our packages can share one copy of a newer 6.x release.
+  - Prisma is pinned to `7.10.0`, and the generated Prisma clients were regenerated with that version. Prisma stays a regular dependency, so your app can use a different Prisma version.
+
+- 6a48ac3: Stream replay, part 1: positioning on a stored event and walking forward.
+
+  - New `factory.goToOffset(...)` returns a read-only, forward-only `IEvDbReadOnlyStream` with `event`, `views`, `messages`, `isHead` and `forward`.
+  - `getEventsAsync(cursor, pageSize?)` and `getSnapshotAsync(viewAddress, maxOffset?)` gained optional parameters. Relational and DynamoDB paging bugs are fixed: duplicate or missing events across pages, and a DynamoDB infinite loop past one page.
+  - BEHAVIOR CHANGE: relational `getEventsAsync` now yields the stored payload as-is. Before, it wrapped the payload as `{ eventType, payload }`. It now matches DynamoDB and what `store` writes. This also fixes `factory.get()` folding events after a snapshot.
+  - `IEvDbStreamFactory` gains a required `goToOffset` member. This affects custom implementations of the interface.
+
+### Patch Changes
+
+- Updated dependencies [9634936]
+- Updated dependencies [6a48ac3]
+- Updated dependencies [6a48ac3]
+  - @eventualize/types@6.1.0
+
 ## 6.0.0
 
 ### Major Changes
