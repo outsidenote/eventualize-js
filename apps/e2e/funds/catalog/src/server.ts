@@ -73,9 +73,11 @@ async function main(): Promise<void> {
     app.get("*", (_req, res) => res.sendFile(join(uiDist, "index.html")));
   } else {
     app.get("/", (_req, res) =>
-      res.status(503).send(
-        `<h1>Catalog UI not built</h1><p>Run <code>pnpm --filter e2e-funds-catalog build:ui</code> to build the UI, or use the JSON API at <a href="/api/specs">/api/specs</a>.</p>`,
-      ),
+      res
+        .status(503)
+        .send(
+          `<h1>Catalog UI not built</h1><p>Run <code>pnpm --filter e2e-funds-catalog build:ui</code> to build the UI, or use the JSON API at <a href="/api/specs">/api/specs</a>.</p>`,
+        ),
     );
   }
 

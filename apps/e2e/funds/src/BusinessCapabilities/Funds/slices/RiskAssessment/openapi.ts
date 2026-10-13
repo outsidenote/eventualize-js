@@ -6,9 +6,7 @@ export const riskAssessmentOpenApi: OpenAPIV3_1.PathsObject = {
       summary: "Get current risk assessment for an account",
       tags: ["Risk"],
       operationId: "getRisk",
-      parameters: [
-        { name: "accountId", in: "path", required: true, schema: { type: "string" } },
-      ],
+      parameters: [{ name: "accountId", in: "path", required: true, schema: { type: "string" } }],
       responses: {
         "200": {
           description: "Risk document",

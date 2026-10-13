@@ -20,7 +20,9 @@ export function launchKafkaConsumer(opts: {
 
   const scheduleRetry = () => {
     if (stopped) return;
-    const timer = setTimeout(() => { if (!stopped) void attempt(); }, RETRY_INTERVAL_MS);
+    const timer = setTimeout(() => {
+      if (!stopped) void attempt();
+    }, RETRY_INTERVAL_MS);
     retryTimers.push(timer);
   };
 
@@ -57,23 +59,41 @@ export function launchKafkaConsumer(opts: {
               },
             });
             try {
-              await onMessage(topic, payload, { outboxId, storedAt: new Date(Number(message.timestamp)) });
+              await onMessage(topic, payload, {
+                outboxId,
+                storedAt: new Date(Number(message.timestamp)),
+              });
             } finally {
               span.end();
             }
           });
 
-          await c.commitOffsets([{ topic, partition, offset: (BigInt(message.offset) + 1n).toString() }]);
+          await c.commitOffsets([
+            { topic, partition, offset: (BigInt(message.offset) + 1n).toString() },
+          ]);
         },
       });
     } catch (err) {
-      const isMissing = err instanceof Error && (err as Error & { type?: string }).type === "UNKNOWN_TOPIC_OR_PARTITION";
+      const isMissing =
+        err instanceof Error &&
+        (err as Error & { type?: string }).type === "UNKNOWN_TOPIC_OR_PARTITION";
       if (isMissing) {
-        console.info(`[KafkaConsumer] ${groupId} topic not yet available, retrying in ${RETRY_INTERVAL_MS / 1000}s`);
+        console.info(
+          `[KafkaConsumer] ${groupId} topic not yet available, retrying in ${
+            RETRY_INTERVAL_MS / 1000
+          }s`,
+        );
       } else {
-        console.error(`[KafkaConsumer] ${groupId} crashed, retrying in ${RETRY_INTERVAL_MS / 1000}s`, err);
+        console.error(
+          `[KafkaConsumer] ${groupId} crashed, retrying in ${RETRY_INTERVAL_MS / 1000}s`,
+          err,
+        );
       }
-      try { await c.disconnect(); } catch { /* best-effort */ }
+      try {
+        await c.disconnect();
+      } catch {
+        /* best-effort */
+      }
       consumer = null;
       scheduleRetry();
     }
@@ -87,13 +107,23 @@ export function launchKafkaConsumer(opts: {
       for (const timer of retryTimers) clearTimeout(timer);
       retryTimers.length = 0;
       if (consumer) {
-        try { await consumer.disconnect(); } catch (err) { console.warn("[KafkaConsumer] disconnect failed", err); } finally { consumer = null; }
+        try {
+          await consumer.disconnect();
+        } catch (err) {
+          console.warn("[KafkaConsumer] disconnect failed", err);
+        } finally {
+          consumer = null;
+        }
       }
     },
   };
 }
 
-export function extractOutboxId(message: { key: Buffer | null; value: Buffer | null; headers?: Record<string, unknown> }): string {
+export function extractOutboxId(message: {
+  key: Buffer | null;
+  value: Buffer | null;
+  headers?: Record<string, unknown>;
+}): string {
   if (message.headers) {
     const idHeader = message.headers["id"];
     if (idHeader) return Buffer.isBuffer(idHeader) ? idHeader.toString() : String(idHeader);
@@ -102,10 +132,15 @@ export function extractOutboxId(message: { key: Buffer | null; value: Buffer | n
     try {
       const parsed = JSON.parse(message.value.toString());
       const value = parsed.payload ?? parsed;
-      if (value && typeof value === "object" && "outboxId" in value) return String((value as Record<string, unknown>).outboxId);
-    } catch { /* best-effort */ }
+      if (value && typeof value === "object" && "outboxId" in value)
+        return String((value as Record<string, unknown>).outboxId);
+    } catch {
+      /* best-effort */
+    }
   }
-  throw new Error("[KafkaConsumer] Cannot extract outboxId — header 'id' missing and payload has no outboxId.");
+  throw new Error(
+    "[KafkaConsumer] Cannot extract outboxId — header 'id' missing and payload has no outboxId.",
+  );
 }
 
 export function parsePayload(message: { value: Buffer | null }): Record<string, unknown> {
@@ -121,7 +156,9 @@ export function parsePayload(message: { value: Buffer | null }): Record<string, 
     if (!isRecord(inner)) throw new Error("payload is not an object");
     return inner;
   } catch (err) {
-    throw new Error(`[KafkaConsumer] payload parse failed: ${err instanceof Error ? err.message : String(err)}`);
+    throw new Error(
+      `[KafkaConsumer] payload parse failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 

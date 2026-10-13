@@ -189,11 +189,17 @@ export default class EvDbDynamoDbStorageAdapter
   }
 
   /**
-   * Get events for a stream since a specific offset
+   * Get events for a stream since a specific offset, in ascending offset order.
+   *
+   * Reads `pageSize` items per DynamoDB query and keeps paging until the end of the
+   * stream, so stop iterating early when you need only a part of it.
+   * @param streamCursor - The stream address and the first offset to read (inclusive).
+   * @param pageSize - Items fetched per query (the DynamoDB `Limit`). Default 100.
+   * @returns Async iterable of EvDbEvent
    */
   async *getEventsAsync(
     streamCursor: EvDbStreamCursor,
-    _pageSize: number = 100,
+    pageSize: number = 100,
   ): AsyncGenerator<EvDbEvent, void, undefined> {
     const span = getTracer().startSpan("eventualize.adapter.query.stream", {
       attributes: {
@@ -206,7 +212,7 @@ export default class EvDbDynamoDbStorageAdapter
       let queryCursor: Record<string, AttributeValue> | undefined = undefined;
 
       do {
-        const getEventsCommand = QueryProvider.getEvents(streamCursor);
+        const getEventsCommand = QueryProvider.getEvents(streamCursor, queryCursor, pageSize);
         const response = await this.dynamoDbClient.send(getEventsCommand);
 
         if (response.Items && response.Items.length > 0) {
@@ -240,9 +246,16 @@ export default class EvDbDynamoDbStorageAdapter
 
   /**
    * Get snapshot for a stream view
+   * @param viewAddress - The view address.
+   * @param maxOffset - Optional upper bound: return the latest snapshot whose offset
+   *   is `<= maxOffset`.
+   * @returns The stored snapshot, or an empty snapshot when none matches.
    */
-  async getSnapshotAsync(viewAddress: EvDbViewAddress): Promise<EvDbStoredSnapshotResultRaw> {
-    const query = QueryProvider.getSnapshot(viewAddress);
+  async getSnapshotAsync(
+    viewAddress: EvDbViewAddress,
+    maxOffset?: number,
+  ): Promise<EvDbStoredSnapshotResultRaw> {
+    const query = QueryProvider.getSnapshot(viewAddress, maxOffset);
     const response = await this.dynamoDbClient.send(query);
 
     if (!response.Items || response.Items.length === 0) {

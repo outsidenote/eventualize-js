@@ -6,7 +6,8 @@ export const leaderboardAsyncApi: AsyncApiFragment = {
     [`pgboss/${LEADERBOARD_QUEUE}`]: {
       address: LEADERBOARD_QUEUE,
       title: "Leaderboard update queue (pg-boss)",
-      description: "Each row in funds_outbox of message_type=FundsChanged triggers a pg-boss job on this queue. The leaderboard worker consumes and upserts the account_leaderboard row.",
+      description:
+        "Each row in funds_outbox of message_type=FundsChanged triggers a pg-boss job on this queue. The leaderboard worker consumes and upserts the account_leaderboard row.",
       messages: { LeaderboardUpdateJob: { $ref: "#/components/messages/LeaderboardUpdateJob" } },
       bindings: {
         "x-pgboss": { queue: LEADERBOARD_QUEUE },

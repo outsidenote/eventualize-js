@@ -4,7 +4,10 @@ import type { RiskAssessmentAdapter } from "../adapter.js";
 
 export function createRiskHttpHandler(adapter: RiskAssessmentAdapter) {
   return async (req: Request, res: Response) => {
-    const { accountId, delta, currentBalance, currency, transactionId } = req.body as Record<string, unknown>;
+    const { accountId, delta, currentBalance, currency, transactionId } = req.body as Record<
+      string,
+      unknown
+    >;
     if (!accountId || delta == null || currentBalance == null) {
       res.status(400).json({ error: "accountId, delta, and currentBalance are required" });
       return;

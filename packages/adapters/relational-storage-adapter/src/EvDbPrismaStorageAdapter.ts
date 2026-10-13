@@ -205,11 +205,17 @@ export class EvDbPrismaStorageAdapter
   }
 
   /**
-   * Get events for a stream since a specific offset
+   * Get events for a stream since a specific offset, in ascending offset order.
+   *
+   * Reads `pageSize` rows per query and keeps paging until the end of the stream,
+   * so stop iterating early when you need only a part of it.
+   * @param streamCursor - The stream address and the first offset to read (inclusive).
+   * @param pageSize - Rows fetched per query. Default 100.
+   * @returns Async iterable of EvDbEvent
    */
   async *getEventsAsync(
     streamCursor: EvDbStreamCursor,
-    _pageSize: number = 100,
+    pageSize: number = 100,
   ): AsyncGenerator<EvDbEvent, void, undefined> {
     const span = getTracer().startSpan("eventualize.adapter.query.stream", {
       attributes: {
@@ -220,9 +226,14 @@ export class EvDbPrismaStorageAdapter
     });
     try {
       const { streamType, streamId } = streamCursor;
-      let currentOffset = streamCursor.offset;
+      let nextOffset = streamCursor.offset;
       while (true) {
-        const events = await this.queryProvider.getEvents(streamType, streamId, currentOffset);
+        const events = await this.queryProvider.getEvents(
+          streamType,
+          streamId,
+          nextOffset,
+          pageSize,
+        );
 
         if (events.length === 0) {
           break;
@@ -232,17 +243,17 @@ export class EvDbPrismaStorageAdapter
           yield new EvDbEvent(
             event.event_type,
             new EvDbStreamCursor(event.stream_type, event.stream_id, Number(event.offset)),
-            { eventType: event.event_type, payload: deserializePayload(event.payload) },
+            deserializePayload(event.payload),
             event.captured_at,
             event.captured_by,
             event.stored_at,
             event.traceparent ?? undefined,
             event.tracestate ?? undefined,
           );
-          currentOffset = Math.max(currentOffset, Number(event.offset));
+          nextOffset = Number(event.offset) + 1;
         }
 
-        if (events.length < _pageSize) {
+        if (events.length < pageSize) {
           break;
         }
       }
@@ -279,10 +290,22 @@ export class EvDbPrismaStorageAdapter
 
   /**
    * Get snapshot for a stream view
+   * @param viewAddress - The view address.
+   * @param maxOffset - Optional upper bound: return the latest snapshot whose offset
+   *   is `<= maxOffset`.
+   * @returns The stored snapshot, or an empty snapshot when none matches.
    */
-  async getSnapshotAsync(viewAddress: EvDbViewAddress): Promise<EvDbStoredSnapshotResultRaw> {
+  async getSnapshotAsync(
+    viewAddress: EvDbViewAddress,
+    maxOffset?: number,
+  ): Promise<EvDbStoredSnapshotResultRaw> {
     const { streamType, streamId, viewName } = viewAddress;
-    const snapshot = await this.queryProvider.getSnapshot(streamType, streamId, viewName);
+    const snapshot = await this.queryProvider.getSnapshot(
+      streamType,
+      streamId,
+      viewName,
+      maxOffset,
+    );
 
     if (!snapshot) return EvDbStoredSnapshotResultRaw.Empty;
 

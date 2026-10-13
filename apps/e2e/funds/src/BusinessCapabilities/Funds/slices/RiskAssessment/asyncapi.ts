@@ -5,7 +5,8 @@ export const riskAssessmentAsyncApi: AsyncApiFragment = {
     "funds.outbox": {
       address: "funds.outbox",
       title: "Funds outbox (subscribed by risk service)",
-      description: "Risk service consumes FundsChanged messages from this Kafka topic and updates the per-account risk document in MongoDB.",
+      description:
+        "Risk service consumes FundsChanged messages from this Kafka topic and updates the per-account risk document in MongoDB.",
       messages: { FundsChanged: { $ref: "#/components/messages/FundsChanged" } },
       bindings: { kafka: { topic: "funds.outbox", groupId: "e2e-funds-risk" } },
     },

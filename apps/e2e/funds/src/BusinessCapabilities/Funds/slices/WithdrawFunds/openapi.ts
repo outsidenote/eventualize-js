@@ -4,7 +4,8 @@ export const withdrawFundsOpenApi: OpenAPIV3_1.PathsObject = {
   "/api/funds/withdraw": {
     post: {
       summary: "Withdraw funds from an account",
-      description: "Appends a FundsWithdrawn event to the account stream and produces a FundsChanged outbox message.",
+      description:
+        "Appends a FundsWithdrawn event to the account stream and produces a FundsChanged outbox message.",
       tags: ["Funds"],
       operationId: "withdrawFunds",
       requestBody: {

@@ -10,12 +10,21 @@ describe("WithdrawFunds commandHandler", () => {
     const stream = FundsStreamFactory.create("acc-1", storageAdapter, storageAdapter);
     stream.appendEventFundsDeposited({ accountId: "acc-1", amount: 200, currency: "USD" });
 
-    handleWithdraw(stream, { commandType: "WithdrawFunds", accountId: "acc-1", amount: 50, currency: "USD" });
+    handleWithdraw(stream, {
+      commandType: "WithdrawFunds",
+      accountId: "acc-1",
+      amount: 50,
+      currency: "USD",
+    });
 
     const events = stream.getEvents();
     const withdrawn = events.filter((e) => e.eventType === "FundsWithdrawn");
     assert.strictEqual(withdrawn.length, 1);
-    assert.deepStrictEqual(withdrawn[0].payload, { accountId: "acc-1", amount: 50, currency: "USD" });
+    assert.deepStrictEqual(withdrawn[0].payload, {
+      accountId: "acc-1",
+      amount: 50,
+      currency: "USD",
+    });
   });
 
   test("throws INSUFFICIENT_FUNDS when balance is too low", async () => {
@@ -23,7 +32,13 @@ describe("WithdrawFunds commandHandler", () => {
     const stream = FundsStreamFactory.create("acc-1", storageAdapter, storageAdapter);
 
     assert.throws(
-      () => handleWithdraw(stream, { commandType: "WithdrawFunds", accountId: "acc-1", amount: 50, currency: "USD" }),
+      () =>
+        handleWithdraw(stream, {
+          commandType: "WithdrawFunds",
+          accountId: "acc-1",
+          amount: 50,
+          currency: "USD",
+        }),
       { message: "INSUFFICIENT_FUNDS" },
     );
   });

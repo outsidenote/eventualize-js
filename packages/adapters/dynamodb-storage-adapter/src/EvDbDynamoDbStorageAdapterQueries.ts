@@ -184,13 +184,21 @@ export default class EvDbDynamoDbStorageAdapterQueries {
     return new QueryCommand(queryParams);
   }
 
-  public static getSnapshot(viewAddress: EvDbViewAddress) {
+  /**
+   * Builds the query for the latest snapshot of a view.
+   * @param viewAddress - The view address.
+   * @param maxOffset - Optional upper bound: only snapshots with offset `<= maxOffset` match.
+   * @returns A `QueryCommand` that returns at most one item: the latest matching snapshot.
+   */
+  public static getSnapshot(viewAddress: EvDbViewAddress, maxOffset?: number) {
+    const hasMax = maxOffset !== undefined;
     const queryParams = {
       TableName: "snapshots",
-      KeyConditionExpression: "view_address = :sa",
+      KeyConditionExpression: hasMax ? "view_address = :sa AND #o <= :max" : "view_address = :sa",
 
       ExpressionAttributeValues: {
         ":sa": { S: serializeViewAddress(viewAddress) },
+        ...(hasMax ? { ":max": { N: maxOffset.toString() } } : {}),
       },
       ProjectionExpression: "#o, #s, stored_at",
       ExpressionAttributeNames: {

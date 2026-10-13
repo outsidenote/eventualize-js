@@ -7,9 +7,12 @@ import { sumViewHandlers } from "./PointsViews/SumViewHandlers.js";
 import { countViewHandlers } from "./PointsViews/CountViewHandlers.js";
 
 const PointsStreamFactory = new StreamFactoryBuilder("PointsStream")
-  .withEvent("PointsAdded").asType<PointsAdded>()
-  .withEvent("PointsSubtracted").asType<PointsSubtracted>()
-  .withEvent("PointsMultiplied").asType<PointsMultiplied>()
+  .withEvent("PointsAdded")
+  .asType<PointsAdded>()
+  .withEvent("PointsSubtracted")
+  .asType<PointsSubtracted>()
+  .withEvent("PointsMultiplied")
+  .asType<PointsMultiplied>()
   .withView("Sum", { sum: 0 }, sumViewHandlers)
   .withView("Count", { count: 0 }, countViewHandlers)
   .withMessages("PointsAdded", (payload, views, metadata) => [

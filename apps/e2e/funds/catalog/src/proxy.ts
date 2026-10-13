@@ -2,7 +2,9 @@ import type { RequestHandler } from "express";
 import { createProxyMiddleware } from "http-proxy-middleware";
 import type { CatalogServiceDescriptor } from "./catalogConfig.js";
 
-export function createCatalogProxy(services: ReadonlyArray<CatalogServiceDescriptor>): RequestHandler {
+export function createCatalogProxy(
+  services: ReadonlyArray<CatalogServiceDescriptor>,
+): RequestHandler {
   const byId = new Map(services.map((s) => [s.id, s]));
 
   return (req, res, next) => {

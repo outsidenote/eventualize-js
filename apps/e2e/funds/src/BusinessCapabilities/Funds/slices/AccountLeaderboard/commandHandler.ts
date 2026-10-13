@@ -1,7 +1,10 @@
 import type { Pool } from "pg";
 import type { UpdateAccountLeaderboard } from "./command.js";
 
-export async function handleUpdateLeaderboard(cmd: UpdateAccountLeaderboard, pool: Pool): Promise<void> {
+export async function handleUpdateLeaderboard(
+  cmd: UpdateAccountLeaderboard,
+  pool: Pool,
+): Promise<void> {
   const isDeposit = cmd.delta > 0;
   const deposited = isDeposit ? cmd.delta : 0;
   const withdrawn = isDeposit ? 0 : Math.abs(cmd.delta);
@@ -19,6 +22,14 @@ export async function handleUpdateLeaderboard(cmd: UpdateAccountLeaderboard, poo
        deposit_count    = account_leaderboard.deposit_count    + $6,
        withdrawal_count = account_leaderboard.withdrawal_count + $7,
        last_activity    = NOW()`,
-    [cmd.accountId, cmd.currency, deposited, withdrawn, cmd.currentBalance, depositCount, withdrawalCount],
+    [
+      cmd.accountId,
+      cmd.currency,
+      deposited,
+      withdrawn,
+      cmd.currentBalance,
+      depositCount,
+      withdrawalCount,
+    ],
   );
 }

@@ -36,21 +36,26 @@ async function main() {
   app.get("/health", (_req, res) => res.json({ status: "ok", service: "funds-risk" }));
 
   app.get("/openapi.json", (_req, res) => {
-    res.json(composeOpenApi({
-      title: "funds-risk",
-      version: "1.0.0",
-      description: "REST endpoints for the funds risk-assessment server.",
-      paths: [riskAssessmentOpenApi],
-    }));
+    res.json(
+      composeOpenApi({
+        title: "funds-risk",
+        version: "1.0.0",
+        description: "REST endpoints for the funds risk-assessment server.",
+        paths: [riskAssessmentOpenApi],
+      }),
+    );
   });
 
   app.get("/asyncapi.json", (_req, res) => {
-    res.json(composeAsyncApi({
-      title: "funds-risk async",
-      version: "1.0.0",
-      description: "Async channels owned by funds-risk: kafka 'receive' for funds.outbox subscription.",
-      fragments: [riskAssessmentAsyncApi],
-    }));
+    res.json(
+      composeAsyncApi({
+        title: "funds-risk async",
+        version: "1.0.0",
+        description:
+          "Async channels owned by funds-risk: kafka 'receive' for funds.outbox subscription.",
+        fragments: [riskAssessmentAsyncApi],
+      }),
+    );
   });
 
   app.post("/api/risk/update", createRiskHttpHandler(riskAdapter));
@@ -58,7 +63,10 @@ async function main() {
   app.get("/api/risk/:accountId", async (req, res) => {
     try {
       const doc = await collection.findOne({ accountId: req.params.accountId });
-      if (!doc) { res.status(404).json({ error: "Account not found" }); return; }
+      if (!doc) {
+        res.status(404).json({ error: "Account not found" });
+        return;
+      }
       res.json({
         accountId: doc.accountId,
         riskLevel: doc.riskLevel,
@@ -72,14 +80,19 @@ async function main() {
   });
 
   const server = createServer(app);
-  await new Promise<void>((resolve, reject) => { server.once("error", reject); server.listen(config.port, resolve); });
+  await new Promise<void>((resolve, reject) => {
+    server.once("error", reject);
+    server.listen(config.port, resolve);
+  });
   console.log(`[Startup] risk server running at http://localhost:${config.port}`);
   console.log(`[Startup] GET  /api/risk/:accountId`);
 
   const shutdown = async (signal: string) => {
     console.log(`[Shutdown] ${signal} received`);
     await riskConsumer.stop();
-    await new Promise<void>((resolve, reject) => { server.close((err) => err ? reject(err) : resolve()); });
+    await new Promise<void>((resolve, reject) => {
+      server.close((err) => (err ? reject(err) : resolve()));
+    });
     await mongoClient.close();
     process.exit(0);
   };
@@ -88,4 +101,7 @@ async function main() {
   process.on("SIGINT", () => void shutdown("SIGINT"));
 }
 
-main().catch((err) => { console.error("[Startup] failed:", err); process.exit(1); });
+main().catch((err) => {
+  console.error("[Startup] failed:", err);
+  process.exit(1);
+});

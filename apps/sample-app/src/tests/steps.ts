@@ -55,9 +55,15 @@ export default class Steps {
     }
   }
 
-  public static createStorageAdapter(storeType: EVENT_STORE_TYPE, storeClient: StoreClientType, dynamoDbOptions: DynamoDBClientOptions | undefined): IEvDbStorageAdapter {
+  public static createStorageAdapter(
+    storeType: EVENT_STORE_TYPE,
+    storeClient: StoreClientType,
+    dynamoDbOptions: DynamoDBClientOptions | undefined,
+  ): IEvDbStorageAdapter {
     return [EVENT_STORE_TYPE.POSTGRES, EVENT_STORE_TYPE.MYSQL].includes(storeType)
-      ? new EvDbPrismaStorageAdapter(storeClient as unknown as ConstructorParameters<typeof EvDbPrismaStorageAdapter>[0])
+      ? new EvDbPrismaStorageAdapter(
+          storeClient as unknown as ConstructorParameters<typeof EvDbPrismaStorageAdapter>[0],
+        )
       : storeType === EVENT_STORE_TYPE.DYNAMODB
         ? EvDbDynamoDbStorageAdapter.withOptions(dynamoDbOptions ?? {})
         : new StorageAdapterStub();
@@ -128,5 +134,3 @@ export default class Steps {
     await admin.close();
   }
 }
-
-

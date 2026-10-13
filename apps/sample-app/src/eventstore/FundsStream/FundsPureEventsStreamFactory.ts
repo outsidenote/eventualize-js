@@ -8,11 +8,16 @@ import type { FundsRefunded } from "./FundsEvents/FundsRefunded.js";
 import type { FundsWithdrawal } from "./FundsEvents/FundsWithdrawal.js";
 
 const FundsPureEventsStreamFactory = new StreamFactoryBuilder("funds-stream")
-  .withEvent("FundsCaptured").asType<FundsCaptured>()
-  .withEvent("FundsDenied").asType<FundsDenied>()
-  .withEvent("FundsDeposited").asType<FundsDeposited>()
-  .withEvent("FundsRefunded").asType<FundsRefunded>()
-  .withEvent("FundsWithdrawal").asType<FundsWithdrawal>()
+  .withEvent("FundsCaptured")
+  .asType<FundsCaptured>()
+  .withEvent("FundsDenied")
+  .asType<FundsDenied>()
+  .withEvent("FundsDeposited")
+  .asType<FundsDeposited>()
+  .withEvent("FundsRefunded")
+  .asType<FundsRefunded>()
+  .withEvent("FundsWithdrawal")
+  .asType<FundsWithdrawal>()
   .build();
 
 export default FundsPureEventsStreamFactory;
