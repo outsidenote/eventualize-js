@@ -65,8 +65,7 @@ class RecordingStorageAdapter implements IEvDbStorageStreamAdapter {
 }
 
 const exporter = new InMemorySpanExporter();
-const provider = new NodeTracerProvider();
-provider.addSpanProcessor(new SimpleSpanProcessor(exporter));
+const provider = new NodeTracerProvider({ spanProcessors: [new SimpleSpanProcessor(exporter)] });
 
 before(() => {
   provider.register();

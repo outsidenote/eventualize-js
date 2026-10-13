@@ -21,7 +21,7 @@ const sdk = new NodeSDK({
     }),
   ],
   logRecordProcessors: [
-    new BatchLogRecordProcessor(new OTLPLogExporter({ url: `${otlpBase}/v1/logs` })),
+    new BatchLogRecordProcessor({ exporter: new OTLPLogExporter({ url: `${otlpBase}/v1/logs` }) }),
   ],
   instrumentations: [getNodeAutoInstrumentations()],
 });

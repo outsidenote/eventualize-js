@@ -13,6 +13,26 @@ A TypeScript event-sourcing library with multiple storage adapters.
 | `@eventualize/mysql-storage-adapter` | MySQL/MariaDB storage adapter |
 | `@eventualize/dynamodb-storage-adapter` | DynamoDB storage adapter |
 
+## Peer dependencies
+
+Install these in your app next to the `@eventualize/*` packages you use. The
+ranges have no upper limit, so newer versions do not cause install conflicts.
+
+| Peer | Range | Needed by | Required |
+| --- | --- | --- | --- |
+| `@aws-sdk/client-dynamodb` | `>=3.1111.0` | `@eventualize/dynamodb-storage-adapter` | Yes |
+| `@opentelemetry/api` | `>=1.7.0` | `types`, `core`, `relational-storage-adapter`, `dynamodb-storage-adapter` | No, only for tracing |
+| `eslint` | `>=9.0.0` | `@eventualize/eslint-plugin` | Yes |
+
+Prisma is a regular dependency, pinned to the version that generated the
+client in this repo. Your app can use a different Prisma version. Create the
+Prisma client with the adapter's factory (`EvDbPostgresPrismaClientFactory.create()`
+or `EvDbMySqlPrismaClientFactory.create()`). A `PrismaClient` from your app's own
+Prisma install is a different type, so do not pass it to the adapters.
+
+`@eventualize/eslint-plugin` depends on `@typescript-eslint/utils`, which
+currently supports TypeScript below 6.1 and ESLint up to 10.
+
 ## Replay: inspect a stream at a past offset
 
 `goToOffset` opens a **read-only** stream positioned on a stored event. Views
