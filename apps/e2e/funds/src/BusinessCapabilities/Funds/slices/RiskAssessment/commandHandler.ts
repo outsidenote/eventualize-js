@@ -13,7 +13,10 @@ export interface AccountRiskDoc {
   assessedAt: Date;
 }
 
-export function computeRiskLevel(transactions: Array<{ delta: number }>, currentBalance: number): RiskLevel {
+export function computeRiskLevel(
+  transactions: Array<{ delta: number }>,
+  currentBalance: number,
+): RiskLevel {
   if (transactions.length < 10) return "none";
   const avgDelta = transactions.reduce((sum, t) => sum + t.delta, 0) / transactions.length;
   if (avgDelta >= 0) return "low";
@@ -23,7 +26,10 @@ export function computeRiskLevel(transactions: Array<{ delta: number }>, current
   return "high";
 }
 
-export async function handleUpdateRisk(cmd: UpdateAccountRisk, collection: Collection<AccountRiskDoc>): Promise<void> {
+export async function handleUpdateRisk(
+  cmd: UpdateAccountRisk,
+  collection: Collection<AccountRiskDoc>,
+): Promise<void> {
   const existing = await collection.findOne({ accountId: cmd.accountId });
   const prev: TxEntry[] = existing?.transactions ?? [];
 

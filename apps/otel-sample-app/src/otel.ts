@@ -14,11 +14,15 @@ const otlpBase = process.env.OTEL_EXPORTER_OTLP_ENDPOINT ?? "http://localhost:43
 const sdk = new NodeSDK({
   serviceName: process.env.OTEL_SERVICE_NAME ?? "otel-sample-app",
   traceExporter: new OTLPTraceExporter({ url: `${otlpBase}/v1/traces` }),
-  metricReaders: [new PeriodicExportingMetricReader({
-    exporter: new OTLPMetricExporter({ url: `${otlpBase}/v1/metrics` }),
-    exportIntervalMillis: 10_000,
-  })],
-  logRecordProcessors: [new BatchLogRecordProcessor(new OTLPLogExporter({ url: `${otlpBase}/v1/logs` }))],
+  metricReaders: [
+    new PeriodicExportingMetricReader({
+      exporter: new OTLPMetricExporter({ url: `${otlpBase}/v1/metrics` }),
+      exportIntervalMillis: 10_000,
+    }),
+  ],
+  logRecordProcessors: [
+    new BatchLogRecordProcessor(new OTLPLogExporter({ url: `${otlpBase}/v1/logs` })),
+  ],
   instrumentations: [getNodeAutoInstrumentations()],
 });
 
@@ -43,5 +47,9 @@ const severityMap: Record<string, SeverityNumber> = {
 
 console.log(`[OTEL] SDK started — service=otel-sample-app traces/metrics/logs → ${otlpBase}`);
 
-process.on("SIGTERM", () => { sdk.shutdown().catch(console.error); });
-process.on("SIGINT", () => { sdk.shutdown().catch(console.error); });
+process.on("SIGTERM", () => {
+  sdk.shutdown().catch(console.error);
+});
+process.on("SIGINT", () => {
+  sdk.shutdown().catch(console.error);
+});

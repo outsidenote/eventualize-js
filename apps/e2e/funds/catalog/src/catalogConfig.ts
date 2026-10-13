@@ -2,8 +2,8 @@ export interface CatalogServiceDescriptor {
   readonly id: string;
   readonly displayName: string;
   readonly baseUrl: string;
-  readonly openApiPath?: string;   // default: "/openapi.json"
-  readonly asyncApiPath?: string;  // default: "/asyncapi.json"
+  readonly openApiPath?: string; // default: "/openapi.json"
+  readonly asyncApiPath?: string; // default: "/asyncapi.json"
 }
 
 export interface CatalogConfig {

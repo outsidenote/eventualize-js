@@ -1,4 +1,4 @@
 export type FundsRefunded = {
-    readonly amount: number;
-    readonly Currency: string;
+  readonly amount: number;
+  readonly Currency: string;
 };

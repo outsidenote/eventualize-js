@@ -10,7 +10,10 @@ import EvDbPrismaStorageAdapter from "@eventualize/relational-storage-adapter/Ev
 import { createDepositHttpHandler } from "#BusinessCapabilities/Funds/slices/DepositFunds/http/index.js";
 import { createWithdrawHttpHandler } from "#BusinessCapabilities/Funds/slices/WithdrawFunds/http/index.js";
 import { createLeaderboardAdapter } from "#BusinessCapabilities/Funds/slices/AccountLeaderboard/adapter.js";
-import { registerLeaderboardWorker, LEADERBOARD_QUEUE } from "#BusinessCapabilities/Funds/slices/AccountLeaderboard/pgboss/index.js";
+import {
+  registerLeaderboardWorker,
+  LEADERBOARD_QUEUE,
+} from "#BusinessCapabilities/Funds/slices/AccountLeaderboard/pgboss/index.js";
 import { createLeaderboardHttpHandler } from "#BusinessCapabilities/Funds/slices/AccountLeaderboard/http/index.js";
 import { composeOpenApi, composeAsyncApi } from "#abstractions/catalog/composeSpecs.js";
 import { depositFundsOpenApi } from "#BusinessCapabilities/Funds/slices/DepositFunds/openapi.js";
@@ -20,7 +23,8 @@ import { fundsOutboxAsyncApi } from "#BusinessCapabilities/Funds/swimlanes/Funds
 import { leaderboardAsyncApi } from "#BusinessCapabilities/Funds/slices/AccountLeaderboard/asyncapi.js";
 
 const config = {
-  postgresConnection: process.env.POSTGRES_CONNECTION ?? "postgres://funds:funds123@localhost:5434/funds",
+  postgresConnection:
+    process.env.POSTGRES_CONNECTION ?? "postgres://funds:funds123@localhost:5434/funds",
   port: Number(process.env.PORT ?? 3014),
 };
 
@@ -81,21 +85,27 @@ async function main() {
   app.get("/health", (_req, res) => res.json({ status: "ok", service: "funds-main" }));
 
   app.get("/openapi.json", (_req, res) => {
-    res.json(composeOpenApi({
-      title: "funds-main",
-      version: "1.0.0",
-      description: "REST endpoints for the funds main server (deposits, withdrawals, leaderboard view).",
-      paths: [depositFundsOpenApi, withdrawFundsOpenApi, accountLeaderboardOpenApi],
-    }));
+    res.json(
+      composeOpenApi({
+        title: "funds-main",
+        version: "1.0.0",
+        description:
+          "REST endpoints for the funds main server (deposits, withdrawals, leaderboard view).",
+        paths: [depositFundsOpenApi, withdrawFundsOpenApi, accountLeaderboardOpenApi],
+      }),
+    );
   });
 
   app.get("/asyncapi.json", (_req, res) => {
-    res.json(composeAsyncApi({
-      title: "funds-main async",
-      version: "1.0.0",
-      description: "Async channels owned by funds-main: outbox 'send' (broadcast) + pg-boss 'receive' (P2P consumer).",
-      fragments: [fundsOutboxAsyncApi, leaderboardAsyncApi],
-    }));
+    res.json(
+      composeAsyncApi({
+        title: "funds-main async",
+        version: "1.0.0",
+        description:
+          "Async channels owned by funds-main: outbox 'send' (broadcast) + pg-boss 'receive' (P2P consumer).",
+        fragments: [fundsOutboxAsyncApi, leaderboardAsyncApi],
+      }),
+    );
   });
 
   app.post("/api/funds/deposit", createDepositHttpHandler(storageAdapter));
@@ -118,7 +128,10 @@ async function main() {
   });
 
   const server = createServer(app);
-  await new Promise<void>((resolve, reject) => { server.once("error", reject); server.listen(config.port, resolve); });
+  await new Promise<void>((resolve, reject) => {
+    server.once("error", reject);
+    server.listen(config.port, resolve);
+  });
   console.log(`[Startup] funds server running at http://localhost:${config.port}`);
   console.log(`[Startup] POST /api/funds/deposit | POST /api/funds/withdraw`);
   console.log(`[Startup] GET  /api/funds/leaderboard`);
@@ -127,7 +140,9 @@ async function main() {
     console.log(`[Shutdown] ${signal} received`);
     await Promise.allSettled([
       boss.stop(),
-      new Promise<void>((resolve, reject) => { server.close((err) => err ? reject(err) : resolve()); }),
+      new Promise<void>((resolve, reject) => {
+        server.close((err) => (err ? reject(err) : resolve()));
+      }),
       pool.end(),
     ]);
     process.exit(0);
@@ -137,4 +152,7 @@ async function main() {
   process.on("SIGINT", () => void shutdown("SIGINT"));
 }
 
-main().catch((err) => { console.error("[Startup] failed:", err); process.exit(1); });
+main().catch((err) => {
+  console.error("[Startup] failed:", err);
+  process.exit(1);
+});

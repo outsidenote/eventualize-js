@@ -18,10 +18,16 @@ export function createDepositHttpHandler(storageAdapter: IEvDbStorageAdapter) {
         amount: Number(amount),
         currency: String(currency ?? "USD"),
       });
-      res.json({ streamId: result.streamId, emittedEventTypes: result.events.map((e) => e.eventType) });
+      res.json({
+        streamId: result.streamId,
+        emittedEventTypes: result.events.map((e) => e.eventType),
+      });
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      if (msg === "OPTIMISTIC_CONCURRENCY_VIOLATION") { res.status(409).json({ error: "Concurrent modification" }); return; }
+      if (msg === "OPTIMISTIC_CONCURRENCY_VIOLATION") {
+        res.status(409).json({ error: "Concurrent modification" });
+        return;
+      }
       console.error("[DepositFunds] error:", err);
       res.status(500).json({ error: msg });
     }

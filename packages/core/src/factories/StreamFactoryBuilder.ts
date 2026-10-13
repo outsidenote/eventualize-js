@@ -27,10 +27,18 @@ export class EventTypeStep<
   TName extends string,
   TEventMap extends Record<string, object> = {},
 > {
-  constructor(private builder: StreamFactoryBuilder<TStreamType, TViews, TEventMap>) { }
+  constructor(private builder: StreamFactoryBuilder<TStreamType, TViews, TEventMap>) {}
 
-  asType<TEvent extends object>(): StreamFactoryBuilder<TStreamType, TViews, TEventMap & Record<TName, TEvent>> {
-    return this.builder as unknown as StreamFactoryBuilder<TStreamType, TViews, TEventMap & Record<TName, TEvent>>;
+  asType<TEvent extends object>(): StreamFactoryBuilder<
+    TStreamType,
+    TViews,
+    TEventMap & Record<TName, TEvent>
+  > {
+    return this.builder as unknown as StreamFactoryBuilder<
+      TStreamType,
+      TViews,
+      TEventMap & Record<TName, TEvent>
+    >;
   }
 }
 
@@ -46,7 +54,7 @@ export class StreamFactoryBuilder<
   private eventTypes: EventTypeConfig[] = [];
   private viewNames: string[] = [];
 
-  constructor(private streamType: TStreamType) { }
+  constructor(private streamType: TStreamType) {}
 
   /**
    * Register a plain object event type by name.
@@ -59,7 +67,9 @@ export class StreamFactoryBuilder<
     this.eventTypes.push({
       eventName: eventType,
     } as EventTypeConfig);
-    return new EventTypeStep<TStreamType, TViews, typeof eventType, TEventMap>(this as unknown as StreamFactoryBuilder<TStreamType, TViews, TEventMap>);
+    return new EventTypeStep<TStreamType, TViews, typeof eventType, TEventMap>(
+      this as unknown as StreamFactoryBuilder<TStreamType, TViews, TEventMap>,
+    );
   }
 
   /**
@@ -81,7 +91,11 @@ export class StreamFactoryBuilder<
 
     this.viewFactories.push(viewFactory as unknown as ViewFactory<unknown, TEventMap>);
     this.viewNames.push(viewName);
-    return this as unknown as StreamFactoryBuilder<TStreamType, TViews & Record<TViewName, TState>, TEventMap>;
+    return this as unknown as StreamFactoryBuilder<
+      TStreamType,
+      TViews & Record<TViewName, TState>,
+      TEventMap
+    >;
   }
 
   /**
@@ -96,14 +110,10 @@ export class StreamFactoryBuilder<
       metadata: IEvDbEventMetadata,
     ) => EvDbMessage[],
   ): this {
-    const config = this.eventTypes.find(e => e.eventName === eventType);
+    const config = this.eventTypes.find((e) => e.eventName === eventType);
     if (config) {
       config.eventMessagesProducer = (event, viewStates) => {
-        return producer(
-          event.payload as TEventMap[TName],
-          viewStates as Readonly<TViews>,
-          event,
-        );
+        return producer(event.payload as TEventMap[TName], viewStates as Readonly<TViews>, event);
       };
     }
     return this;

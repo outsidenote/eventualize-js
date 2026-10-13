@@ -20,14 +20,20 @@ const processes = servers.map(({ name, file, color }) => {
   });
 
   child.stdout.on("data", (chunk: Buffer) =>
-    chunk.toString().split("\n").filter(Boolean).forEach((line) => console.log(`${prefix} ${line}`)),
+    chunk
+      .toString()
+      .split("\n")
+      .filter(Boolean)
+      .forEach((line) => console.log(`${prefix} ${line}`)),
   );
   child.stderr.on("data", (chunk: Buffer) =>
-    chunk.toString().split("\n").filter(Boolean).forEach((line) => console.error(`${prefix} ${line}`)),
+    chunk
+      .toString()
+      .split("\n")
+      .filter(Boolean)
+      .forEach((line) => console.error(`${prefix} ${line}`)),
   );
-  child.on("exit", (code, signal) =>
-    console.log(`${prefix} exited (code=${code ?? signal})`),
-  );
+  child.on("exit", (code, signal) => console.log(`${prefix} exited (code=${code ?? signal})`));
 
   return child;
 });

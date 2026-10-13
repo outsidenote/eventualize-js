@@ -26,10 +26,10 @@ describe("AccountLeaderboard commandHandler", () => {
 
     assert.strictEqual(queries.length, 1);
     assert.ok(queries[0].sql.includes("INSERT INTO account_leaderboard"));
-    assert.strictEqual(queries[0].params[0], "acc-1");   // accountId
-    assert.strictEqual(queries[0].params[2], 100);        // total_deposited increment
-    assert.strictEqual(queries[0].params[3], 0);          // total_withdrawn increment
-    assert.strictEqual(queries[0].params[4], 100);        // last_balance
+    assert.strictEqual(queries[0].params[0], "acc-1"); // accountId
+    assert.strictEqual(queries[0].params[2], 100); // total_deposited increment
+    assert.strictEqual(queries[0].params[3], 0); // total_withdrawn increment
+    assert.strictEqual(queries[0].params[4], 100); // last_balance
   });
 
   test("executes SQL UPSERT with correct withdrawal params", async () => {
@@ -52,7 +52,7 @@ describe("AccountLeaderboard commandHandler", () => {
 
     await handleUpdateLeaderboard(cmd, mockPool as never);
 
-    assert.strictEqual(queries[0].params[2], 0);    // total_deposited increment = 0
-    assert.strictEqual(queries[0].params[3], 50);   // total_withdrawn increment = abs(delta)
+    assert.strictEqual(queries[0].params[2], 0); // total_deposited increment = 0
+    assert.strictEqual(queries[0].params[3], 50); // total_withdrawn increment = abs(delta)
   });
 });

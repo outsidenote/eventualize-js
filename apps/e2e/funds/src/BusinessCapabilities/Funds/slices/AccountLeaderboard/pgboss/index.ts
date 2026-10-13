@@ -30,7 +30,9 @@ export async function registerLeaderboardWorker(
       currency: payload.currency,
       transactionId: payload.transactionId,
     });
-    console.log(`[Leaderboard/pgboss] account=${payload.accountId} balance=${payload.currentBalance}`);
+    console.log(
+      `[Leaderboard/pgboss] account=${payload.accountId} balance=${payload.currentBalance}`,
+    );
   });
 
   console.log(`[Leaderboard/pgboss] worker registered for ${LEADERBOARD_QUEUE}`);

@@ -1,3 +1,3 @@
 export type PointsMultiplied = {
-  readonly multiplier: number
-}
+  readonly multiplier: number;
+};

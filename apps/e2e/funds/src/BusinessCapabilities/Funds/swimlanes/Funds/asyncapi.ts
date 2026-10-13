@@ -11,7 +11,8 @@ export const fundsOutboxAsyncApi: AsyncApiFragment = {
     "funds.outbox": {
       address: "funds.outbox",
       title: "Funds outbox (Kafka via Debezium CDC)",
-      description: "Every FundsDeposited / FundsWithdrawn event in the funds stream produces a FundsChanged outbox row, which Debezium publishes to this Kafka topic.",
+      description:
+        "Every FundsDeposited / FundsWithdrawn event in the funds stream produces a FundsChanged outbox row, which Debezium publishes to this Kafka topic.",
       messages: { FundsChanged: { $ref: "#/components/messages/FundsChanged" } },
       bindings: { kafka: { topic: "funds.outbox" } },
     },
@@ -36,7 +37,10 @@ export const fundsOutboxAsyncApi: AsyncApiFragment = {
           properties: {
             accountId: { type: "string" },
             currentBalance: { type: "number" },
-            delta: { type: "number", description: "Positive for deposits, negative for withdrawals" },
+            delta: {
+              type: "number",
+              description: "Positive for deposits, negative for withdrawals",
+            },
             currency: { type: "string" },
             transactionId: { type: "string" },
           },

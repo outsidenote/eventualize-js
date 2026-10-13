@@ -9,11 +9,16 @@ import type { FundsWithdrawal } from "./FundsEvents/FundsWithdrawal.js";
 import EvDbMessage from "@eventualize/types/messages/EvDbMessage";
 
 const FundsEventsAndViewsStreamFactory = new StreamFactoryBuilder("funds-stream")
-  .withEvent("FundsCaptured").asType<FundsCaptured>()
-  .withEvent("FundsDenied").asType<FundsDenied>()
-  .withEvent("FundsDeposited").asType<FundsDeposited>()
-  .withEvent("FundsRefunded").asType<FundsRefunded>()
-  .withEvent("FundsWithdrawal").asType<FundsWithdrawal>()
+  .withEvent("FundsCaptured")
+  .asType<FundsCaptured>()
+  .withEvent("FundsDenied")
+  .asType<FundsDenied>()
+  .withEvent("FundsDeposited")
+  .asType<FundsDeposited>()
+  .withEvent("FundsRefunded")
+  .asType<FundsRefunded>()
+  .withEvent("FundsWithdrawal")
+  .asType<FundsWithdrawal>()
   .withView("balance", 0, {
     FundsDeposited: (state, event) => state + event.amount,
     FundsRefunded: (state, event) => state - event.amount,
@@ -27,12 +32,10 @@ const FundsEventsAndViewsStreamFactory = new StreamFactoryBuilder("funds-stream"
     FundsWithdrawal: (state) => state.set("withdrawal", (state.get("withdrawal") ?? 0) + 1),
   })
   .withMessages("FundsCaptured", (payload, views, metadata) => [
-    EvDbMessage.createFromMetadata(metadata,
-      "Funds Captured with Balance Notification",
-      {
-        amountCaptured: payload.amount,
-        balanceAfterCapture: views.balance,
-      }),
+    EvDbMessage.createFromMetadata(metadata, "Funds Captured with Balance Notification", {
+      amountCaptured: payload.amount,
+      balanceAfterCapture: views.balance,
+    }),
   ])
   .build();
 

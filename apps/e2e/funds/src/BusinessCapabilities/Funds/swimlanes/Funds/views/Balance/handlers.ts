@@ -4,9 +4,15 @@ import type { BalanceViewState } from "./state.js";
 import type IEvDbEventMetadata from "@eventualize/types/events/IEvDbEventMetadata";
 
 export const handlers = {
-  FundsDeposited: (state: BalanceViewState, event: FundsDeposited, _meta: IEvDbEventMetadata): BalanceViewState =>
-    state + event.amount,
+  FundsDeposited: (
+    state: BalanceViewState,
+    event: FundsDeposited,
+    _meta: IEvDbEventMetadata,
+  ): BalanceViewState => state + event.amount,
 
-  FundsWithdrawn: (state: BalanceViewState, event: FundsWithdrawn, _meta: IEvDbEventMetadata): BalanceViewState =>
-    state - event.amount,
+  FundsWithdrawn: (
+    state: BalanceViewState,
+    event: FundsWithdrawn,
+    _meta: IEvDbEventMetadata,
+  ): BalanceViewState => state - event.amount,
 };

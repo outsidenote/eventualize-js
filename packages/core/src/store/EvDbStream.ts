@@ -123,11 +123,14 @@ export default class EvDbStream implements IEvDbStreamStore, IEvDbStreamStoreDat
     lastStoredOffset: number,
     protected messagesProducer: EVDbMessagesProducer,
   ) {
-    this._views = views.reduce((acc, view) => {
-      const viewName = view.address.viewName;
-      acc[viewName] = view;
-      return acc;
-    }, {} as Record<string, IEvDbViewStore>) as ImmutableIEvDbViewMap;
+    this._views = views.reduce(
+      (acc, view) => {
+        const viewName = view.address.viewName;
+        acc[viewName] = view;
+        return acc;
+      },
+      {} as Record<string, IEvDbViewStore>,
+    ) as ImmutableIEvDbViewMap;
     this._storageAdapter = storageAdapter;
     this.streamAddress = new EvDbStreamAddress(streamType, streamId);
     this.storedOffset = lastStoredOffset;

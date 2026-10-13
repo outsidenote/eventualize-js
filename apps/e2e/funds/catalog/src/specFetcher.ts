@@ -26,10 +26,7 @@ export interface ServiceSpecResult {
   readonly error?: string;
 }
 
-async function retryFetchJson(
-  url: string,
-  opts: FetchOptions,
-): Promise<unknown> {
+async function retryFetchJson(url: string, opts: FetchOptions): Promise<unknown> {
   const fetchImpl = opts.fetchImpl ?? fetch;
   const startedAt = Date.now();
   let delay = opts.initialDelayMs;
@@ -72,8 +69,10 @@ export async function fetchServiceSpecs(
   else status = "partial";
 
   const errors: string[] = [];
-  if (openApiSettled.status === "rejected") errors.push(`openapi: ${String(openApiSettled.reason)}`);
-  if (asyncApiSettled.status === "rejected") errors.push(`asyncapi: ${String(asyncApiSettled.reason)}`);
+  if (openApiSettled.status === "rejected")
+    errors.push(`openapi: ${String(openApiSettled.reason)}`);
+  if (asyncApiSettled.status === "rejected")
+    errors.push(`asyncapi: ${String(asyncApiSettled.reason)}`);
 
   return {
     id: svc.id,

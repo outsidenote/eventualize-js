@@ -5,8 +5,10 @@ import { viewName, defaultState, handlers } from "./views/Balance/index.js";
 import { depositedMessages, withdrawnMessages } from "./messages/fundsChangedMessages.js";
 
 const FundsStreamFactory = new StreamFactoryBuilder("funds-stream")
-  .withEvent("FundsDeposited").asType<FundsDeposited>()
-  .withEvent("FundsWithdrawn").asType<FundsWithdrawn>()
+  .withEvent("FundsDeposited")
+  .asType<FundsDeposited>()
+  .withEvent("FundsWithdrawn")
+  .asType<FundsWithdrawn>()
   .withView(viewName, defaultState, handlers)
   .withMessages("FundsDeposited", depositedMessages)
   .withMessages("FundsWithdrawn", withdrawnMessages)

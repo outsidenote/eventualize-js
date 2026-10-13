@@ -145,12 +145,10 @@ export class EvDbStreamFactory<
   TEventMap extends Record<string, object>,
   TStreamType extends string,
   TViews extends Record<string, unknown> = {},
-> implements IEvDbStreamFactory<TEventMap, TStreamType, TViews>
-{
-  private DynamicStreamClass: new (...args: StreamCtorArgs) => StreamWithEventMethods<
-    TEventMap,
-    TViews
-  >;
+> implements IEvDbStreamFactory<TEventMap, TStreamType, TViews> {
+  private DynamicStreamClass: new (
+    ...args: StreamCtorArgs
+  ) => StreamWithEventMethods<TEventMap, TViews>;
   private ReplayStreamClass: new (...args: StreamCtorArgs) => IEvDbReplayTarget<TViews>;
   private CloneStreamClass: new (...args: StreamCtorArgs) => IEvDbCloneTarget;
 

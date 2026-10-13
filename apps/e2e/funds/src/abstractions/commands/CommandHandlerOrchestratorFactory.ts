@@ -1,6 +1,13 @@
-import type { CommandHandler, CommandHandlerOrchestrator, CommandHandlerOrchestratorResult } from "./commandHandler.js";
+import type {
+  CommandHandler,
+  CommandHandlerOrchestrator,
+  CommandHandlerOrchestratorResult,
+} from "./commandHandler.js";
 import type { IEvDbStorageAdapter } from "@eventualize/core/adapters/IEvDbStorageAdapter";
-import type { EvDbStreamFactory, StreamWithEventMethods } from "@eventualize/core/factories/EvDbStreamFactory";
+import type {
+  EvDbStreamFactory,
+  StreamWithEventMethods,
+} from "@eventualize/core/factories/EvDbStreamFactory";
 
 export class CommandHandlerOrchestratorFactory {
   static create<
@@ -16,11 +23,11 @@ export class CommandHandlerOrchestratorFactory {
   ): CommandHandlerOrchestrator<TCommand> {
     return async (command: TCommand): Promise<CommandHandlerOrchestratorResult> => {
       const streamId = getStreamId(command);
-      const stream = await streamFactory.get(
+      const stream = (await streamFactory.get(
         streamId,
         storageAdapter,
         storageAdapter,
-      ) as StreamWithEventMethods<TEventMap, TViews>;
+      )) as StreamWithEventMethods<TEventMap, TViews>;
 
       commandHandler(stream, command);
 

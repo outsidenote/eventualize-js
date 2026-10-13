@@ -4,7 +4,8 @@ export const depositFundsOpenApi: OpenAPIV3_1.PathsObject = {
   "/api/funds/deposit": {
     post: {
       summary: "Deposit funds into an account",
-      description: "Appends a FundsDeposited event to the account stream and produces a FundsChanged outbox message.",
+      description:
+        "Appends a FundsDeposited event to the account stream and produces a FundsChanged outbox message.",
       tags: ["Funds"],
       operationId: "depositFunds",
       requestBody: {

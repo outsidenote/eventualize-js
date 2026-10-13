@@ -25,10 +25,7 @@ describe("eventualizeInstrumentation", () => {
     const { eventualizeInstrumentation, EVDB_TRACER_NAMES } = await import("./tracers.js");
     const info = eventualizeInstrumentation();
     assert.ok(Array.isArray(info.tracerNames));
-    assert.deepStrictEqual(
-      info.tracerNames,
-      Object.values(EVDB_TRACER_NAMES),
-    );
+    assert.deepStrictEqual(info.tracerNames, Object.values(EVDB_TRACER_NAMES));
     assert.strictEqual(info.resourceAttributes["eventualize.sdk.language"], "typescript");
     assert.ok(info.resourceAttributes["eventualize.sdk.version"]);
   });
@@ -55,7 +52,10 @@ describe("withSpan", () => {
 
     const err = new Error("oops");
     await assert.rejects(
-      () => withSpan(tracer, "test.err", async () => { throw err; }),
+      () =>
+        withSpan(tracer, "test.err", async () => {
+          throw err;
+        }),
       err,
     );
 

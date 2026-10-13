@@ -5,7 +5,9 @@ import FundsStreamFactory from "../../swimlanes/Funds/index.js";
 import { handleDeposit } from "./commandHandler.js";
 import type { DepositFunds } from "./command.js";
 
-export function createDepositAdapter(storageAdapter: IEvDbStorageAdapter): CommandHandlerOrchestrator<DepositFunds> {
+export function createDepositAdapter(
+  storageAdapter: IEvDbStorageAdapter,
+): CommandHandlerOrchestrator<DepositFunds> {
   return CommandHandlerOrchestratorFactory.create(
     storageAdapter,
     FundsStreamFactory,
