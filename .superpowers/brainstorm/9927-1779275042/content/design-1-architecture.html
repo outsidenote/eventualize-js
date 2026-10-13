@@ -1,0 +1,85 @@
+<h2>Design — Architecture Overview</h2>
+<p class="subtitle">A new <code>catalog-server</code> process joins the funds e2e app. It fetches specs from the other two servers and serves a Vite SPA.</p>
+
+<div class="mockup">
+  <div class="mockup-header">System topology — apps/e2e/funds</div>
+  <div class="mockup-body" style="font-size:12px">
+    <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap">
+
+      <!-- index.ts orchestrator -->
+      <div style="background:#1e1e2e;border:1px solid #444;border-radius:6px;padding:12px;min-width:160px">
+        <div style="color:#cba6f7;font-weight:bold;margin-bottom:8px">index.ts (orchestrator)</div>
+        <div style="color:#89b4fa;font-size:11px">spawns ↓</div>
+        <div style="color:#a6e3a1;margin-top:6px;font-size:11px">▸ server.ts</div>
+        <div style="color:#a6e3a1;font-size:11px">▸ risk-server.ts</div>
+        <div style="color:#f9e2af;font-size:11px">▸ catalog-server.ts <span style="color:#f38ba8">NEW</span></div>
+      </div>
+
+      <div style="color:#585b70;font-size:20px;align-self:center">→</div>
+
+      <!-- Three servers -->
+      <div style="display:flex;flex-direction:column;gap:10px">
+
+        <div style="background:#1e1e2e;border:1px solid #313244;border-radius:6px;padding:10px;min-width:200px">
+          <div style="color:#a6e3a1;font-weight:bold;font-size:11px">funds-main :3014</div>
+          <div style="color:#585b70;font-size:10px;margin-top:4px">POST /api/funds/deposit</div>
+          <div style="color:#585b70;font-size:10px">POST /api/funds/withdraw</div>
+          <div style="color:#585b70;font-size:10px">GET  /api/funds/leaderboard</div>
+          <div style="color:#89b4fa;font-size:10px;margin-top:4px">GET  /openapi.json  ← <span style="color:#f9e2af">NEW</span></div>
+        </div>
+
+        <div style="background:#1e1e2e;border:1px solid #313244;border-radius:6px;padding:10px;min-width:200px">
+          <div style="color:#cba6f7;font-weight:bold;font-size:11px">funds-risk :3013</div>
+          <div style="color:#585b70;font-size:10px;margin-top:4px">GET  /api/risk/:accountId</div>
+          <div style="color:#585b70;font-size:10px">POST /api/risk/update</div>
+          <div style="color:#89b4fa;font-size:10px;margin-top:4px">GET  /openapi.json  ← <span style="color:#f9e2af">NEW</span></div>
+        </div>
+
+        <div style="background:#1e1e2e;border:2px solid #f9e2af;border-radius:6px;padding:10px;min-width:200px">
+          <div style="color:#f9e2af;font-weight:bold;font-size:11px">catalog-server :3099  NEW</div>
+          <div style="color:#585b70;font-size:10px;margin-top:4px">GET  /api/specs  (aggregated)</div>
+          <div style="color:#585b70;font-size:10px">GET  /*           (Vite SPA)</div>
+        </div>
+
+      </div>
+
+      <div style="color:#585b70;font-size:20px;align-self:center">→</div>
+
+      <!-- Data sources -->
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="background:#1e1e2e;border:1px solid #313244;border-radius:6px;padding:10px;font-size:11px">
+          <div style="color:#89b4fa;font-weight:bold">Startup fetch</div>
+          <div style="color:#a6e3a1;margin-top:4px">← :3014/openapi.json</div>
+          <div style="color:#cba6f7">← :3013/openapi.json</div>
+        </div>
+        <div style="background:#1e1e2e;border:1px solid #313244;border-radius:6px;padding:10px;font-size:11px">
+          <div style="color:#89b4fa;font-weight:bold">Static file</div>
+          <div style="color:#f9e2af;margin-top:4px">← asyncapi.yaml</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:16px">
+  <h3>New files</h3>
+  <div style="background:#1e1e2e;border-radius:6px;padding:12px;font-size:11px;color:#cdd6f4;font-family:monospace">
+    apps/e2e/funds/<br/>
+    ├── asyncapi.yaml            <span style="color:#f9e2af">← NEW: async spec</span><br/>
+    ├── catalog/<br/>
+    │   ├── package.json<br/>
+    │   ├── vite.config.ts<br/>
+    │   ├── index.html<br/>
+    │   ├── src/<br/>
+    │   │   ├── server.ts        <span style="color:#f9e2af">← Express + /api/specs</span><br/>
+    │   │   ├── App.tsx          <span style="color:#f9e2af">← SwaggerUI + AsyncAPI</span><br/>
+    │   │   └── main.tsx<br/>
+    │   └── dist/                <span style="color:#585b70">← Vite build output</span><br/>
+    └── src/<br/>
+        ├── server.ts            <span style="color:#a6e3a1">← adds /openapi.json</span><br/>
+        └── risk-server.ts       <span style="color:#a6e3a1">← adds /openapi.json</span>
+  </div>
+</div>
+
+<p class="subtitle" style="margin-top:16px">Does this architecture look right? Let me know in the terminal.</p>

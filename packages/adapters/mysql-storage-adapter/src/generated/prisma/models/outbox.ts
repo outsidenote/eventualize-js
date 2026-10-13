@@ -43,7 +43,8 @@ export type OutboxMinAggregateOutputType = {
   channel: string | null
   message_type: string | null
   serialize_type: string | null
-  telemetry_context: runtime.Bytes | null
+  traceparent: string | null
+  tracestate: string | null
   captured_by: string | null
   captured_at: Date | null
   stored_at: Date | null
@@ -58,7 +59,8 @@ export type OutboxMaxAggregateOutputType = {
   channel: string | null
   message_type: string | null
   serialize_type: string | null
-  telemetry_context: runtime.Bytes | null
+  traceparent: string | null
+  tracestate: string | null
   captured_by: string | null
   captured_at: Date | null
   stored_at: Date | null
@@ -73,7 +75,8 @@ export type OutboxCountAggregateOutputType = {
   channel: number
   message_type: number
   serialize_type: number
-  telemetry_context: number
+  traceparent: number
+  tracestate: number
   captured_by: number
   captured_at: number
   stored_at: number
@@ -99,7 +102,8 @@ export type OutboxMinAggregateInputType = {
   channel?: true
   message_type?: true
   serialize_type?: true
-  telemetry_context?: true
+  traceparent?: true
+  tracestate?: true
   captured_by?: true
   captured_at?: true
   stored_at?: true
@@ -114,7 +118,8 @@ export type OutboxMaxAggregateInputType = {
   channel?: true
   message_type?: true
   serialize_type?: true
-  telemetry_context?: true
+  traceparent?: true
+  tracestate?: true
   captured_by?: true
   captured_at?: true
   stored_at?: true
@@ -129,7 +134,8 @@ export type OutboxCountAggregateInputType = {
   channel?: true
   message_type?: true
   serialize_type?: true
-  telemetry_context?: true
+  traceparent?: true
+  tracestate?: true
   captured_by?: true
   captured_at?: true
   stored_at?: true
@@ -232,7 +238,8 @@ export type OutboxGroupByOutputType = {
   channel: string
   message_type: string
   serialize_type: string
-  telemetry_context: runtime.Bytes | null
+  traceparent: string | null
+  tracestate: string | null
   captured_by: string
   captured_at: Date
   stored_at: Date
@@ -244,7 +251,7 @@ export type OutboxGroupByOutputType = {
   _max: OutboxMaxAggregateOutputType | null
 }
 
-type GetOutboxGroupByPayload<T extends outboxGroupByArgs> = Prisma.PrismaPromise<
+export type GetOutboxGroupByPayload<T extends outboxGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<OutboxGroupByOutputType, T['by']> &
       {
@@ -271,7 +278,8 @@ export type outboxWhereInput = {
   channel?: Prisma.StringFilter<"outbox"> | string
   message_type?: Prisma.StringFilter<"outbox"> | string
   serialize_type?: Prisma.StringFilter<"outbox"> | string
-  telemetry_context?: Prisma.BytesNullableFilter<"outbox"> | runtime.Bytes | null
+  traceparent?: Prisma.StringNullableFilter<"outbox"> | string | null
+  tracestate?: Prisma.StringNullableFilter<"outbox"> | string | null
   captured_by?: Prisma.StringFilter<"outbox"> | string
   captured_at?: Prisma.DateTimeFilter<"outbox"> | Date | string
   stored_at?: Prisma.DateTimeFilter<"outbox"> | Date | string
@@ -287,7 +295,8 @@ export type outboxOrderByWithRelationInput = {
   channel?: Prisma.SortOrder
   message_type?: Prisma.SortOrder
   serialize_type?: Prisma.SortOrder
-  telemetry_context?: Prisma.SortOrderInput | Prisma.SortOrder
+  traceparent?: Prisma.SortOrderInput | Prisma.SortOrder
+  tracestate?: Prisma.SortOrderInput | Prisma.SortOrder
   captured_by?: Prisma.SortOrder
   captured_at?: Prisma.SortOrder
   stored_at?: Prisma.SortOrder
@@ -308,7 +317,8 @@ export type outboxWhereUniqueInput = Prisma.AtLeast<{
   channel?: Prisma.StringFilter<"outbox"> | string
   message_type?: Prisma.StringFilter<"outbox"> | string
   serialize_type?: Prisma.StringFilter<"outbox"> | string
-  telemetry_context?: Prisma.BytesNullableFilter<"outbox"> | runtime.Bytes | null
+  traceparent?: Prisma.StringNullableFilter<"outbox"> | string | null
+  tracestate?: Prisma.StringNullableFilter<"outbox"> | string | null
   captured_by?: Prisma.StringFilter<"outbox"> | string
   captured_at?: Prisma.DateTimeFilter<"outbox"> | Date | string
   stored_at?: Prisma.DateTimeFilter<"outbox"> | Date | string
@@ -324,7 +334,8 @@ export type outboxOrderByWithAggregationInput = {
   channel?: Prisma.SortOrder
   message_type?: Prisma.SortOrder
   serialize_type?: Prisma.SortOrder
-  telemetry_context?: Prisma.SortOrderInput | Prisma.SortOrder
+  traceparent?: Prisma.SortOrderInput | Prisma.SortOrder
+  tracestate?: Prisma.SortOrderInput | Prisma.SortOrder
   captured_by?: Prisma.SortOrder
   captured_at?: Prisma.SortOrder
   stored_at?: Prisma.SortOrder
@@ -348,7 +359,8 @@ export type outboxScalarWhereWithAggregatesInput = {
   channel?: Prisma.StringWithAggregatesFilter<"outbox"> | string
   message_type?: Prisma.StringWithAggregatesFilter<"outbox"> | string
   serialize_type?: Prisma.StringWithAggregatesFilter<"outbox"> | string
-  telemetry_context?: Prisma.BytesNullableWithAggregatesFilter<"outbox"> | runtime.Bytes | null
+  traceparent?: Prisma.StringNullableWithAggregatesFilter<"outbox"> | string | null
+  tracestate?: Prisma.StringNullableWithAggregatesFilter<"outbox"> | string | null
   captured_by?: Prisma.StringWithAggregatesFilter<"outbox"> | string
   captured_at?: Prisma.DateTimeWithAggregatesFilter<"outbox"> | Date | string
   stored_at?: Prisma.DateTimeWithAggregatesFilter<"outbox"> | Date | string
@@ -364,7 +376,8 @@ export type outboxCreateInput = {
   channel: string
   message_type: string
   serialize_type: string
-  telemetry_context?: runtime.Bytes | null
+  traceparent?: string | null
+  tracestate?: string | null
   captured_by: string
   captured_at: Date | string
   stored_at?: Date | string
@@ -380,7 +393,8 @@ export type outboxUncheckedCreateInput = {
   channel: string
   message_type: string
   serialize_type: string
-  telemetry_context?: runtime.Bytes | null
+  traceparent?: string | null
+  tracestate?: string | null
   captured_by: string
   captured_at: Date | string
   stored_at?: Date | string
@@ -396,7 +410,8 @@ export type outboxUpdateInput = {
   channel?: Prisma.StringFieldUpdateOperationsInput | string
   message_type?: Prisma.StringFieldUpdateOperationsInput | string
   serialize_type?: Prisma.StringFieldUpdateOperationsInput | string
-  telemetry_context?: Prisma.NullableBytesFieldUpdateOperationsInput | runtime.Bytes | null
+  traceparent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tracestate?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   captured_by?: Prisma.StringFieldUpdateOperationsInput | string
   captured_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   stored_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -412,7 +427,8 @@ export type outboxUncheckedUpdateInput = {
   channel?: Prisma.StringFieldUpdateOperationsInput | string
   message_type?: Prisma.StringFieldUpdateOperationsInput | string
   serialize_type?: Prisma.StringFieldUpdateOperationsInput | string
-  telemetry_context?: Prisma.NullableBytesFieldUpdateOperationsInput | runtime.Bytes | null
+  traceparent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tracestate?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   captured_by?: Prisma.StringFieldUpdateOperationsInput | string
   captured_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   stored_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -428,7 +444,8 @@ export type outboxCreateManyInput = {
   channel: string
   message_type: string
   serialize_type: string
-  telemetry_context?: runtime.Bytes | null
+  traceparent?: string | null
+  tracestate?: string | null
   captured_by: string
   captured_at: Date | string
   stored_at?: Date | string
@@ -444,7 +461,8 @@ export type outboxUpdateManyMutationInput = {
   channel?: Prisma.StringFieldUpdateOperationsInput | string
   message_type?: Prisma.StringFieldUpdateOperationsInput | string
   serialize_type?: Prisma.StringFieldUpdateOperationsInput | string
-  telemetry_context?: Prisma.NullableBytesFieldUpdateOperationsInput | runtime.Bytes | null
+  traceparent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tracestate?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   captured_by?: Prisma.StringFieldUpdateOperationsInput | string
   captured_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   stored_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -460,7 +478,8 @@ export type outboxUncheckedUpdateManyInput = {
   channel?: Prisma.StringFieldUpdateOperationsInput | string
   message_type?: Prisma.StringFieldUpdateOperationsInput | string
   serialize_type?: Prisma.StringFieldUpdateOperationsInput | string
-  telemetry_context?: Prisma.NullableBytesFieldUpdateOperationsInput | runtime.Bytes | null
+  traceparent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tracestate?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   captured_by?: Prisma.StringFieldUpdateOperationsInput | string
   captured_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   stored_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -491,7 +510,8 @@ export type outboxCountOrderByAggregateInput = {
   channel?: Prisma.SortOrder
   message_type?: Prisma.SortOrder
   serialize_type?: Prisma.SortOrder
-  telemetry_context?: Prisma.SortOrder
+  traceparent?: Prisma.SortOrder
+  tracestate?: Prisma.SortOrder
   captured_by?: Prisma.SortOrder
   captured_at?: Prisma.SortOrder
   stored_at?: Prisma.SortOrder
@@ -511,7 +531,8 @@ export type outboxMaxOrderByAggregateInput = {
   channel?: Prisma.SortOrder
   message_type?: Prisma.SortOrder
   serialize_type?: Prisma.SortOrder
-  telemetry_context?: Prisma.SortOrder
+  traceparent?: Prisma.SortOrder
+  tracestate?: Prisma.SortOrder
   captured_by?: Prisma.SortOrder
   captured_at?: Prisma.SortOrder
   stored_at?: Prisma.SortOrder
@@ -526,7 +547,8 @@ export type outboxMinOrderByAggregateInput = {
   channel?: Prisma.SortOrder
   message_type?: Prisma.SortOrder
   serialize_type?: Prisma.SortOrder
-  telemetry_context?: Prisma.SortOrder
+  traceparent?: Prisma.SortOrder
+  tracestate?: Prisma.SortOrder
   captured_by?: Prisma.SortOrder
   captured_at?: Prisma.SortOrder
   stored_at?: Prisma.SortOrder
@@ -534,10 +556,6 @@ export type outboxMinOrderByAggregateInput = {
 
 export type outboxSumOrderByAggregateInput = {
   offset?: Prisma.SortOrder
-}
-
-export type NullableBytesFieldUpdateOperationsInput = {
-  set?: runtime.Bytes | null
 }
 
 
@@ -551,7 +569,8 @@ export type outboxSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   channel?: boolean
   message_type?: boolean
   serialize_type?: boolean
-  telemetry_context?: boolean
+  traceparent?: boolean
+  tracestate?: boolean
   captured_by?: boolean
   captured_at?: boolean
   stored_at?: boolean
@@ -569,14 +588,15 @@ export type outboxSelectScalar = {
   channel?: boolean
   message_type?: boolean
   serialize_type?: boolean
-  telemetry_context?: boolean
+  traceparent?: boolean
+  tracestate?: boolean
   captured_by?: boolean
   captured_at?: boolean
   stored_at?: boolean
   payload?: boolean
 }
 
-export type outboxOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "stream_type" | "stream_id" | "offset" | "event_type" | "channel" | "message_type" | "serialize_type" | "telemetry_context" | "captured_by" | "captured_at" | "stored_at" | "payload", ExtArgs["result"]["outbox"]>
+export type outboxOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "stream_type" | "stream_id" | "offset" | "event_type" | "channel" | "message_type" | "serialize_type" | "traceparent" | "tracestate" | "captured_by" | "captured_at" | "stored_at" | "payload", ExtArgs["result"]["outbox"]>
 
 export type $outboxPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "outbox"
@@ -590,7 +610,8 @@ export type $outboxPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
     channel: string
     message_type: string
     serialize_type: string
-    telemetry_context: runtime.Bytes | null
+    traceparent: string | null
+    tracestate: string | null
     captured_by: string
     captured_at: Date
     stored_at: Date
@@ -972,7 +993,8 @@ export interface outboxFieldRefs {
   readonly channel: Prisma.FieldRef<"outbox", 'String'>
   readonly message_type: Prisma.FieldRef<"outbox", 'String'>
   readonly serialize_type: Prisma.FieldRef<"outbox", 'String'>
-  readonly telemetry_context: Prisma.FieldRef<"outbox", 'Bytes'>
+  readonly traceparent: Prisma.FieldRef<"outbox", 'String'>
+  readonly tracestate: Prisma.FieldRef<"outbox", 'String'>
   readonly captured_by: Prisma.FieldRef<"outbox", 'String'>
   readonly captured_at: Prisma.FieldRef<"outbox", 'DateTime'>
   readonly stored_at: Prisma.FieldRef<"outbox", 'DateTime'>
@@ -1153,6 +1175,11 @@ export type outboxFindManyArgs<ExtArgs extends runtime.Types.Extensions.Internal
    * Skip the first `n` outboxes.
    */
   skip?: number
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+   * 
+   * Filter by unique combinations of outboxes.
+   */
   distinct?: Prisma.OutboxScalarFieldEnum | Prisma.OutboxScalarFieldEnum[]
 }
 

@@ -162,6 +162,14 @@
           "AttributeType": "N"
         },
         {
+          "AttributeName": "traceparent",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "tracestate",
+          "AttributeType": "S"
+        },
+        {
           "AttributeName": "stored_at",
           "AttributeType": "S"
         },

@@ -1,0 +1,18 @@
+{
+  "extends": "../../../../tsconfig.json",
+  "compilerOptions": {
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+    "outDir": "dist/server",
+    "rootDir": "src",
+    "declaration": false,
+    "composite": false,
+    "noEmit": false,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": false,
+    "allowImportingTsExtensions": false
+  },
+  "include": ["src/server.ts", "src/specFetcher.ts", "src/proxy.ts", "src/catalogConfig.ts"],
+  "exclude": ["dist", "node_modules"]
+}

@@ -32,7 +32,10 @@ This repo is a pnpm workspace (see `pnpm-workspace.yaml`). Always use `pnpm` —
 never `npm install` or `yarn` (a preinstall guard blocks them).
 
 - Install dependencies: `pnpm install`
-- Internal `@eventualize/*` dependencies use `workspace:*`, so they always
-  link to the local `packages/` folders automatically.
-- Prisma packages are pinned in `pnpm-workspace.yaml` (see the comment there)
-  because the checked-in generated Prisma client only works with that version.
+- Internal `@eventualize/*` dependencies use `workspace:^`, so they always
+  link to the local `packages/` folders, and publish as `^x.y.z` ranges.
+- Prisma packages (`@prisma/client`, `@prisma/adapter-pg`, `@prisma/adapter-mariadb`,
+  `prisma`) are pinned to one exact version in the package manifests, because the
+  checked-in generated Prisma client only works with the runtime version that
+  generated it. To upgrade Prisma, change all pins together, then run
+  `prisma generate` in `postgres-storage-adapter` and `mysql-storage-adapter`.

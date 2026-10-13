@@ -1,0 +1,95 @@
+<h2>Design — AsyncAPI Ownership Model</h2>
+<p class="subtitle">Each service owns the AsyncAPI spec for the channels it controls. The catalog crawls <code>/asyncapi.json</code> alongside <code>/openapi.json</code> from each server.</p>
+
+<div class="mockup">
+  <div class="mockup-header">Ownership rules</div>
+  <div class="mockup-body" style="font-size:12px">
+    <div style="display:flex;gap:12px;flex-wrap:wrap">
+
+      <!-- Rule 1: broadcast -->
+      <div style="flex:1;min-width:240px;background:#1e2d1e;border:1px solid #2d4a2d;border-radius:6px;padding:12px">
+        <div style="color:#a6e3a1;font-weight:bold;margin-bottom:6px">📢 Broadcast (pub/sub)</div>
+        <div style="color:#cdd6f4;font-size:11px;margin-bottom:8px">
+          e.g. outbox → Kafka <code>funds.outbox</code><br/>
+          <span style="color:#585b70">Anyone can subscribe, nobody is the single recipient</span>
+        </div>
+        <div style="background:#0d1f0d;border-radius:4px;padding:8px;font-size:11px">
+          <div style="color:#f9e2af">Owner: <strong>Producer</strong></div>
+          <div style="color:#585b70;margin-top:4px">→ funds-main :3014</div>
+          <div style="color:#89b4fa;margin-top:4px">exposes /asyncapi.json</div>
+          <div style="color:#a6e3a1;margin-top:4px;font-size:10px">channel: funds.outbox<br/>operation: <strong>send</strong> (publish)<br/>message: FundsChanged</div>
+        </div>
+      </div>
+
+      <!-- Rule 2: point-to-point command -->
+      <div style="flex:1;min-width:240px;background:#2d2018;border:1px solid #4a3520;border-radius:6px;padding:12px">
+        <div style="color:#f9e2af;font-weight:bold;margin-bottom:6px">🎯 Point-to-point (command)</div>
+        <div style="color:#cdd6f4;font-size:11px;margin-bottom:8px">
+          e.g. pg-boss queue <code>leaderboard-update</code><br/>
+          <span style="color:#585b70">One producer, one consumer — consumer defines the contract</span>
+        </div>
+        <div style="background:#1a1208;border-radius:4px;padding:8px;font-size:11px">
+          <div style="color:#f9e2af">Owner: <strong>Consumer</strong></div>
+          <div style="color:#585b70;margin-top:4px">→ funds-main :3014 (pg-boss worker)</div>
+          <div style="color:#89b4fa;margin-top:4px">exposes /asyncapi.json</div>
+          <div style="color:#f9e2af;margin-top:4px;font-size:10px">channel: pgboss/leaderboard-update<br/>operation: <strong>receive</strong> (subscribe)<br/>message: LeaderboardUpdateJob</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="mockup" style="margin-top:16px">
+  <div class="mockup-header">Per-server AsyncAPI ownership in funds e2e</div>
+  <div class="mockup-body" style="font-size:11px">
+    <table style="width:100%;border-collapse:collapse;color:#cdd6f4">
+      <thead>
+        <tr style="border-bottom:1px solid #444;color:#89b4fa">
+          <th style="text-align:left;padding:6px">Server</th>
+          <th style="text-align:left;padding:6px">Channel</th>
+          <th style="text-align:left;padding:6px">Transport</th>
+          <th style="text-align:left;padding:6px">Operation</th>
+          <th style="text-align:left;padding:6px">Why this server?</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-bottom:1px solid #313244">
+          <td style="padding:6px;color:#a6e3a1">funds-main :3014</td>
+          <td style="padding:6px"><code>funds.outbox</code></td>
+          <td style="padding:6px">Kafka (via Debezium)</td>
+          <td style="padding:6px"><span style="background:#2d4a2d;padding:2px 6px;border-radius:3px">send</span></td>
+          <td style="padding:6px;color:#585b70">Broadcast producer owns the contract</td>
+        </tr>
+        <tr style="border-bottom:1px solid #313244">
+          <td style="padding:6px;color:#a6e3a1">funds-main :3014</td>
+          <td style="padding:6px"><code>pgboss/leaderboard-update</code></td>
+          <td style="padding:6px">pg-boss</td>
+          <td style="padding:6px"><span style="background:#4a3520;padding:2px 6px;border-radius:3px">receive</span></td>
+          <td style="padding:6px;color:#585b70">P2P consumer defines expected message</td>
+        </tr>
+        <tr>
+          <td style="padding:6px;color:#cba6f7">funds-risk :3013</td>
+          <td style="padding:6px"><code>funds.outbox</code></td>
+          <td style="padding:6px">Kafka</td>
+          <td style="padding:6px"><span style="background:#2a1e3a;padding:2px 6px;border-radius:3px">receive</span></td>
+          <td style="padding:6px;color:#585b70">Subscriber documents what it expects</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="mockup" style="margin-top:16px">
+  <div class="mockup-header">Catalog startup — crawl both spec types from each server</div>
+  <div class="mockup-body" style="font-size:11px;color:#cdd6f4;font-family:monospace">
+    1. GET :3014/openapi.json  → REST spec (funds-main)<br/>
+    2. GET :3014/asyncapi.json → Async spec (outbox send + pgboss receive)<br/>
+    3. GET :3013/openapi.json  → REST spec (funds-risk)<br/>
+    4. GET :3013/asyncapi.json → Async spec (kafka receive)<br/>
+    <br/>
+    <span style="color:#a6e3a1">No global asyncapi.yaml — each server owns its slice</span>
+  </div>
+</div>
+
+<p class="subtitle" style="margin-top:16px">Does this ownership split look right? Reply in terminal.</p>

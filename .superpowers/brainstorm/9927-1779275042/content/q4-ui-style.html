@@ -1,0 +1,96 @@
+<h2>Which UI rendering approach?</h2>
+<p class="subtitle">The catalog page needs to show both REST (OpenAPI) and async (AsyncAPI) sections. Three ways to render it:</p>
+
+<div class="cards">
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#1a1a2e;padding:12px;border-radius:6px;font-size:11px;color:#e0e0e0">
+        <div style="background:#2d2d44;padding:6px 10px;border-radius:4px;margin-bottom:8px;color:#7c85f3;font-weight:bold;font-size:13px">⚡ funds catalog</div>
+        <div style="display:flex;gap:8px;margin-bottom:8px">
+          <span style="background:#444;padding:3px 8px;border-radius:12px;font-size:10px">REST</span>
+          <span style="background:#444;padding:3px 8px;border-radius:12px;font-size:10px">Async</span>
+        </div>
+        <!-- Swagger UI look -->
+        <div style="background:#2a2a3e;padding:8px;border-radius:4px;margin-bottom:6px">
+          <span style="background:#49cc90;color:#000;padding:2px 6px;border-radius:3px;font-size:10px;font-weight:bold">POST</span>
+          <span style="margin-left:6px;color:#fff">/api/funds/deposit</span>
+          <span style="float:right;opacity:0.5;font-size:10px">▼</span>
+        </div>
+        <div style="background:#2a2a3e;padding:8px;border-radius:4px;margin-bottom:6px">
+          <span style="background:#49cc90;color:#000;padding:2px 6px;border-radius:3px;font-size:10px;font-weight:bold">POST</span>
+          <span style="margin-left:6px;color:#fff">/api/funds/withdraw</span>
+        </div>
+        <div style="border-top:1px solid #444;margin:8px 0;padding-top:8px;color:#e6a817;font-size:10px;font-weight:bold">↕ ASYNC CHANNELS</div>
+        <div style="background:#2a2a3e;padding:8px;border-radius:4px">
+          <span style="background:#e6a817;color:#000;padding:2px 6px;border-radius:3px;font-size:10px;font-weight:bold">PUB</span>
+          <span style="margin-left:6px;color:#fff">kafka: funds.outbox</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>Swagger UI + AsyncAPI section</h3>
+      <p>Classic <code>swagger-ui-express</code> for REST with a custom AsyncAPI panel below it on the same page. Familiar Swagger look. Uses <code>@asyncapi/react-component</code> for the async section.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#0f1117;padding:12px;border-radius:6px;font-size:11px;color:#e0e0e0">
+        <div style="display:flex;gap:0;margin-bottom:10px;border-bottom:1px solid #333">
+          <span style="padding:6px 12px;border-bottom:2px solid #7c85f3;color:#7c85f3;font-size:11px">funds-main :3014</span>
+          <span style="padding:6px 12px;color:#666;font-size:11px">funds-risk :3013</span>
+        </div>
+        <div style="display:flex;gap:8px;height:100px">
+          <div style="width:35%;background:#1a1a2a;border-radius:4px;padding:8px;font-size:10px">
+            <div style="color:#49cc90;margin-bottom:4px">▸ POST /deposit</div>
+            <div style="color:#49cc90;margin-bottom:4px">▸ POST /withdraw</div>
+            <div style="color:#61aeee;margin-bottom:4px">▸ GET /leaderboard</div>
+            <div style="border-top:1px solid #333;margin:6px 0"></div>
+            <div style="color:#e6a817">↕ funds.outbox</div>
+            <div style="color:#e6a817">↕ pgboss:leaderboard</div>
+          </div>
+          <div style="flex:1;background:#1a1a2a;border-radius:4px;padding:8px;font-size:10px">
+            <div style="color:#888;margin-bottom:4px">POST /api/funds/deposit</div>
+            <div style="color:#49cc90;font-size:9px">DepositFunds command</div>
+            <pre style="color:#cdd6f4;font-size:9px;margin:4px 0">{ "accountId": "...",
+  "amount": 100,
+  "currency": "USD" }</pre>
+            <button style="background:#7c85f3;border:none;color:#fff;padding:3px 8px;border-radius:3px;font-size:9px">Try it</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>Custom unified UI (Scalar or hand-rolled)</h3>
+      <p>A single-page app with a sidebar listing all services and their REST+async endpoints together. Click any item to see schema + Try it. Built with Scalar (modern OpenAPI renderer) or a lightweight custom React/Preact app.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#fff;padding:12px;border-radius:6px;font-size:11px;color:#333">
+        <div style="font-weight:bold;font-size:13px;margin-bottom:8px;color:#1a1a1a">funds e2e — API Reference</div>
+        <div style="display:flex;gap:8px;height:100px">
+          <div style="width:35%;font-size:10px">
+            <div style="color:#888;margin-bottom:4px;text-transform:uppercase;font-size:9px">REST</div>
+            <div style="color:#0f7b3e;margin-bottom:3px">POST /deposit</div>
+            <div style="color:#0f7b3e;margin-bottom:3px">POST /withdraw</div>
+            <div style="color:#1565c0;margin-bottom:6px">GET /leaderboard</div>
+            <div style="color:#888;margin-bottom:4px;text-transform:uppercase;font-size:9px">ASYNC</div>
+            <div style="color:#b5500d;margin-bottom:3px">⇄ funds.outbox</div>
+            <div style="color:#b5500d">⇄ pgboss:queue</div>
+          </div>
+          <div style="flex:1;background:#f5f5f5;border-radius:4px;padding:8px;font-size:10px">
+            <div style="font-weight:bold;margin-bottom:4px">POST /api/funds/deposit</div>
+            <div style="color:#666;margin-bottom:4px;font-size:9px">Deposits funds into an account</div>
+            <div style="background:#e8f5e9;padding:4px;border-radius:3px;font-size:9px;color:#1b5e20">Request body: DepositFunds</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>Redoc (REST) + AsyncAPI Studio embed</h3>
+      <p>Clean, documentation-first rendering. Redoc gives a 3-panel layout for REST. AsyncAPI Studio component renders the async spec. More readable, less "playground-y". Best for sharing with others.</p>
+    </div>
+  </div>
+</div>

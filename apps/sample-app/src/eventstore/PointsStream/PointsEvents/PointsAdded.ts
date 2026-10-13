@@ -1,3 +1,3 @@
 export type PointsAdded = {
-  readonly points: number
-}
+  readonly points: number;
+};

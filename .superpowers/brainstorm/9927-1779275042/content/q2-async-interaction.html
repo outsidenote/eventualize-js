@@ -1,0 +1,64 @@
+<h2>How interactive should the async side be?</h2>
+<p class="subtitle">
+  The funds app has two async flows: <strong>Kafka → RiskAssessment</strong> (CDC via Debezium) and <strong>pg-boss → AccountLeaderboard</strong> (outbox trigger).
+  For REST endpoints, "Try it out" is obvious. For async channels — what level of interactivity do you need?
+</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Document-only (read-only catalog)</h3>
+      <p>Show each async channel with its schema, payload examples, and flow diagram. No ability to publish/trigger from the UI. REST endpoints still have "Try it out".</p>
+      <div class="mockup" style="margin-top:8px">
+        <div class="mockup-header">AsyncAPI panel — Kafka: funds.outbox</div>
+        <div class="mockup-body" style="font-size:12px">
+          <strong>Topic:</strong> funds.outbox &nbsp;|&nbsp; <strong>Direction:</strong> PUBLISH (Debezium CDC)<br/>
+          <strong>Message:</strong> FundsChanged<br/>
+          <pre style="background:#1e1e2e;color:#cdd6f4;padding:8px;border-radius:4px;font-size:11px">{
+  "accountId": "string",
+  "delta": "number",
+  "currency": "string",
+  "currentBalance": "number"
+}</pre>
+          <span style="opacity:0.5">[ No send button — documentation only ]</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Publish test messages to Kafka / pg-boss</h3>
+      <p>From the catalog UI you can fill a JSON form and publish a test message to a Kafka topic or enqueue a pg-boss job directly. Great for testing consumers in isolation without having to hit the REST API first.</p>
+      <div class="mockup" style="margin-top:8px">
+        <div class="mockup-header">Try it — Kafka: funds.outbox → RiskConsumer</div>
+        <div class="mockup-body" style="font-size:12px">
+          <textarea style="width:100%;background:#1e1e2e;color:#cdd6f4;border:none;padding:8px;border-radius:4px;font-size:11px" rows="5">{"accountId":"acc-123","delta":500,"currency":"USD","currentBalance":1500}</textarea>
+          <button class="mock-button" style="margin-top:6px">▶ Publish to Kafka</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Live event stream viewer</h3>
+      <p>The catalog tails Kafka topics and outbox in real time, showing a live feed of events as they flow. Combine with REST "Try it out" — deposit funds, then watch the event appear in the stream below. Ideal for demos and E2E debugging.</p>
+      <div class="mockup" style="margin-top:8px">
+        <div class="mockup-header">Live stream — funds.outbox</div>
+        <div class="mockup-body" style="font-size:11px">
+          <div style="background:#1e1e2e;color:#a6e3a1;padding:8px;border-radius:4px;font-family:monospace">
+            [12:04:01] FundsChanged { accountId: "acc-42", delta: +200 }<br/>
+            [12:04:03] FundsChanged { accountId: "acc-17", delta: -50 }<br/>
+            <span style="opacity:0.4">&nbsp;● waiting...</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<p class="subtitle" style="margin-top:16px">You can also pick multiple — e.g. B+C (publish + live stream).</p>

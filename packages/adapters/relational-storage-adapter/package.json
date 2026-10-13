@@ -31,12 +31,21 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
-    "@eventualize/types": "workspace:*",
-    "@prisma/client": "^7.1.0"
+    "@eventualize/types": "workspace:^",
+    "@prisma/client": "7.10.0"
+  },
+  "peerDependencies": {
+    "@opentelemetry/api": ">=1.7.0"
+  },
+  "peerDependenciesMeta": {
+    "@opentelemetry/api": {
+      "optional": true
+    }
   },
   "devDependencies": {
-    "dotenv": "^17.2.3",
-    "prisma": "^6.19.2"
+    "@opentelemetry/api": "^1.9.1",
+    "dotenv": "^18.0.7",
+    "prisma": "7.10.0"
   },
   "files": [
     "dist"

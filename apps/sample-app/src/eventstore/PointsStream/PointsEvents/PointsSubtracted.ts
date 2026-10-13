@@ -1,3 +1,3 @@
 export type PointsSubtracted = {
-  readonly points: number
-}
+  readonly points: number;
+};

@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "allowImportingTsExtensions": true,
+    "preserveSymlinks": true,
+  },
+  "include": ["src/**/*.test.ts", "src/**/*.test-support.ts"],
+  "exclude": []
+}

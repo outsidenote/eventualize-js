@@ -23,7 +23,6 @@ describe("Database Integration Tests", () => {
     await testManager.stop();
   });
 
-
   test("start api pure events integration tests", async () => {
     const databasesToTest = testManager.supportedDatabases;
     for (const storeType of databasesToTest) {
@@ -60,7 +59,11 @@ describe("Database Integration Tests", () => {
 
           await stream.appendEventFundsDeposited({ amount: 100, Currency: "USD" });
           await stream.appendEventFundsCaptured({ amount: 20, Currency: "USD" });
-          assert.deepStrictEqual(stream.views, {}, "There should be no views in pure events stream");
+          assert.deepStrictEqual(
+            stream.views,
+            {},
+            "There should be no views in pure events stream",
+          );
           const affected = await stream.store();
           assert.strictEqual(affected.numEvents, 2, "Two events should have been stored");
 
@@ -114,7 +117,11 @@ describe("Database Integration Tests", () => {
         await t.test("Store Events", async () => {
           const streamId = "api-points-stream";
           const storageAdapter = Helpers.createEventStore(storeType, testData.storeClient);
-          const stream = await FundsEventsAndViewsStreamFactory.get(streamId, storageAdapter, storageAdapter);
+          const stream = await FundsEventsAndViewsStreamFactory.get(
+            streamId,
+            storageAdapter,
+            storageAdapter,
+          );
 
           assert.strictEqual(
             stream.storedOffset,
@@ -128,7 +135,11 @@ describe("Database Integration Tests", () => {
           const affected = await stream.store();
           assert.strictEqual(affected.numEvents, 2, "Two events should have been stored");
 
-          const stream1 = await FundsEventsAndViewsStreamFactory.get(streamId, storageAdapter, storageAdapter);
+          const stream1 = await FundsEventsAndViewsStreamFactory.get(
+            streamId,
+            storageAdapter,
+            storageAdapter,
+          );
           assert.strictEqual(
             stream1.storedOffset,
             1,
@@ -183,7 +194,11 @@ describe("Database Integration Tests", () => {
         await t.test("Messages produced by withMessages", async () => {
           const streamId = "api-messages-stream";
           const storageAdapter = Helpers.createEventStore(storeType, testData.storeClient);
-          const stream = await FundsEventsAndViewsStreamFactory.get(streamId, storageAdapter, storageAdapter);
+          const stream = await FundsEventsAndViewsStreamFactory.get(
+            streamId,
+            storageAdapter,
+            storageAdapter,
+          );
 
           // FundsDeposited has no withMessages producer — no messages expected
           await stream.appendEventFundsDeposited({ amount: 100, Currency: "USD" });
@@ -196,7 +211,11 @@ describe("Database Integration Tests", () => {
           // FundsCaptured has a withMessages producer — 1 message expected
           await stream.appendEventFundsCaptured({ amount: 20, Currency: "USD" });
           const messages = stream.getMessages();
-          assert.strictEqual(messages.length, 1, "One message should be produced for FundsCaptured");
+          assert.strictEqual(
+            messages.length,
+            1,
+            "One message should be produced for FundsCaptured",
+          );
 
           const msg = messages[0];
           assert.strictEqual(
@@ -222,7 +241,11 @@ describe("Database Integration Tests", () => {
           );
 
           // Reloaded stream should have no pending messages
-          const stream1 = await FundsEventsAndViewsStreamFactory.get(streamId, storageAdapter, storageAdapter);
+          const stream1 = await FundsEventsAndViewsStreamFactory.get(
+            streamId,
+            storageAdapter,
+            storageAdapter,
+          );
           assert.strictEqual(
             stream1.getMessages().length,
             0,

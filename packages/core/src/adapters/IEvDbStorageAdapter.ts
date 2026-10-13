@@ -6,5 +6,4 @@ import type IEvDbStorageStreamAdapter from "@eventualize/types/adapters/IEvDbSto
  */
 
 export interface IEvDbStorageAdapter
-  extends IEvDbStorageStreamAdapter,
-    IEvDbStorageSnapshotAdapter {}
+  extends IEvDbStorageStreamAdapter, IEvDbStorageSnapshotAdapter {}

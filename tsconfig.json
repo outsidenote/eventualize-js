@@ -50,6 +50,8 @@
       ],
     }
   },
+  // Solution-style root: only builds the referenced projects below.
+  "files": [],
   "references": [
     {
       "path": "./packages/types"
@@ -74,6 +76,12 @@
     },
     {
       "path": "./packages/eslint-plugin"
+    },
+    {
+      "path": "./apps/e2e/funds"
+    },
+    {
+      "path": "./apps/otel-sample-app"
     },
   ]
 }

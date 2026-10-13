@@ -40,6 +40,8 @@ export type EventsMinAggregateOutputType = {
   stream_id: string | null
   offset: bigint | null
   event_type: string | null
+  traceparent: string | null
+  tracestate: string | null
   captured_by: string | null
   captured_at: Date | null
   stored_at: Date | null
@@ -51,6 +53,8 @@ export type EventsMaxAggregateOutputType = {
   stream_id: string | null
   offset: bigint | null
   event_type: string | null
+  traceparent: string | null
+  tracestate: string | null
   captured_by: string | null
   captured_at: Date | null
   stored_at: Date | null
@@ -62,7 +66,8 @@ export type EventsCountAggregateOutputType = {
   stream_id: number
   offset: number
   event_type: number
-  telemetry_context: number
+  traceparent: number
+  tracestate: number
   captured_by: number
   captured_at: number
   stored_at: number
@@ -85,6 +90,8 @@ export type EventsMinAggregateInputType = {
   stream_id?: true
   offset?: true
   event_type?: true
+  traceparent?: true
+  tracestate?: true
   captured_by?: true
   captured_at?: true
   stored_at?: true
@@ -96,6 +103,8 @@ export type EventsMaxAggregateInputType = {
   stream_id?: true
   offset?: true
   event_type?: true
+  traceparent?: true
+  tracestate?: true
   captured_by?: true
   captured_at?: true
   stored_at?: true
@@ -107,7 +116,8 @@ export type EventsCountAggregateInputType = {
   stream_id?: true
   offset?: true
   event_type?: true
-  telemetry_context?: true
+  traceparent?: true
+  tracestate?: true
   captured_by?: true
   captured_at?: true
   stored_at?: true
@@ -207,7 +217,8 @@ export type EventsGroupByOutputType = {
   stream_id: string
   offset: bigint
   event_type: string
-  telemetry_context: runtime.JsonValue | null
+  traceparent: string | null
+  tracestate: string | null
   captured_by: string
   captured_at: Date
   stored_at: Date
@@ -219,7 +230,7 @@ export type EventsGroupByOutputType = {
   _max: EventsMaxAggregateOutputType | null
 }
 
-type GetEventsGroupByPayload<T extends eventsGroupByArgs> = Prisma.PrismaPromise<
+export type GetEventsGroupByPayload<T extends eventsGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<EventsGroupByOutputType, T['by']> &
       {
@@ -243,7 +254,8 @@ export type eventsWhereInput = {
   stream_id?: Prisma.StringFilter<"events"> | string
   offset?: Prisma.BigIntFilter<"events"> | bigint | number
   event_type?: Prisma.StringFilter<"events"> | string
-  telemetry_context?: Prisma.JsonNullableFilter<"events">
+  traceparent?: Prisma.StringNullableFilter<"events"> | string | null
+  tracestate?: Prisma.StringNullableFilter<"events"> | string | null
   captured_by?: Prisma.StringFilter<"events"> | string
   captured_at?: Prisma.DateTimeFilter<"events"> | Date | string
   stored_at?: Prisma.DateTimeFilter<"events"> | Date | string
@@ -256,7 +268,8 @@ export type eventsOrderByWithRelationInput = {
   stream_id?: Prisma.SortOrder
   offset?: Prisma.SortOrder
   event_type?: Prisma.SortOrder
-  telemetry_context?: Prisma.SortOrderInput | Prisma.SortOrder
+  traceparent?: Prisma.SortOrderInput | Prisma.SortOrder
+  tracestate?: Prisma.SortOrderInput | Prisma.SortOrder
   captured_by?: Prisma.SortOrder
   captured_at?: Prisma.SortOrder
   stored_at?: Prisma.SortOrder
@@ -274,7 +287,8 @@ export type eventsWhereUniqueInput = Prisma.AtLeast<{
   stream_id?: Prisma.StringFilter<"events"> | string
   offset?: Prisma.BigIntFilter<"events"> | bigint | number
   event_type?: Prisma.StringFilter<"events"> | string
-  telemetry_context?: Prisma.JsonNullableFilter<"events">
+  traceparent?: Prisma.StringNullableFilter<"events"> | string | null
+  tracestate?: Prisma.StringNullableFilter<"events"> | string | null
   captured_by?: Prisma.StringFilter<"events"> | string
   captured_at?: Prisma.DateTimeFilter<"events"> | Date | string
   stored_at?: Prisma.DateTimeFilter<"events"> | Date | string
@@ -287,7 +301,8 @@ export type eventsOrderByWithAggregationInput = {
   stream_id?: Prisma.SortOrder
   offset?: Prisma.SortOrder
   event_type?: Prisma.SortOrder
-  telemetry_context?: Prisma.SortOrderInput | Prisma.SortOrder
+  traceparent?: Prisma.SortOrderInput | Prisma.SortOrder
+  tracestate?: Prisma.SortOrderInput | Prisma.SortOrder
   captured_by?: Prisma.SortOrder
   captured_at?: Prisma.SortOrder
   stored_at?: Prisma.SortOrder
@@ -308,7 +323,8 @@ export type eventsScalarWhereWithAggregatesInput = {
   stream_id?: Prisma.StringWithAggregatesFilter<"events"> | string
   offset?: Prisma.BigIntWithAggregatesFilter<"events"> | bigint | number
   event_type?: Prisma.StringWithAggregatesFilter<"events"> | string
-  telemetry_context?: Prisma.JsonNullableWithAggregatesFilter<"events">
+  traceparent?: Prisma.StringNullableWithAggregatesFilter<"events"> | string | null
+  tracestate?: Prisma.StringNullableWithAggregatesFilter<"events"> | string | null
   captured_by?: Prisma.StringWithAggregatesFilter<"events"> | string
   captured_at?: Prisma.DateTimeWithAggregatesFilter<"events"> | Date | string
   stored_at?: Prisma.DateTimeWithAggregatesFilter<"events"> | Date | string
@@ -321,7 +337,8 @@ export type eventsCreateInput = {
   stream_id: string
   offset: bigint | number
   event_type: string
-  telemetry_context?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  traceparent?: string | null
+  tracestate?: string | null
   captured_by: string
   captured_at: Date | string
   stored_at?: Date | string
@@ -334,7 +351,8 @@ export type eventsUncheckedCreateInput = {
   stream_id: string
   offset: bigint | number
   event_type: string
-  telemetry_context?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  traceparent?: string | null
+  tracestate?: string | null
   captured_by: string
   captured_at: Date | string
   stored_at?: Date | string
@@ -347,7 +365,8 @@ export type eventsUpdateInput = {
   stream_id?: Prisma.StringFieldUpdateOperationsInput | string
   offset?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   event_type?: Prisma.StringFieldUpdateOperationsInput | string
-  telemetry_context?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  traceparent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tracestate?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   captured_by?: Prisma.StringFieldUpdateOperationsInput | string
   captured_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   stored_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -360,7 +379,8 @@ export type eventsUncheckedUpdateInput = {
   stream_id?: Prisma.StringFieldUpdateOperationsInput | string
   offset?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   event_type?: Prisma.StringFieldUpdateOperationsInput | string
-  telemetry_context?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  traceparent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tracestate?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   captured_by?: Prisma.StringFieldUpdateOperationsInput | string
   captured_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   stored_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -373,7 +393,8 @@ export type eventsCreateManyInput = {
   stream_id: string
   offset: bigint | number
   event_type: string
-  telemetry_context?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  traceparent?: string | null
+  tracestate?: string | null
   captured_by: string
   captured_at: Date | string
   stored_at?: Date | string
@@ -386,7 +407,8 @@ export type eventsUpdateManyMutationInput = {
   stream_id?: Prisma.StringFieldUpdateOperationsInput | string
   offset?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   event_type?: Prisma.StringFieldUpdateOperationsInput | string
-  telemetry_context?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  traceparent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tracestate?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   captured_by?: Prisma.StringFieldUpdateOperationsInput | string
   captured_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   stored_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -399,7 +421,8 @@ export type eventsUncheckedUpdateManyInput = {
   stream_id?: Prisma.StringFieldUpdateOperationsInput | string
   offset?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   event_type?: Prisma.StringFieldUpdateOperationsInput | string
-  telemetry_context?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  traceparent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tracestate?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   captured_by?: Prisma.StringFieldUpdateOperationsInput | string
   captured_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   stored_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -424,7 +447,8 @@ export type eventsCountOrderByAggregateInput = {
   stream_id?: Prisma.SortOrder
   offset?: Prisma.SortOrder
   event_type?: Prisma.SortOrder
-  telemetry_context?: Prisma.SortOrder
+  traceparent?: Prisma.SortOrder
+  tracestate?: Prisma.SortOrder
   captured_by?: Prisma.SortOrder
   captured_at?: Prisma.SortOrder
   stored_at?: Prisma.SortOrder
@@ -441,6 +465,8 @@ export type eventsMaxOrderByAggregateInput = {
   stream_id?: Prisma.SortOrder
   offset?: Prisma.SortOrder
   event_type?: Prisma.SortOrder
+  traceparent?: Prisma.SortOrder
+  tracestate?: Prisma.SortOrder
   captured_by?: Prisma.SortOrder
   captured_at?: Prisma.SortOrder
   stored_at?: Prisma.SortOrder
@@ -452,6 +478,8 @@ export type eventsMinOrderByAggregateInput = {
   stream_id?: Prisma.SortOrder
   offset?: Prisma.SortOrder
   event_type?: Prisma.SortOrder
+  traceparent?: Prisma.SortOrder
+  tracestate?: Prisma.SortOrder
   captured_by?: Prisma.SortOrder
   captured_at?: Prisma.SortOrder
   stored_at?: Prisma.SortOrder
@@ -473,6 +501,10 @@ export type BigIntFieldUpdateOperationsInput = {
   divide?: bigint | number
 }
 
+export type NullableStringFieldUpdateOperationsInput = {
+  set?: string | null
+}
+
 export type DateTimeFieldUpdateOperationsInput = {
   set?: Date | string
 }
@@ -485,7 +517,8 @@ export type eventsSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   stream_id?: boolean
   offset?: boolean
   event_type?: boolean
-  telemetry_context?: boolean
+  traceparent?: boolean
+  tracestate?: boolean
   captured_by?: boolean
   captured_at?: boolean
   stored_at?: boolean
@@ -500,14 +533,15 @@ export type eventsSelectScalar = {
   stream_id?: boolean
   offset?: boolean
   event_type?: boolean
-  telemetry_context?: boolean
+  traceparent?: boolean
+  tracestate?: boolean
   captured_by?: boolean
   captured_at?: boolean
   stored_at?: boolean
   payload?: boolean
 }
 
-export type eventsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "stream_type" | "stream_id" | "offset" | "event_type" | "telemetry_context" | "captured_by" | "captured_at" | "stored_at" | "payload", ExtArgs["result"]["events"]>
+export type eventsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "stream_type" | "stream_id" | "offset" | "event_type" | "traceparent" | "tracestate" | "captured_by" | "captured_at" | "stored_at" | "payload", ExtArgs["result"]["events"]>
 
 export type $eventsPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "events"
@@ -518,7 +552,8 @@ export type $eventsPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
     stream_id: string
     offset: bigint
     event_type: string
-    telemetry_context: runtime.JsonValue | null
+    traceparent: string | null
+    tracestate: string | null
     captured_by: string
     captured_at: Date
     stored_at: Date
@@ -897,7 +932,8 @@ export interface eventsFieldRefs {
   readonly stream_id: Prisma.FieldRef<"events", 'String'>
   readonly offset: Prisma.FieldRef<"events", 'BigInt'>
   readonly event_type: Prisma.FieldRef<"events", 'String'>
-  readonly telemetry_context: Prisma.FieldRef<"events", 'Json'>
+  readonly traceparent: Prisma.FieldRef<"events", 'String'>
+  readonly tracestate: Prisma.FieldRef<"events", 'String'>
   readonly captured_by: Prisma.FieldRef<"events", 'String'>
   readonly captured_at: Prisma.FieldRef<"events", 'DateTime'>
   readonly stored_at: Prisma.FieldRef<"events", 'DateTime'>
@@ -1078,6 +1114,11 @@ export type eventsFindManyArgs<ExtArgs extends runtime.Types.Extensions.Internal
    * Skip the first `n` events.
    */
   skip?: number
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+   * 
+   * Filter by unique combinations of events.
+   */
   distinct?: Prisma.EventsScalarFieldEnum | Prisma.EventsScalarFieldEnum[]
 }
 

@@ -8,7 +8,8 @@ const MYSQL_SCHEMA_STATEMENTS = [
         stream_id VARCHAR(150) NOT NULL,
         \`offset\` BIGINT NOT NULL,
         event_type VARCHAR(150) NOT NULL,
-        telemetry_context JSON,
+        traceparent VARCHAR(255),
+        tracestate VARCHAR(255),
         captured_by VARCHAR(150) NOT NULL,
         captured_at DATETIME(3) NOT NULL,
         stored_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
@@ -26,7 +27,8 @@ const MYSQL_SCHEMA_STATEMENTS = [
         channel VARCHAR(150) NOT NULL,
         message_type VARCHAR(150) NOT NULL,
         serialize_type VARCHAR(150) NOT NULL,
-        telemetry_context LONGBLOB,
+        traceparent VARCHAR(255),
+        tracestate VARCHAR(255),
         captured_by VARCHAR(150) NOT NULL,
         captured_at DATETIME(3) NOT NULL,
         stored_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
@@ -68,7 +70,7 @@ export async function createMysqlSchema(connectionUri: string): Promise<void> {
     if (!(error instanceof Error)) {
       throw new Error("Unknown error occurred while creating MySQL schema");
     }
-    console.error(`✗ Failed to create MySQL schema: ${(error.message)}`);
+    console.error(`✗ Failed to create MySQL schema: ${error.message}`);
     throw error;
   } finally {
     await connection.end();

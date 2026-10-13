@@ -30,15 +30,25 @@
   },
   "license": "ISC",
   "type": "module",
+  "peerDependencies": {
+    "@opentelemetry/api": ">=1.7.0",
+    "@aws-sdk/client-dynamodb": ">=3.1111.0"
+  },
+  "peerDependenciesMeta": {
+    "@opentelemetry/api": {
+      "optional": true
+    }
+  },
   "devDependencies": {
-    "@types/node": "^24.10.1"
+    "@opentelemetry/api": "^1.9.1",
+    "@types/node": "^24.19.2",
+    "@aws-sdk/client-dynamodb": "^3.1150.0"
   },
   "files": [
     "dist"
   ],
   "dependencies": {
-    "@eventualize/types": "workspace:*",
-    "@aws-sdk/client-dynamodb": "^3.948.0",
-    "@aws-sdk/util-dynamodb": "^3.948.0"
+    "@eventualize/types": "workspace:^",
+    "@aws-sdk/util-dynamodb": "^3.996.9"
   }
 }

@@ -13,8 +13,13 @@ import type EvDbContinuousFetchOptions from "@eventualize/types/primitives/EvDbC
 import type EvDbMessageFilter from "@eventualize/types/messages/EvDbMessageFilter";
 import type { EvDbShardName } from "@eventualize/types/primitives/EvDbShardName";
 
+import { trace, SpanStatusCode } from "@opentelemetry/api";
 import type { Prisma, PrismaClient } from "./generated/prisma/client.js";
 import { PrismaQueryProvider } from "./EvDbRelationalStorageAdapterQueries.js";
+
+const TRACER_NAME = "@eventualize/relational-adapter";
+const TRACER_VERSION = "6.0.0";
+const getTracer = () => trace.getTracer(TRACER_NAME, TRACER_VERSION);
 
 const deserializePayload = (payload: unknown): IEvDbPayloadData => {
   if (!!payload && typeof payload == "object") {
@@ -28,7 +33,8 @@ const deserializePayload = (payload: unknown): IEvDbPayloadData => {
  * Replaces SQL Server-specific adapter with database-agnostic Prisma implementation
  */
 export class EvDbPrismaStorageAdapter
-  implements IEvDbStorageSnapshotAdapter, IEvDbStorageStreamAdapter {
+  implements IEvDbStorageSnapshotAdapter, IEvDbStorageStreamAdapter
+{
   private readonly queryProvider: PrismaQueryProvider;
   protected readonly databaseType: string = "prisma";
 
@@ -95,6 +101,34 @@ export class EvDbPrismaStorageAdapter
     events: ReadonlyArray<EvDbEvent>,
     messages: ReadonlyArray<EvDbMessage>,
   ): Promise<StreamStoreAffected> {
+    return getTracer().startActiveSpan(
+      "eventualize.adapter.store",
+      {
+        attributes: {
+          "eventualize.adapter.kind": "relational",
+          "eventualize.event.count": events.length,
+        },
+      },
+      async (span) => {
+        try {
+          const result = await this._storeStreamAsync(events, messages);
+          span.setStatus({ code: SpanStatusCode.OK });
+          return result;
+        } catch (error) {
+          span.setStatus({ code: SpanStatusCode.ERROR, message: (error as Error)?.message });
+          if (error instanceof Error) span.recordException(error);
+          throw error;
+        } finally {
+          span.end();
+        }
+      },
+    );
+  }
+
+  private async _storeStreamAsync(
+    events: ReadonlyArray<EvDbEvent>,
+    messages: ReadonlyArray<EvDbMessage>,
+  ): Promise<StreamStoreAffected> {
     try {
       const eventsToInsert: Prisma.eventsCreateInput[] = events.map((event) => {
         const streamCursor = event.streamCursor as EvDbStreamCursor;
@@ -104,6 +138,8 @@ export class EvDbPrismaStorageAdapter
           stream_id: streamCursor.streamId,
           offset: streamCursor.offset,
           event_type: event.eventType,
+          traceparent: event.traceparent,
+          tracestate: event.tracestate,
           captured_by: event.capturedBy,
           captured_at: event.capturedAt,
           payload: event.payload as unknown as Prisma.InputJsonValue,
@@ -120,6 +156,8 @@ export class EvDbPrismaStorageAdapter
           event_type: message.eventType,
           channel: message.channel,
           message_type: message.messageType,
+          traceparent: message.traceparent,
+          tracestate: message.tracestate,
           captured_by: message.capturedBy,
           captured_at: message.capturedAt,
           stored_at: message.storedAt,
@@ -167,36 +205,65 @@ export class EvDbPrismaStorageAdapter
   }
 
   /**
-   * Get events for a stream since a specific offset
+   * Get events for a stream since a specific offset, in ascending offset order.
+   *
+   * Reads `pageSize` rows per query and keeps paging until the end of the stream,
+   * so stop iterating early when you need only a part of it.
+   * @param streamCursor - The stream address and the first offset to read (inclusive).
+   * @param pageSize - Rows fetched per query. Default 100.
+   * @returns Async iterable of EvDbEvent
    */
   async *getEventsAsync(
     streamCursor: EvDbStreamCursor,
-    _pageSize: number = 100,
+    pageSize: number = 100,
   ): AsyncGenerator<EvDbEvent, void, undefined> {
-    const { streamType, streamId } = streamCursor;
-    let currentOffset = streamCursor.offset;
-    while (true) {
-      const events = await this.queryProvider.getEvents(streamType, streamId, currentOffset);
-
-      if (events.length === 0) {
-        break;
-      }
-
-      for (const event of events) {
-        yield new EvDbEvent(
-          event.event_type,
-          new EvDbStreamCursor(event.stream_type, event.stream_id, Number(event.offset)),
-          { eventType: event.event_type, payload: deserializePayload(event.payload) },
-          event.captured_at,
-          event.captured_by,
-          event.stored_at,
+    const span = getTracer().startSpan("eventualize.adapter.query.stream", {
+      attributes: {
+        "eventualize.adapter.kind": "relational",
+        "eventualize.stream.id": streamCursor.streamId,
+        "eventualize.stream.type": streamCursor.streamType,
+      },
+    });
+    try {
+      const { streamType, streamId } = streamCursor;
+      let nextOffset = streamCursor.offset;
+      while (true) {
+        const events = await this.queryProvider.getEvents(
+          streamType,
+          streamId,
+          nextOffset,
+          pageSize,
         );
-        currentOffset = Math.max(currentOffset, Number(event.offset));
-      }
 
-      if (events.length < _pageSize) {
-        break;
+        if (events.length === 0) {
+          break;
+        }
+
+        for (const event of events) {
+          yield new EvDbEvent(
+            event.event_type,
+            new EvDbStreamCursor(event.stream_type, event.stream_id, Number(event.offset)),
+            deserializePayload(event.payload),
+            event.captured_at,
+            event.captured_by,
+            event.stored_at,
+            event.traceparent ?? undefined,
+            event.tracestate ?? undefined,
+          );
+          nextOffset = Number(event.offset) + 1;
+        }
+
+        if (events.length < pageSize) {
+          break;
+        }
       }
+      span.setStatus({ code: SpanStatusCode.OK });
+    } catch (error) {
+      span.setStatus({ code: SpanStatusCode.ERROR, message: (error as Error)?.message });
+      if (error instanceof Error) span.recordException(error);
+      throw error;
+    } finally {
+      span.end();
     }
   }
 
@@ -223,10 +290,22 @@ export class EvDbPrismaStorageAdapter
 
   /**
    * Get snapshot for a stream view
+   * @param viewAddress - The view address.
+   * @param maxOffset - Optional upper bound: return the latest snapshot whose offset
+   *   is `<= maxOffset`.
+   * @returns The stored snapshot, or an empty snapshot when none matches.
    */
-  async getSnapshotAsync(viewAddress: EvDbViewAddress): Promise<EvDbStoredSnapshotResultRaw> {
+  async getSnapshotAsync(
+    viewAddress: EvDbViewAddress,
+    maxOffset?: number,
+  ): Promise<EvDbStoredSnapshotResultRaw> {
     const { streamType, streamId, viewName } = viewAddress;
-    const snapshot = await this.queryProvider.getSnapshot(streamType, streamId, viewName);
+    const snapshot = await this.queryProvider.getSnapshot(
+      streamType,
+      streamId,
+      viewName,
+      maxOffset,
+    );
 
     if (!snapshot) return EvDbStoredSnapshotResultRaw.Empty;
 

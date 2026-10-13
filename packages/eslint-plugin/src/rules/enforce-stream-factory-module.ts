@@ -6,10 +6,7 @@ const { RuleCreator } = ESLintUtils;
 const createRule = RuleCreator.withoutDocs;
 
 type MessageIds =
-  | "invalidStatement"
-  | "multipleConsts"
-  | "invalidExportDefault"
-  | "invalidBuildChain";
+  "invalidStatement" | "multipleConsts" | "invalidExportDefault" | "invalidBuildChain";
 
 /**
  * Returns true if this import declaration imports StreamFactoryBuilder as a named specifier.
@@ -30,10 +27,7 @@ function isStreamFactoryImport(node: TSESTree.ImportDeclaration): boolean {
  */
 function walkCallChain(node: TSESTree.Expression): string[] | null {
   if (node.type === "NewExpression") {
-    if (
-      node.callee.type === "Identifier" &&
-      node.callee.name === "StreamFactoryBuilder"
-    ) {
+    if (node.callee.type === "Identifier" && node.callee.name === "StreamFactoryBuilder") {
       return [];
     }
     return null;
@@ -68,9 +62,7 @@ function isValidBuildChain(node: TSESTree.Expression): boolean {
  *   const XxxFactory = new StreamFactoryBuilder(...).chain().build();
  * Returns the factory name or null if invalid.
  */
-function getValidFactoryName(
-  node: TSESTree.VariableDeclaration,
-): string | null {
+function getValidFactoryName(node: TSESTree.VariableDeclaration): string | null {
   if (node.kind !== "const") return null;
   if (node.declarations.length !== 1) return null;
   const decl = node.declarations[0];
@@ -87,19 +79,13 @@ function isValidExportDefault(
   node: TSESTree.ExportDefaultDeclaration,
   factoryName: string,
 ): boolean {
-  return (
-    node.declaration.type === "Identifier" &&
-    node.declaration.name === factoryName
-  );
+  return node.declaration.type === "Identifier" && node.declaration.name === factoryName;
 }
 
 /**
  * Validates: export type XxxStreamType = typeof <factoryName>.StreamType
  */
-function isValidExportType(
-  node: TSESTree.ExportNamedDeclaration,
-  factoryName: string,
-): boolean {
+function isValidExportType(node: TSESTree.ExportNamedDeclaration, factoryName: string): boolean {
   if (node.exportKind !== "type") return false;
   if (node.declaration === null || node.declaration === undefined) return false;
   if (node.declaration.type !== "TSTypeAliasDeclaration") return false;
@@ -169,14 +155,10 @@ export const enforceStreamFactoryModule = createRule<[], MessageIds>({
                 // Use invalidBuildChain only when the init is rooted in StreamFactoryBuilder
                 // but is missing the terminating .build() call.
                 const init =
-                  statement.kind === "const" &&
-                  statement.declarations.length === 1
+                  statement.kind === "const" && statement.declarations.length === 1
                     ? statement.declarations[0].init
                     : null;
-                const chain =
-                  init !== null && init !== undefined
-                    ? walkCallChain(init)
-                    : null;
+                const chain = init !== null && init !== undefined ? walkCallChain(init) : null;
                 const isStreamFactoryChain = chain !== null;
                 if (isStreamFactoryChain) {
                   context.report({ node: statement, messageId: "invalidBuildChain" });

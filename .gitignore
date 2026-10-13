@@ -141,3 +141,7 @@ vite.config.ts.timestamp-*
 .claude/skills/software-architecture/.DS_Store
 
 .DS_Store
+
+# hidden
+
+.playwright-map/

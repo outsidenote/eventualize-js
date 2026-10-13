@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>funds catalog</title>
+    <style>
+      body { margin: 0; font-family: -apple-system, system-ui, sans-serif; background: #fafafa; }
+      header { padding: 12px 20px; background: #1e293b; color: #fff; display: flex; justify-content: space-between; align-items: center; }
+      .tabs { display: flex; gap: 8px; padding: 12px 20px; border-bottom: 1px solid #e2e8f0; background: #fff; }
+      .tab { padding: 6px 14px; border-radius: 4px; cursor: pointer; background: #f1f5f9; }
+      .tab.active { background: #1e40af; color: #fff; }
+      .health { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+      .health.online { background: #22c55e; }
+      .health.partial { background: #eab308; }
+      .health.offline { background: #ef4444; }
+      .panel { padding: 16px 20px; }
+      .panel h2 { margin: 24px 0 12px; font-size: 18px; color: #334155; }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

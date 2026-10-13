@@ -20,6 +20,11 @@ export class PrismaQueryProvider {
 
   /**
    * Get events for a stream since an offset using Prisma
+   * @param stream_type - The stream type.
+   * @param stream_id - The stream id.
+   * @param since_offset - The first offset to return (inclusive).
+   * @param pageSize - The maximum number of rows to return. Default 100.
+   * @returns Up to `pageSize` events, in ascending offset order.
    */
   async getEvents(
     stream_type: string,
@@ -43,7 +48,10 @@ export class PrismaQueryProvider {
         captured_by: true,
         payload: true,
         stored_at: true,
+        traceparent: true,
+        tracestate: true,
       },
+      orderBy: { offset: "asc" },
       take: pageSize,
     });
   }
@@ -98,13 +106,19 @@ export class PrismaQueryProvider {
 
   /**
    * Get snapshot using Prisma
+   * @param streamType - The stream type.
+   * @param streamId - The stream id.
+   * @param viewName - The view name.
+   * @param maxOffset - Optional upper bound: only snapshots with offset `<= maxOffset` match.
+   * @returns The latest matching snapshot, or `null` when none matches.
    */
-  async getSnapshot(streamType: string, streamId: string, viewName: string) {
+  async getSnapshot(streamType: string, streamId: string, viewName: string, maxOffset?: number) {
     return this.prisma.snapshot.findFirst({
       where: {
         stream_type: streamType,
         stream_id: streamId,
         view_name: viewName,
+        ...(maxOffset === undefined ? {} : { offset: { lte: maxOffset } }),
       },
       select: {
         state: true,

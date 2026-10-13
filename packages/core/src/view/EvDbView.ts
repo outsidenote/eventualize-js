@@ -10,7 +10,8 @@ import type { IEvDbPayloadData } from "@eventualize/types/events/IEvDbPayloadDat
 
 export abstract class EvDbView<TState>
   extends EvDbViewRaw
-  implements IEvDbViewStoreGeneric<TState> {
+  implements IEvDbViewStoreGeneric<TState>
+{
   protected getDefaultState(): TState {
     return this.defaultState;
   }

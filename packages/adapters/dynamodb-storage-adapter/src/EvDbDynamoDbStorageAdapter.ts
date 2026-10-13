@@ -15,6 +15,7 @@ import type EvDbContinuousFetchOptions from "@eventualize/types/primitives/EvDbC
 import type EvDbMessageFilter from "@eventualize/types/messages/EvDbMessageFilter";
 import type { EvDbShardName } from "@eventualize/types/primitives/EvDbShardName";
 
+import { trace, SpanStatusCode } from "@opentelemetry/api";
 import type { DynamoDBClientOptions } from "./DynamoDbClient.js";
 import { createDynamoDBClient } from "./DynamoDbClient.js";
 import type { MessageRecord } from "./EvDbDynamoDbStorageAdapterQueries.js";
@@ -24,6 +25,10 @@ import QueryProvider, {
 } from "./EvDbDynamoDbStorageAdapterQueries.js";
 import type { AttributeValue, DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { TransactionCanceledException, TransactWriteItemsCommand } from "@aws-sdk/client-dynamodb";
+
+const TRACER_NAME = "@eventualize/dynamodb-adapter";
+const TRACER_VERSION = "6.0.0";
+const getTracer = () => trace.getTracer(TRACER_NAME, TRACER_VERSION);
 
 /**
  * DynamoDB storage adapter for EvDb
@@ -105,44 +110,60 @@ export default class EvDbDynamoDbStorageAdapter
     events: ReadonlyArray<EvDbEvent>,
     messages: ReadonlyArray<EvDbMessage>,
   ): Promise<StreamStoreAffected> {
-    try {
-      const eventsToInsert: EventRecord[] = events.map((event) =>
-        EventRecord.createFromEvent(event),
-      );
+    return getTracer().startActiveSpan(
+      "eventualize.adapter.store",
+      {
+        attributes: {
+          "eventualize.adapter.kind": "dynamodb",
+          "eventualize.event.count": events.length,
+        },
+      },
+      async (span) => {
+        try {
+          const eventsToInsert: EventRecord[] = events.map((event) =>
+            EventRecord.createFromEvent(event),
+          );
 
-      const messagesToInsert: MessageRecord[] = messages.map((message) => {
-        return {
-          id: crypto.randomUUID(),
-          stream_cursor: message.streamCursor,
-          channel: message.channel,
-          message_type: message.messageType,
-          event_type: message.eventType,
-          captured_by: message.capturedBy,
-          captured_at: message.capturedAt,
-          payload: message.payload as IEvDbPayloadData,
-        };
-      });
+          const messagesToInsert: MessageRecord[] = messages.map((message) => {
+            return {
+              id: crypto.randomUUID(),
+              stream_cursor: message.streamCursor,
+              channel: message.channel,
+              message_type: message.messageType,
+              event_type: message.eventType,
+              traceparent: message.traceparent,
+              tracestate: message.tracestate,
+              captured_by: message.capturedBy,
+              captured_at: message.capturedAt,
+              payload: message.payload as IEvDbPayloadData,
+            };
+          });
 
-      const storeEventsQuery = QueryProvider.saveEvents(eventsToInsert);
-      const storeMessagesQuery = QueryProvider.saveMessages(messagesToInsert);
+          const storeEventsQuery = QueryProvider.saveEvents(eventsToInsert);
+          const storeMessagesQuery = QueryProvider.saveMessages(messagesToInsert);
+          const transactItems = { TransactItems: [...storeEventsQuery, ...storeMessagesQuery] };
+          const command = new TransactWriteItemsCommand(transactItems);
+          await this.dynamoDbClient.send(command);
 
-      const transactItems = { TransactItems: [...storeEventsQuery, ...storeMessagesQuery] };
-
-      const command = new TransactWriteItemsCommand(transactItems);
-      await this.dynamoDbClient.send(command);
-
-      const numEvents = eventsToInsert.length;
-      const numMessages = messagesToInsert.reduce(
-        (prev, { message_type: t }) => Object.assign(prev, { [t]: (prev[t] ?? 0) + 1 }),
-        {} as Record<string, number>,
-      );
-      return new StreamStoreAffected(numEvents, new Map(Object.entries(numMessages)));
-    } catch (error) {
-      if (this.isOccException(error)) {
-        throw new Error("OPTIMISTIC_CONCURRENCY_VIOLATION");
-      }
-      throw error;
-    }
+          const numEvents = eventsToInsert.length;
+          const numMessages = messagesToInsert.reduce(
+            (prev, { message_type: t }) => Object.assign(prev, { [t]: (prev[t] ?? 0) + 1 }),
+            {} as Record<string, number>,
+          );
+          span.setStatus({ code: SpanStatusCode.OK });
+          return new StreamStoreAffected(numEvents, new Map(Object.entries(numMessages)));
+        } catch (error) {
+          span.setStatus({ code: SpanStatusCode.ERROR, message: (error as Error)?.message });
+          if (error instanceof Error) span.recordException(error);
+          if (this.isOccException(error)) {
+            throw new Error("OPTIMISTIC_CONCURRENCY_VIOLATION");
+          }
+          throw error;
+        } finally {
+          span.end();
+        }
+      },
+    );
   }
 
   /**
@@ -168,44 +189,73 @@ export default class EvDbDynamoDbStorageAdapter
   }
 
   /**
-   * Get events for a stream since a specific offset
+   * Get events for a stream since a specific offset, in ascending offset order.
+   *
+   * Reads `pageSize` items per DynamoDB query and keeps paging until the end of the
+   * stream, so stop iterating early when you need only a part of it.
+   * @param streamCursor - The stream address and the first offset to read (inclusive).
+   * @param pageSize - Items fetched per query (the DynamoDB `Limit`). Default 100.
+   * @returns Async iterable of EvDbEvent
    */
   async *getEventsAsync(
     streamCursor: EvDbStreamCursor,
-    _pageSize: number = 100,
+    pageSize: number = 100,
   ): AsyncGenerator<EvDbEvent, void, undefined> {
-    let queryCursor: Record<string, AttributeValue> | undefined = undefined;
+    const span = getTracer().startSpan("eventualize.adapter.query.stream", {
+      attributes: {
+        "eventualize.adapter.kind": "dynamodb",
+        "eventualize.stream.id": streamCursor.streamId,
+        "eventualize.stream.type": streamCursor.streamType,
+      },
+    });
+    try {
+      let queryCursor: Record<string, AttributeValue> | undefined = undefined;
 
-    do {
-      const getEventsCommand = QueryProvider.getEvents(streamCursor);
-      const response = await this.dynamoDbClient.send(getEventsCommand);
+      do {
+        const getEventsCommand = QueryProvider.getEvents(streamCursor, queryCursor, pageSize);
+        const response = await this.dynamoDbClient.send(getEventsCommand);
 
-      if (response.Items && response.Items.length > 0) {
-        for (const item of response.Items) {
-          const res = unmarshall(item);
-          const streamAddress = deserializeStreamAddress(res.stream_address);
-          const r: EventRecord = new EventRecord(
-            crypto.randomUUID(),
-            new EvDbStreamCursor(streamAddress.streamType, streamAddress.streamId, res.offset),
-            res.event_type,
-            res.captured_by,
-            new Date(res.captured_at),
-            res.payload,
-            new Date(res.stored_at),
-          );
-          yield r.toEvDbEvent();
+        if (response.Items && response.Items.length > 0) {
+          for (const item of response.Items) {
+            const res = unmarshall(item);
+            const streamAddress = deserializeStreamAddress(res.stream_address);
+            const r: EventRecord = new EventRecord(
+              crypto.randomUUID(),
+              new EvDbStreamCursor(streamAddress.streamType, streamAddress.streamId, res.offset),
+              res.event_type,
+              res.captured_by,
+              new Date(res.captured_at),
+              res.payload,
+              new Date(res.stored_at),
+            );
+            yield r.toEvDbEvent();
+          }
         }
-      }
 
-      queryCursor = response.LastEvaluatedKey;
-    } while (queryCursor);
+        queryCursor = response.LastEvaluatedKey;
+      } while (queryCursor);
+      span.setStatus({ code: SpanStatusCode.OK });
+    } catch (error) {
+      span.setStatus({ code: SpanStatusCode.ERROR, message: (error as Error)?.message });
+      if (error instanceof Error) span.recordException(error);
+      throw error;
+    } finally {
+      span.end();
+    }
   }
 
   /**
    * Get snapshot for a stream view
+   * @param viewAddress - The view address.
+   * @param maxOffset - Optional upper bound: return the latest snapshot whose offset
+   *   is `<= maxOffset`.
+   * @returns The stored snapshot, or an empty snapshot when none matches.
    */
-  async getSnapshotAsync(viewAddress: EvDbViewAddress): Promise<EvDbStoredSnapshotResultRaw> {
-    const query = QueryProvider.getSnapshot(viewAddress);
+  async getSnapshotAsync(
+    viewAddress: EvDbViewAddress,
+    maxOffset?: number,
+  ): Promise<EvDbStoredSnapshotResultRaw> {
+    const query = QueryProvider.getSnapshot(viewAddress, maxOffset);
     const response = await this.dynamoDbClient.send(query);
 
     if (!response.Items || response.Items.length === 0) {
