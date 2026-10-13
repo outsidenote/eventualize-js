@@ -165,18 +165,7 @@ export default class EvDbStream implements IEvDbStreamStore, IEvDbStreamStoreDat
     });
 
     try {
-      const cursor = this.getNextCursor(this._pendingEvents);
-      const { traceparent, tracestate } = this.captureTraceparent();
-      const e = new EvDbEvent(
-        eventType,
-        cursor,
-        payload,
-        new Date(),
-        capturedBy,
-        undefined,
-        traceparent,
-        tracestate,
-      );
+      const e = this.buildEvent(eventType, payload, new Date(), capturedBy);
       this._pendingEvents = [...this._pendingEvents, e];
       const producedMessages = this.applyEvent(e);
       this._pendingMessages = [...this._pendingMessages, ...producedMessages];
@@ -185,6 +174,33 @@ export default class EvDbStream implements IEvDbStreamStore, IEvDbStreamStoreDat
     } finally {
       span.end();
     }
+  }
+
+  /**
+   * Builds the next event of this stream: the next cursor and the active trace
+   * context. It does not add the event to the pending events and does not apply
+   * it to the views.
+   *
+   * `appendEvent` passes `new Date()`; clone passes the source event's values.
+   */
+  protected buildEvent(
+    eventType: string,
+    payload: IEvDbPayloadData,
+    capturedAt: Date,
+    capturedBy: string,
+  ): EvDbEvent {
+    const cursor = this.getNextCursor(this._pendingEvents);
+    const { traceparent, tracestate } = this.captureTraceparent();
+    return new EvDbEvent(
+      eventType,
+      cursor,
+      payload,
+      capturedAt,
+      capturedBy,
+      undefined,
+      traceparent,
+      tracestate,
+    );
   }
 
   /**
@@ -199,17 +215,38 @@ export default class EvDbStream implements IEvDbStreamStore, IEvDbStreamStoreDat
    * @returns The messages produced for `e`, stamped with `e`'s trace context.
    */
   protected applyEvent(e: EvDbEvent): ReadonlyArray<EvDbMessage> {
+    this.applyToViews(e);
+    return this.produceMessages(e);
+  }
+
+  /** Applies an event to every view. Does not produce messages. */
+  protected applyToViews(e: EvDbEvent): void {
     for (const view of Object.values(this._views)) {
       view.applyEvent(e);
     }
+  }
 
-    const viewsStates = Object.fromEntries(
+  /**
+   * Runs the messages producer for `e` and stamps the messages with `e`'s trace
+   * context. Does not touch the pending buffers.
+   *
+   * @param viewsStates - The view states the producer sees (default: the current ones).
+   */
+  protected produceMessages(
+    e: EvDbEvent,
+    viewsStates: Readonly<Record<string, unknown>> = this.getViewStates(),
+  ): ReadonlyArray<EvDbMessage> {
+    return this.messagesProducer(e, viewsStates).map((m) =>
+      e.traceparent ? m.withTraceparent(e.traceparent, e.tracestate) : m,
+    );
+  }
+
+  /** The current state of every view, keyed by view name. */
+  protected getViewStates(): Record<string, unknown> {
+    return Object.fromEntries(
       Object.entries(this._views).map(([k, v]) => {
         return [k, (v as EvDbView<unknown>).state];
       }),
-    );
-    return this.messagesProducer(e, viewsStates).map((m) =>
-      e.traceparent ? m.withTraceparent(e.traceparent, e.tracestate) : m,
     );
   }
 

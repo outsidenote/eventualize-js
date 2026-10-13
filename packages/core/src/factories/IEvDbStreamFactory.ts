@@ -2,6 +2,7 @@ import type IEvDbStorageSnapshotAdapter from "@eventualize/types/adapters/IEvDbS
 import type IEvDbStorageStreamAdapter from "@eventualize/types/adapters/IEvDbStorageStreamAdapter";
 import type IEvDbReadOnlyStream from "@eventualize/types/store/IEvDbReadOnlyStream";
 import type { StreamWithEventMethods } from "./EvDbStreamFactory.js";
+import type { EvDbCloneOptions } from "./EvDbCloneTypes.js";
 
 /**
  * General interface for an EvDbStreamFactory implementation.
@@ -32,6 +33,14 @@ export interface IEvDbStreamFactory<
     snapshotStorageAdapter?: IEvDbStorageSnapshotAdapter,
     pageSize?: number,
   ): Promise<IEvDbReadOnlyStream<TViews>>;
+
+  clone(
+    streamId: string,
+    targetStreamId: string,
+    streamStorageAdapter: IEvDbStorageStreamAdapter,
+    snapshotStorageAdapter?: IEvDbStorageSnapshotAdapter,
+    options?: EvDbCloneOptions<TEventMap>,
+  ): Promise<StreamWithEventMethods<TEventMap, TViews>>;
 
   getStreamType(): TStreamType;
 }

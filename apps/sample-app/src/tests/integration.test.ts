@@ -8,6 +8,7 @@ import type { PointsStreamType } from "../eventstore/PointsStream/PointsStreamFa
 import type { IEvDbStorageAdapter } from "@eventualize/core/adapters/IEvDbStorageAdapter";
 import EvDbStreamCursor from "@eventualize/types/stream/EvDbStreamCursor";
 import type EvDbEvent from "@eventualize/types/events/EvDbEvent";
+import EvDbCloneError from "@eventualize/core/store/EvDbCloneError";
 import EvDbStreamAddress from "@eventualize/types/stream/EvDbStreamAddress";
 import EvDbViewAddress from "@eventualize/types/view/EvDbViewAddress";
 import { context, propagation, trace } from "@opentelemetry/api";
@@ -276,6 +277,86 @@ describe("Database Integration Tests", () => {
             RangeError,
           );
         });
+
+        await t.test("Clone: offsetLimit 15, dropping PointsMultiplied", async () => {
+          const target = await PointsStreamFactory.clone(
+            "pointsPaging",
+            "pointsPagingClone",
+            testData.storageAdapter!,
+            testData.storageAdapter!,
+            {
+              offsetLimit: 15,
+              projectEvent: (e) => (e.eventType === "PointsMultiplied" ? undefined : e),
+            },
+          );
+          assert.strictEqual(target.views.Sum.sum, 210);
+          assert.strictEqual(target.views.Count.count, 14);
+
+          const source: EvDbEvent[] = [];
+          for await (const e of testData.storageAdapter!.getEventsAsync(
+            new EvDbStreamCursor("PointsStream", "pointsPaging", 0),
+          )) {
+            if (e.streamCursor.offset <= 15 && e.eventType !== "PointsMultiplied") source.push(e);
+          }
+          const cloned: EvDbEvent[] = [];
+          for await (const e of testData.storageAdapter!.getEventsAsync(
+            new EvDbStreamCursor("PointsStream", "pointsPagingClone", 0),
+          )) {
+            cloned.push(e);
+          }
+          assert.deepStrictEqual(
+            cloned.map((e) => e.streamCursor.offset),
+            Array.from({ length: 14 }, (_, i) => i),
+          );
+          assert.deepStrictEqual(
+            cloned.map((e) => e.eventType),
+            source.map((e) => e.eventType),
+          );
+          assert.deepStrictEqual(
+            cloned.map((e) => e.capturedAt.getTime()),
+            source.map((e) => e.capturedAt.getTime()),
+          );
+        });
+
+        await t.test("Clone: a non-empty target throws EvDbCloneError", async () => {
+          await assert.rejects(
+            PointsStreamFactory.clone(
+              "pointsPaging",
+              "pointsPagingClone",
+              testData.storageAdapter!,
+              testData.storageAdapter!,
+            ),
+            EvDbCloneError,
+          );
+        });
+
+        await t.test(
+          "Clone: events and messages are batched to stay under the DynamoDB item limit",
+          async () => {
+            // 2 batches of 20 PointsAdded events (2 messages each): 60 items per store.
+            const first = Steps.createPointsStream("pointsMessages", testData.storageAdapter!);
+            for (let i = 0; i < 20; i++) await first.appendEventPointsAdded({ points: 1 });
+            await first.store();
+            const second = await PointsStreamFactory.get(
+              "pointsMessages",
+              testData.storageAdapter!,
+              testData.storageAdapter!,
+            );
+            for (let i = 0; i < 20; i++) await second.appendEventPointsAdded({ points: 1 });
+            await second.store();
+
+            // 40 events + 80 messages = 120 items: more than one DynamoDB transaction holds.
+            const target = await PointsStreamFactory.clone(
+              "pointsMessages",
+              "pointsMessagesClone",
+              testData.storageAdapter!,
+              testData.storageAdapter!,
+              { projectMessage: (m) => m },
+            );
+            assert.strictEqual(target.views.Count.count, 40);
+            assert.strictEqual(target.views.Sum.sum, 40);
+          },
+        );
 
         t.after(async () => {
           await Steps.clearEnvironment(

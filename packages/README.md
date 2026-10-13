@@ -40,6 +40,43 @@ while (!stream.isHead) {
 Navigation is forward-only (see `docs/adr/0001-replay-forward-only-navigation.md`).
 To go back, call `goToOffset` again with a smaller offset.
 
+## Replay: clone a stream
+
+`clone` copies a stream, up to an offset, into a new **empty** stream of the
+same type. Use it to fix or redact data, to make a sandbox copy, or to migrate
+old event shapes.
+
+```ts
+const copy = await PointsStreamFactory.clone("points-1", "points-1-copy", storageAdapter, snapshotAdapter, {
+  offsetLimit: 15, // optional, inclusive; default: the source head
+  pageSize: 100, // optional; source events read per page, default 100
+  projectEvent: (e) => (e.eventType === "PointsMultiplied" ? undefined : e), // change or drop events
+  projectMessage: (m) => m.withChannel(`sandbox.${m.channel}`), // optional; default: no messages
+});
+```
+
+- Copied events keep their `capturedAt` and `capturedBy` unless `projectEvent` overrides them.
+- By default the clone writes no outbox messages (the producer is not called).
+- Target offsets start at 0 and have no gaps, so they can differ from source offsets
+  (a source that starts at offset 1, or events dropped by `projectEvent`).
+- Writes are stored per page, and earlier when pending events + messages reach 100
+  (the DynamoDB transaction limit).
+- The target must be empty. A failure throws `EvDbCloneError` with `lastSourceOffset`
+  (last source offset fully handled) and `targetStoredOffset`; what was stored before the
+  failure stays in the target.
+
+```ts
+import EvDbCloneError from "@eventualize/core/store/EvDbCloneError";
+
+try {
+  await PointsStreamFactory.clone("points-1", "points-1-copy", storageAdapter, snapshotAdapter);
+} catch (err) {
+  if (err instanceof EvDbCloneError) {
+    console.error(err.lastSourceOffset, err.targetStoredOffset, err.cause);
+  }
+}
+```
+
 ## Prerequisites
 
 - Node.js (with native test runner support)
