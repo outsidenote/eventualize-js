@@ -1,16 +1,40 @@
 # @eventualize/dynamodb-storage-adapter
 
-## 6.1.1
+## 8.0.0
 
-### Highlights
+### Major Changes
 
-- **Better OpenTelemetry support.** Events and outbox messages now store the W3C trace context (`traceparent` and `tracestate`) of the span that produced them, so you can link a stored event or message back to its trace. The context is captured from the active span when you do not pass it in.
+- 4f98857: `@aws-sdk/client-dynamodb` is now a peer dependency (`>=3.1111.0`) instead of a regular dependency.
 
-  Database change: the relational adapters (MySQL and Postgres) replace the `telemetry_context` column with `traceparent` and `tracestate` (`VARCHAR(255)`) on the `events` and `outbox` tables. Apply the migration `20261011150000_replace_telemetry_context_with_traceparent` before you upgrade. The migration drops `telemetry_context` and its data.
+  `EvDbDynamoDbStorageAdapter` accepts a `DynamoDBClient` that your app creates. As a peer, your app and the adapter now share one copy of the AWS SDK client, so the types always match. The range has no upper limit, so newer SDK versions do not cause install conflicts.
 
-- **Replay.** `factory.goToOffset(...)` opens a read-only stream at a stored event. Use `forward` to walk the stream ahead and read `event`, `views` and `messages` at each step.
+  Migration: if your package manager does not install peers automatically, add the client to your app:
 
-- **Clone.** `factory.clone(...)` copies a stream into a new, empty stream of the same type. You can change or drop events and outbox messages during the copy.
+      pnpm add @aws-sdk/client-dynamodb
+
+### Minor Changes
+
+- 4f98857: Dependency update (October 2026).
+
+  - The optional `@opentelemetry/api` peer range is now `>=1.7.0` (was `^1.7.0`), so newer API versions do not cause install conflicts.
+  - Internal `@eventualize/*` dependencies now use `^` ranges, so your app and our packages can share one copy of a newer 6.x release.
+  - Prisma is pinned to `7.10.0`, and the generated Prisma clients were regenerated with that version. Prisma stays a regular dependency, so your app can use a different Prisma version.
+
+- 4f98857: Stream replay, part 1: positioning on a stored event and walking forward.
+
+  - New `factory.goToOffset(...)` returns a read-only, forward-only `IEvDbReadOnlyStream` with `event`, `views`, `messages`, `isHead` and `forward`.
+  - `getEventsAsync(cursor, pageSize?)` and `getSnapshotAsync(viewAddress, maxOffset?)` gained optional parameters. Relational and DynamoDB paging bugs are fixed: duplicate or missing events across pages, and a DynamoDB infinite loop past one page.
+  - BEHAVIOR CHANGE: relational `getEventsAsync` now yields the stored payload as-is. Before, it wrapped the payload as `{ eventType, payload }`. It now matches DynamoDB and what `store` writes. This also fixes `factory.get()` folding events after a snapshot.
+  - `IEvDbStreamFactory` gains a required `goToOffset` member. This affects custom implementations of the interface.
+
+### Patch Changes
+
+- Updated dependencies [4f98857]
+- Updated dependencies [4f98857]
+- Updated dependencies [4f98857]
+  - @eventualize/types@6.2.0
+
+## 7.0.0
 
 ### Major Changes
 
@@ -42,7 +66,7 @@
 - Updated dependencies [9634936]
 - Updated dependencies [6a48ac3]
 - Updated dependencies [6a48ac3]
-  - @eventualize/types@6.1.1
+  - @eventualize/types@6.1.0
 
 ## 6.0.0
 
