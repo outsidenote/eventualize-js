@@ -1,5 +1,21 @@
 # @eventualize/mysql-storage-adapter
 
+## 6.2.0
+
+### Minor Changes
+
+- 4f98857: Dependency update (October 2026).
+
+  - The optional `@opentelemetry/api` peer range is now `>=1.7.0` (was `^1.7.0`), so newer API versions do not cause install conflicts.
+  - Internal `@eventualize/*` dependencies now use `^` ranges, so your app and our packages can share one copy of a newer 6.x release.
+  - Prisma is pinned to `7.10.0`, and the generated Prisma clients were regenerated with that version. Prisma stays a regular dependency, so your app can use a different Prisma version.
+
+### Patch Changes
+
+- Updated dependencies [4f98857]
+- Updated dependencies [4f98857]
+  - @eventualize/relational-storage-adapter@6.2.0
+
 ## 6.1.0
 
 ### Minor Changes
