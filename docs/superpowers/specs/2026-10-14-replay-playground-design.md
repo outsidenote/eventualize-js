@@ -255,13 +255,14 @@ Kustomize in `apps/playground/k8s/`, namespace `evdb-playground`.
 | Resource | Details |
 |----------|---------|
 | `postgres` | StatefulSet, `postgres:18`, 1Gi PVC, Secret with user/password/db, ClusterIP Service `postgres:5432` |
-| `migrate` | Job with the backend image. Waits until Postgres accepts connections, then runs `prisma migrate deploy` against the `postgres-storage-adapter` schema. Safe to re-run. |
+| `migrate` | Job with the `evdb-playground-migrate:local` image (the `migrate` target of the backend Dockerfile, which keeps the Prisma CLI). Waits until Postgres accepts connections, then runs `prisma migrate deploy` against the `postgres-storage-adapter` schema. Safe to re-run. |
 | `backend` | Deployment, 1 replica, ClusterIP Service `backend:3000`. Readiness and liveness on `/api/health`. An initContainer waits until the schema exists. `POSTGRES_CONNECTION` from the Secret. |
 | `frontend` | Deployment with nginx, Service type `LoadBalancer`, port 8080 (Docker Desktop maps it to `localhost:8080`). |
 
 Images: `evdb-playground-backend:local`, `evdb-playground-frontend:local`,
-`imagePullPolicy: Never`. Docker Desktop k8s uses the host image store, so no
-registry is needed.
+`imagePullPolicy: Never`. Docker Desktop's Kubernetes may run kind-style nodes
+with their own containerd, so `deploy.sh` imports the images into each node with
+`ctr -n k8s.io images import`. No registry is needed.
 
 ### 6.1 Dockerfiles
 
@@ -272,6 +273,7 @@ the workspace. A `.dockerignore` excludes `node_modules`, `dist`, `.env*`,
 - **Backend:** multi-stage. Stage 1: `pnpm install --frozen-lockfile`, build
   the needed workspace packages, `pnpm deploy --filter playground-backend --prod /out`.
   Stage 2: `node:24-slim` with `/out` and the Prisma schema + migrations.
+  A `migrate` target reuses the build stage to run `prisma migrate deploy`.
 - **Frontend:** stage 1: Vite build. Stage 2: `nginx:alpine` with `nginx.conf`
   (serve static files, SPA fallback to `index.html`, proxy `/api/` to
   `http://backend:3000`).
@@ -286,19 +288,20 @@ Root `package.json`:
 |--------|--------|
 | `playground:deploy` | `bash scripts/playground/deploy.sh` |
 | `playground:destroy` | `bash scripts/playground/destroy.sh` |
-| `playground:dev` | backend with `tsx watch` + Vite dev server, against the root `docker-compose` Postgres |
+| `playground:dev` | backend with `tsx watch` + Vite dev server, against a `playground` database in the root `docker-compose` Postgres (created and migrated by `dev.sh`) |
 
 `deploy.sh` (`set -euo pipefail`):
 
 1. Abort unless `kubectl config current-context` is `docker-desktop`.
-2. `docker build` both images.
-3. `kubectl apply -k apps/playground/k8s`.
-4. Delete the old `migrate` Job if it exists, apply it again, wait for it to
+2. `docker build` the backend, migrate and frontend images.
+3. Import the images into each Docker Desktop node (`docker save | docker exec -i <node> ctr -n k8s.io images import`).
+4. `kubectl apply -k apps/playground/k8s`.
+5. Delete the old `migrate` Job if it exists, apply it again, wait for it to
    complete.
-5. `kubectl rollout restart` the backend and frontend, then
+6. `kubectl rollout restart` the backend and frontend, then
    `kubectl rollout status` (with a timeout).
-6. Smoke check: `curl -fsS http://localhost:8080/api/health`.
-7. Print `http://localhost:8080`.
+7. Smoke check: `curl -fsS http://localhost:8080/api/health`.
+8. Print `http://localhost:8080`.
 
 `destroy.sh` runs the same context check, then
 `kubectl delete namespace evdb-playground`. This deletes the stored data.
@@ -323,11 +326,13 @@ Tests use `node:test` with `tsx`, like the rest of the repo.
 **Integration (backend):** `src/tests/api.integration.test.ts`, testcontainers
 Postgres. Deposit, withdraw, denied withdraw, large deposit. Then replay from
 several offsets with several batch sizes. Each item must equal a full fold of
-the events up to that offset. Covered by the root `test:integration` glob.
+the events up to that offset. Run with `pnpm --filter playground-backend test`
+(the root `test` glob does not reach `apps/playground/*/src`).
 
 **Manual:** the deploy smoke check, then the UI.
 
-**Definition of done:** `pnpm build`, `pnpm exec eslint .` and `pnpm test`
+**Definition of done:** `pnpm build`, `pnpm exec eslint .`, `pnpm test`,
+`pnpm --filter playground-backend test` and `pnpm --filter playground-frontend test`
 pass, with build and lint error counts not above the baseline (see
 `CLAUDE.md`). `pnpm playground:deploy` succeeds and the UI works on
 `localhost:8080`.

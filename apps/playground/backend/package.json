@@ -1,0 +1,36 @@
+{
+  "name": "playground-backend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Replay playground backend: funds commands and batched goToOffset replay",
+  "type": "module",
+  "main": "./dist/server.js",
+  "scripts": {
+    "build": "tsc --build",
+    "clean": "rimraf dist tsconfig.tsbuildinfo",
+    "start": "node dist/server.js",
+    "dev": "node --watch --import tsx src/server.ts",
+    "test": "node --import tsx --test 'src/**/*.test.ts'"
+  },
+  "dependencies": {
+    "@eventualize/core": "workspace:^",
+    "@eventualize/postgres-storage-adapter": "workspace:^",
+    "@eventualize/relational-storage-adapter": "workspace:^",
+    "@eventualize/types": "workspace:^",
+    "@opentelemetry/api": "^1.9.1",
+    "@prisma/adapter-pg": "7.10.0",
+    "@prisma/client": "7.10.0",
+    "express": "^4.22.3"
+  },
+  "devDependencies": {
+    "@testcontainers/postgresql": "^12.2.0",
+    "@types/express": "^5.0.6",
+    "@types/node": "^24.19.2",
+    "@types/pg": "^8.23.1",
+    "pg": "^8.23.1",
+    "rimraf": "^6.1.3",
+    "testcontainers": "^12.2.0",
+    "tsx": "^4.23.15",
+    "typescript": "^6.0.3"
+  }
+}

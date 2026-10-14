@@ -358,6 +358,44 @@ describe("Database Integration Tests", () => {
           },
         );
 
+        await t.test("Clone: offsetLimit 135 iterates past the first page", async () => {
+          // 2 stores of 70 PointsSubtracted events (no messages): offsets 1..140.
+          const first = Steps.createPointsStream("pointsLong", testData.storageAdapter!);
+          for (let i = 0; i < 70; i++) first.appendEventPointsSubtracted({ points: 1 });
+          await first.store();
+          const second = await PointsStreamFactory.get(
+            "pointsLong",
+            testData.storageAdapter!,
+            testData.storageAdapter!,
+          );
+          for (let i = 0; i < 70; i++) second.appendEventPointsSubtracted({ points: 1 });
+          await second.store();
+          assert.strictEqual(second.storedOffset, 140);
+
+          const target = await PointsStreamFactory.clone(
+            "pointsLong",
+            "pointsLongClone",
+            testData.storageAdapter!,
+            testData.storageAdapter!,
+            { offsetLimit: 135 },
+          );
+          // Source offsets 1..135 become target offsets 0..134.
+          assert.strictEqual(target.views.Count.count, 135);
+          assert.strictEqual(target.views.Sum.sum, -135);
+          assert.strictEqual(target.storedOffset, 134);
+
+          const cloned: number[] = [];
+          for await (const e of testData.storageAdapter!.getEventsAsync(
+            new EvDbStreamCursor("PointsStream", "pointsLongClone", 0),
+          )) {
+            cloned.push(e.streamCursor.offset);
+          }
+          assert.deepStrictEqual(
+            cloned,
+            Array.from({ length: 135 }, (_, i) => i),
+          );
+        });
+
         t.after(async () => {
           await Steps.clearEnvironment(
             testData.storeClient,

@@ -4,6 +4,7 @@ packages:
   - "apps/*"
   - "apps/e2e/*"
   - "apps/e2e/funds/*"
+  - "apps/playground/*"
 
 onlyBuiltDependencies:
   - "@prisma/engines"
