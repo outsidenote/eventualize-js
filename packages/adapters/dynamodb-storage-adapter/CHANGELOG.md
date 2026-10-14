@@ -1,6 +1,16 @@
 # @eventualize/dynamodb-storage-adapter
 
-## 7.0.0
+## 6.1.1
+
+### Highlights
+
+- **Better OpenTelemetry support.** Events and outbox messages now store the W3C trace context (`traceparent` and `tracestate`) of the span that produced them, so you can link a stored event or message back to its trace. The context is captured from the active span when you do not pass it in.
+
+  Database change: the relational adapters (MySQL and Postgres) replace the `telemetry_context` column with `traceparent` and `tracestate` (`VARCHAR(255)`) on the `events` and `outbox` tables. Apply the migration `20261011150000_replace_telemetry_context_with_traceparent` before you upgrade. The migration drops `telemetry_context` and its data.
+
+- **Replay.** `factory.goToOffset(...)` opens a read-only stream at a stored event. Use `forward` to walk the stream ahead and read `event`, `views` and `messages` at each step.
+
+- **Clone.** `factory.clone(...)` copies a stream into a new, empty stream of the same type. You can change or drop events and outbox messages during the copy.
 
 ### Major Changes
 
@@ -32,7 +42,7 @@
 - Updated dependencies [9634936]
 - Updated dependencies [6a48ac3]
 - Updated dependencies [6a48ac3]
-  - @eventualize/types@6.1.0
+  - @eventualize/types@6.1.1
 
 ## 6.0.0
 
