@@ -1,6 +1,6 @@
 {
   "name": "@eventualize/relational-storage-adapter",
-  "version": "6.2.0",
+  "version": "6.2.1",
   "description": "Prisma-based eventualize-js storage adapter for SQL databases.",
   "keywords": [
     "event-sourcing",
