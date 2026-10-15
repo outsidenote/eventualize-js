@@ -1,5 +1,11 @@
 # @eventualize/eslint-plugin
 
+## 6.0.3
+
+### Patch Changes
+
+- 006831e: Add a README, description, keywords and homepage to each package, so the npm page shows docs.
+
 ## 6.0.2
 
 ### Patch Changes

@@ -1,5 +1,13 @@
 # @eventualize/relational-storage-adapter
 
+## 6.2.1
+
+### Patch Changes
+
+- 006831e: Add a README, description, keywords and homepage to each package, so the npm page shows docs.
+- Updated dependencies [006831e]
+  - @eventualize/types@6.2.1
+
 ## 6.2.0
 
 ### Minor Changes

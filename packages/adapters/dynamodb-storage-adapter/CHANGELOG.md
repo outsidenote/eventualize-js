@@ -1,5 +1,13 @@
 # @eventualize/dynamodb-storage-adapter
 
+## 8.0.1
+
+### Patch Changes
+
+- 006831e: Add a README, description, keywords and homepage to each package, so the npm page shows docs.
+- Updated dependencies [006831e]
+  - @eventualize/types@6.2.1
+
 ## 8.0.0
 
 ### Major Changes
