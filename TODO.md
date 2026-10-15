@@ -7,7 +7,6 @@ Small cleanups noticed during the pnpm migration (Aug 2026) and the dependency u
 - **Fix or remove `generate:stream-factory`** — the script points at a file
   that doesn't exist on main.
 - **Run prettier** on the 27 files it currently complains about.
-- **README fixes**: DynamoDB port in the env table says 8000; compose uses 4566.
 - **TypeScript 7**: blocked until typescript-eslint supports it (8.71.2 accepts
   `typescript <6.1.0`). Then move root, apps and the eslint plugin together.
 - **Demo app majors** (`apps/e2e/funds`, `apps/e2e/funds/catalog`): React 19,

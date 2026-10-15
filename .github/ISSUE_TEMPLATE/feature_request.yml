@@ -1,0 +1,21 @@
+name: Feature request
+description: Suggest a new feature or a change.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What do you want to do, and what stops you today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: How the API could look. A code sample helps.
+      render: ts
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you tried

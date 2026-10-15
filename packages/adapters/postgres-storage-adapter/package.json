@@ -1,11 +1,24 @@
 {
   "name": "@eventualize/postgres-storage-adapter",
   "version": "6.2.0",
-  "description": "",
+  "description": "PostgreSQL storage for eventualize-js (Prisma client factory).",
+  "keywords": [
+    "event-sourcing",
+    "eventualize",
+    "typescript",
+    "postgres",
+    "postgresql",
+    "prisma",
+    "storage-adapter"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/outsidenote/eventualize-js",
     "directory": "packages/adapters/postgres-storage-adapter"
+  },
+  "homepage": "https://github.com/outsidenote/eventualize-js/tree/main/packages/adapters/postgres-storage-adapter#readme",
+  "bugs": {
+    "url": "https://github.com/outsidenote/eventualize-js/issues"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

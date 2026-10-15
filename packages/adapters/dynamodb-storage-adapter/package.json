@@ -1,11 +1,23 @@
 {
   "name": "@eventualize/dynamodb-storage-adapter",
   "version": "8.0.0",
-  "description": "",
+  "description": "DynamoDB storage adapter for eventualize-js.",
+  "keywords": [
+    "event-sourcing",
+    "eventualize",
+    "typescript",
+    "dynamodb",
+    "aws",
+    "storage-adapter"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/outsidenote/eventualize-js",
     "directory": "packages/adapters/dynamodb-storage-adapter"
+  },
+  "homepage": "https://github.com/outsidenote/eventualize-js/tree/main/packages/adapters/dynamodb-storage-adapter#readme",
+  "bugs": {
+    "url": "https://github.com/outsidenote/eventualize-js/issues"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

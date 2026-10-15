@@ -2,6 +2,14 @@
   "name": "@eventualize/eslint-plugin",
   "version": "6.0.2",
   "description": "ESLint plugin enforcing EvDb StreamFactoryBuilder module structure",
+  "keywords": [
+    "event-sourcing",
+    "eventualize",
+    "typescript",
+    "eslint",
+    "eslintplugin",
+    "eslint-plugin"
+  ],
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
@@ -15,6 +23,10 @@
     "type": "git",
     "url": "https://github.com/outsidenote/eventualize-js",
     "directory": "packages/eslint-plugin"
+  },
+  "homepage": "https://github.com/outsidenote/eventualize-js/tree/main/packages/eslint-plugin#readme",
+  "bugs": {
+    "url": "https://github.com/outsidenote/eventualize-js/issues"
   },
   "publishConfig": {
     "access": "public"
