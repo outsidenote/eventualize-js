@@ -1,114 +1,20 @@
-# Stream Replay Guide
+# Clone: copy a stream into a new one
 
-eventualize-js can look at a stream's past, and copy a stream into a new one.
+`factory.clone(...)` copies a stream, up to an offset, into a **new, empty**
+stream of the same type. Events and outbox messages can be changed or dropped on
+the way. Only the new stream is written; the source stays as it is.
 
-| Feature | What it does | Writes to storage? |
-|---------|--------------|--------------------|
-| `factory.goToOffset(...)` | Opens a **read-only** stream on a past event. You can step forward and look at the views at each step. | No |
-| `factory.clone(...)` | Copies a stream, up to an offset, into a **new empty** stream. Events and messages can be changed or dropped on the way. | Yes (only the new stream) |
+Use it to fix or redact data, to make a sandbox copy of real history, or to
+migrate old event shapes.
 
-Both are methods on every stream factory (the object returned by
+It is a method on every stream factory (the object returned by
 `StreamFactoryBuilder.build()`). The examples use the sample `PointsStreamFactory`
 (events `PointsAdded`, `PointsSubtracted`, `PointsMultiplied`; views `Sum`, `Count`).
 
----
+To look at a stream's past without writing anything, see [Replay](replay.md).
+The two features are independent.
 
-## 1. Inspect a stream at a past offset — `goToOffset`
-
-```ts
-goToOffset(
-  streamId: string,
-  offset: number,
-  streamStorageAdapter: IEvDbStorageStreamAdapter,
-  snapshotStorageAdapter?: IEvDbStorageSnapshotAdapter,
-  pageSize?: number, // default 100
-): Promise<IEvDbReadOnlyStream<TViews>>;
-```
-
-### Quick start
-
-```ts
-const stream = await PointsStreamFactory.goToOffset("points-1", 15, storageAdapter, snapshotAdapter);
-
-stream.event;    // the stored event at offset 15
-stream.views;    // view states after that event: { Sum: {...}, Count: {...} }
-stream.messages; // outbox messages recomputed for that event
-stream.isHead;   // true when no event exists after it
-
-while (!stream.isHead) {
-  await stream.forward();
-  console.log(stream.event.streamCursor.offset, stream.views.Sum.sum);
-}
-```
-
-### The read-only stream
-
-`goToOffset` returns an `IEvDbReadOnlyStream`:
-
-| Member | Meaning |
-|--------|---------|
-| `event` | The stored event the stream is on. `event.streamCursor` has the stream type, id and offset. Never `undefined`. |
-| `views` | The view states after `event` was applied. |
-| `messages` | The outbox messages that the **current** producer code makes for `event`. They are recomputed, not read from the stored outbox. |
-| `isHead` | `true` when no event exists after `event` (as of the last read). |
-| `forward(steps = 1)` | Moves forward up to `steps` events. |
-
-A read-only stream has no `appendEvent*`, `appendToOutbox` or `store`. They are
-missing from the type and from the object, so you cannot write by mistake.
-
-### How the start point is chosen
-
-1. For each view, the latest snapshot **at or before** `offset` is loaded.
-   A view without such a snapshot starts from its default state.
-2. Events are read from the lowest snapshot offset (or from 0) up to `offset`,
-   and applied to the views. A view skips events it already holds.
-3. The stream stops on the event at `offset`.
-
-Without a `snapshotStorageAdapter`, every view starts from its default state and
-folds from the first event. This is slower, but the views are still there.
-
-View handlers get the **stored** metadata of each event (`capturedAt`,
-`capturedBy`, cursor, trace context). So time-based views give the same result
-as they did originally.
-
-### Moving forward
-
-- `forward()` changes the **same** object and returns it. It does not make a copy.
-  If you need the state of a step later, copy `stream.views` yourself.
-- `forward(5)` with only 2 events left moves 2 and stops. Check `isHead`.
-- At the head, `forward()` reads storage again. Events stored after you opened
-  the stream are picked up.
-- `messages` always belong to the current `event` only.
-- Do not call `forward()` again before the previous call finished. Await each call.
-
-### Going back
-
-Navigation is forward-only on purpose (see
-[ADR 0001](adr/0001-replay-forward-only-navigation.md)). Going back means
-reading a snapshot and folding again, so it is not cheap. To go back, call
-`goToOffset` again with a smaller offset. The cost is then clear at the call site.
-
-### Paging and memory
-
-Events are read in pages of `pageSize`. The stream keeps one page plus the current
-event in memory. Events it has passed are dropped. No database query or iterator
-stays open between `forward()` calls.
-
-### Errors
-
-| Situation | Error |
-|-----------|-------|
-| `offset` is negative or not an integer | `RangeError` |
-| `pageSize` is not a positive integer | `RangeError` |
-| No event at `offset` (empty stream, offset after the head, or a gap) | `RangeError: Offset N not found in stream <type>/<id>` |
-| `forward(steps)` with `steps` not a positive integer | `RangeError` |
-
-> **Note:** streams created with `factory.create()` start at offset **1**, not 0.
-> `goToOffset(id, 0, ...)` on such a stream throws `RangeError`.
-
----
-
-## 2. Copy a stream — `clone`
+## Signature
 
 ```ts
 clone(
@@ -123,7 +29,7 @@ clone(
 It returns the target as a normal, **writable** stream at its head. You can
 append to it right away.
 
-### Quick start
+## Quick start
 
 ```ts
 // A sandbox copy of everything up to offset 15. No outbox messages are written.
@@ -135,7 +41,7 @@ await sandbox.appendEventPointsAdded({ points: 10 }); // try something on the co
 await sandbox.store();
 ```
 
-### Options
+## Options
 
 | Option | Default | Meaning |
 |--------|---------|---------|
@@ -144,7 +50,7 @@ await sandbox.store();
 | `projectEvent` | copy as is | `(e) => result \| undefined`. Change an event, or return `undefined` to drop it. |
 | `projectMessage` | drop all messages, **producer not called** | `(m) => message \| undefined`. Keep, change or drop each produced outbox message. |
 
-### `projectEvent`
+## `projectEvent`
 
 The input is a typed union, so `switch (e.eventType)` narrows `e.payload`:
 
@@ -169,7 +75,7 @@ projectEvent: (e) => {
 - The result is type-checked: a payload that does not match its `eventType`
   does not compile.
 
-### Metadata of copied events
+## Metadata of copied events
 
 | Field | Value |
 |-------|-------|
@@ -178,7 +84,7 @@ projectEvent: (e) => {
 | `traceparent` / `tracestate` | the clone operation's span |
 | offset | new, in the target |
 
-### Outbox messages
+## Outbox messages
 
 By default a clone writes **no** outbox messages, and the messages producer is
 not called at all. The source already sent its notifications when the events
@@ -202,13 +108,13 @@ projectMessage: (m) => (m.messageType === "Audit" ? m : undefined), // keep some
 > event). View handlers must be pure: return a new state and do not change the
 > old one.
 
-### Target offsets
+## Target offsets
 
 The target must be **empty**. Its offsets start at 0 and have no gaps. They can
 differ from the source offsets, for example when the source starts at offset 1,
 or when `projectEvent` drops events.
 
-### How writes are stored
+## How writes are stored
 
 Clone stores the target as it goes:
 
@@ -219,7 +125,7 @@ Clone stores the target as it goes:
 
 Events stored before a failure stay in the target.
 
-### Errors and progress
+## Errors and progress
 
 | Situation | Error |
 |-----------|-------|
@@ -252,7 +158,7 @@ try {
 There is no resume. After a failure, clean up the partial target, or clone again
 into a new target id.
 
-### Other behaviour
+## Other behaviour
 
 - Source snapshots are **not** used. The target views fold from the copied events.
 - An empty source, or a clone where every event is dropped, returns an empty
@@ -262,27 +168,7 @@ into a new target id.
 - Without a `snapshotStorageAdapter`, the target has no views (the same as
   `factory.create()` / `factory.get()`).
 
----
-
-## 3. Recipes
-
-### Debug: walk a stream and watch a view
-
-```ts
-const s = await PointsStreamFactory.goToOffset("points-1", 1, storageAdapter, snapshotAdapter);
-for (;;) {
-  console.log(s.event.streamCursor.offset, s.event.eventType, s.views.Sum.sum);
-  if (s.isHead) break;
-  await s.forward();
-}
-```
-
-### Debug: what did the views look like before a bad event?
-
-```ts
-const before = await PointsStreamFactory.goToOffset("points-1", badOffset - 1, storageAdapter, snapshotAdapter);
-console.log(before.views);
-```
+## Recipes
 
 ### Sandbox: copy real history, then experiment
 
@@ -328,49 +214,19 @@ await PointsStreamFactory.clone("points-1", "points-1-copy", storageAdapter, sna
 });
 ```
 
----
+## Limits
 
-## 4. Limits
-
-- `goToOffset` moves forward only.
 - `clone` works within one factory and one storage. It cannot copy across
   stream types, factories or databases.
 - `clone` cannot resume, and cannot append into a non-empty target.
 - `clone` maps one source event to zero or one target event (no splitting).
 - On DynamoDB, a single event whose messages alone reach 100 items cannot be
   stored. The clone fails with `EvDbCloneError`.
-- `goToTime` (position by time) is not available yet.
 
----
+## Observability
 
-## 5. Observability
-
-Both methods run inside an OpenTelemetry span (see [OTEL_INTEGRATION.md](OTEL_INTEGRATION.md)):
-
-| Span | Attributes |
-|------|------------|
-| `eventualize.stream.goToOffset` | `eventualize.stream.id`, `eventualize.stream.type`, `eventualize.stream.offset` |
-| `eventualize.stream.clone` | `eventualize.stream.type`, `eventualize.stream.id` (source), `eventualize.clone.target_id`, `eventualize.clone.offset_limit` (when set) |
-
-Each page read also creates the adapter's `eventualize.adapter.query.stream` span.
-
----
-
-## 6. For storage adapter authors
-
-The replay work added two **optional** parameters to the adapter interfaces.
-Existing adapters still compile.
-
-| Method | New parameter | Contract |
-|--------|---------------|----------|
-| `getEventsAsync(streamCursor, pageSize?)` | `pageSize` (default 100) | Yield events with `offset >= streamCursor.offset`, in ascending offset order, **each exactly once**, reading `pageSize` rows per query. |
-| `getSnapshotAsync(viewAddress, maxOffset?)` | `maxOffset` | Return the latest snapshot with `offset <= maxOffset`; the empty snapshot (offset `-1`) when there is none. Without `maxOffset`: the latest snapshot, as before. |
-
-An adapter that ignores `maxOffset` still gives correct results: core discards a
-snapshot newer than the target and folds from the default state.
-
-**Behaviour change in the relational adapter (Postgres/MySQL):** `getEventsAsync`
-now yields the stored payload as is. Before, it wrapped it as
-`{ eventType, payload }`. It now matches DynamoDB and what `store()` writes.
-Code that read `event.payload.payload` from the relational adapter must read
-`event.payload` instead.
+`clone` runs inside the OpenTelemetry span `eventualize.stream.clone`, with the
+attributes `eventualize.stream.type`, `eventualize.stream.id` (source),
+`eventualize.clone.target_id` and `eventualize.clone.offset_limit` (when set).
+Each page read also creates the adapter's `eventualize.adapter.query.stream`
+span. See the [OpenTelemetry guide](opentelemetry.md).

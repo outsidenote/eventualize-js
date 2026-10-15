@@ -8,54 +8,54 @@ When no OTEL SDK is registered, all instrumentation is a no-op with zero overhea
 
 ---
 
-## Final User Experience — Setup (Once at App Startup)
+## Setup (once, at app startup)
 
-This is the complete setup. No library API changes are required.
+You configure an OTEL SDK. The library needs no extra options.
 
 ### 1. Install OTEL packages
 
 ```bash
-npm install @opentelemetry/api @opentelemetry/sdk-node \
-            @opentelemetry/exporter-trace-otlp-http \
-            @opentelemetry/resources
+pnpm add @opentelemetry/api @opentelemetry/sdk-node @opentelemetry/exporter-trace-otlp-proto
 ```
 
-### 2. Configure OTEL SDK at your application entry point
+`@opentelemetry/api` is listed as an optional peer dependency, but
+`@eventualize/types` and `@eventualize/core` import it. Install it in every app
+that uses eventualize-js.
+
+### 2. Start the SDK before any other import
 
 ```typescript
-// instrumentation.ts  ← run this before anything else (e.g., via --require)
+// otel.ts — import this file first, before anything else
 import { NodeSDK } from "@opentelemetry/sdk-node";
-import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
-import { Resource } from "@opentelemetry/resources";
-import { eventualizeInstrumentation } from "@eventualize/core/otel";
+import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-proto";
 
 const sdk = new NodeSDK({
   serviceName: "my-app",
-  resource: new Resource({
-    "service.name": "my-app",
-    "service.version": "1.0.0",
-    ...eventualizeInstrumentation().resourceAttributes, // optional
-  }),
-  traceExporter: new OTLPTraceExporter({
-    url: "http://localhost:4318/v1/traces",
-  }),
+  traceExporter: new OTLPTraceExporter({ url: "http://localhost:4318/v1/traces" }),
 });
 
 sdk.start();
 ```
 
-### 3. Use eventualize-js as usual — zero API changes
+```typescript
+// index.ts
+import "./otel.js"; // must be the first import
+```
+
+To tag your resource with the library version, spread
+`eventualizeInstrumentation().resourceAttributes` (from `@eventualize/core/otel`)
+into your resource attributes.
+
+A full working setup (traces, metrics, logs) is in
+[`apps/otel-sample-app/src/otel.ts`](../../apps/otel-sample-app/src/otel.ts).
+
+### 3. Use eventualize-js as usual
 
 ```typescript
-const factory = new EvDbStreamFactory({
-  eventTypes: [...],
-  viewNames: [...],
-  // No instrumentation parameter. Library self-instruments.
-});
-
-const stream = await factory.getAsync("user-123", "UserStream");
-await stream.appendEventUserRegistered({ email: "user@example.com" });
-// Spans created automatically and exported to your OTEL backend.
+const stream = await FundsStreamFactory.get("account-1", storageAdapter, storageAdapter);
+await stream.appendEventFundsDeposited({ amount: 100 });
+await stream.store();
+// Spans are created automatically and exported to your OTEL backend.
 ```
 
 ---
@@ -200,6 +200,9 @@ await context.with(parentContext, async () => {
 ```
 
 ### Kafka Consumer — Link to Upstream (New Root Trace)
+
+A tested helper that does this for pg-boss and Kafka consumers of the outbox is in
+[Outbox delivery → Tracing in the consumer](outbox.md#tracing-in-the-consumer-span-links).
 
 Use this when you want a new root trace that *references* the upstream:
 

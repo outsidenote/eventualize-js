@@ -1,0 +1,38 @@
+# eventualize-js
+
+> Type-safe event sourcing for TypeScript (Node.js, ESM). You declare a stream's events, views and outbox messages with `StreamFactoryBuilder`, then append events and `store()` them through a storage adapter for PostgreSQL, MySQL or DynamoDB. Published as `@eventualize/*` packages on npm.
+
+Import each module by its deep path (for example `@eventualize/core/factories/StreamFactoryBuilder`); the packages have no root index. Pass the same adapter object as both the stream adapter and the snapshot adapter. Conflicting writes throw `Error("OPTIMISTIC_CONCURRENCY_VIOLATION")`.
+
+## Docs
+
+- [README](https://raw.githubusercontent.com/outsidenote/eventualize-js/main/README.md): overview, install, quick start
+- [Getting started](https://raw.githubusercontent.com/outsidenote/eventualize-js/main/docs/getting-started.md): tutorial on PostgreSQL, from tables to outbox messages
+- [Concepts](https://raw.githubusercontent.com/outsidenote/eventualize-js/main/docs/concepts.md): streams, events, views, snapshots, outbox, concurrency
+- [Storage adapters](https://raw.githubusercontent.com/outsidenote/eventualize-js/main/docs/guides/storage-adapters.md): adapter setup, table creation, adapter interface contract
+- [Outbox delivery](https://raw.githubusercontent.com/outsidenote/eventualize-js/main/docs/guides/outbox.md): deliver outbox rows with a pg-boss trigger or Debezium CDC to Kafka; recommended: one queue/topic per channel, per-stream order
+- [Replay](https://raw.githubusercontent.com/outsidenote/eventualize-js/main/docs/guides/replay.md): `goToOffset` read-only stream at a past offset, `forward`, errors
+- [Clone](https://raw.githubusercontent.com/outsidenote/eventualize-js/main/docs/guides/clone.md): `clone` a stream into a new one, `projectEvent`/`projectMessage`, `EvDbCloneError`
+- [OpenTelemetry](https://raw.githubusercontent.com/outsidenote/eventualize-js/main/docs/guides/opentelemetry.md): SDK setup, span names, trace propagation
+
+## Packages
+
+- [@eventualize/core](https://raw.githubusercontent.com/outsidenote/eventualize-js/main/packages/core/README.md): builder, streams, views, replay, clone, OTel helpers
+- [@eventualize/types](https://raw.githubusercontent.com/outsidenote/eventualize-js/main/packages/types/README.md): events, messages, cursors, adapter interfaces
+- [@eventualize/relational-storage-adapter](https://raw.githubusercontent.com/outsidenote/eventualize-js/main/packages/adapters/relational-storage-adapter/README.md): Prisma adapter for SQL
+- [@eventualize/postgres-storage-adapter](https://raw.githubusercontent.com/outsidenote/eventualize-js/main/packages/adapters/postgres-storage-adapter/README.md): PostgreSQL client factory
+- [@eventualize/mysql-storage-adapter](https://raw.githubusercontent.com/outsidenote/eventualize-js/main/packages/adapters/mysql-storage-adapter/README.md): MySQL / MariaDB client factory
+- [@eventualize/dynamodb-storage-adapter](https://raw.githubusercontent.com/outsidenote/eventualize-js/main/packages/adapters/dynamodb-storage-adapter/README.md): DynamoDB adapter
+- [@eventualize/eslint-plugin](https://raw.githubusercontent.com/outsidenote/eventualize-js/main/packages/eslint-plugin/README.md): stream factory module lint rule
+
+## Examples
+
+- [PointsStreamFactory.ts](https://raw.githubusercontent.com/outsidenote/eventualize-js/main/apps/sample-app/src/eventstore/PointsStream/PointsStreamFactory.ts): a complete stream factory with views and messages
+- [integration.test.ts](https://raw.githubusercontent.com/outsidenote/eventualize-js/main/apps/sample-app/src/tests/integration.test.ts): store, load, concurrency, replay and clone on every database
+
+## Optional
+
+- [AGENTS.md](https://raw.githubusercontent.com/outsidenote/eventualize-js/main/AGENTS.md): instructions for agents changing this repo
+- [CONTRIBUTING.md](https://raw.githubusercontent.com/outsidenote/eventualize-js/main/CONTRIBUTING.md): dev setup and release flow
+- [ADR 0001](https://raw.githubusercontent.com/outsidenote/eventualize-js/main/docs/adr/0001-replay-forward-only-navigation.md): why replay is forward-only
+- [OpenTelemetry API design](https://raw.githubusercontent.com/outsidenote/eventualize-js/main/docs/design/otel-api-design.md)

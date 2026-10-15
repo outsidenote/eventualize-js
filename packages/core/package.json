@@ -1,11 +1,24 @@
 {
   "name": "@eventualize/core",
   "version": "6.2.0",
-  "description": "",
+  "description": "Type-safe event sourcing for TypeScript: streams, views, snapshots, outbox messages, replay and OpenTelemetry tracing.",
+  "keywords": [
+    "event-sourcing",
+    "eventualize",
+    "typescript",
+    "cqrs",
+    "outbox",
+    "replay",
+    "opentelemetry"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/outsidenote/eventualize-js",
     "directory": "packages/core"
+  },
+  "homepage": "https://github.com/outsidenote/eventualize-js/tree/main/packages/core#readme",
+  "bugs": {
+    "url": "https://github.com/outsidenote/eventualize-js/issues"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

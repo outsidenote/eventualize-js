@@ -1,11 +1,23 @@
 {
   "name": "@eventualize/relational-storage-adapter",
   "version": "6.2.0",
-  "description": "",
+  "description": "Prisma-based eventualize-js storage adapter for SQL databases.",
+  "keywords": [
+    "event-sourcing",
+    "eventualize",
+    "typescript",
+    "prisma",
+    "sql",
+    "storage-adapter"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/outsidenote/eventualize-js",
     "directory": "packages/adapters/relational-storage-adapter"
+  },
+  "homepage": "https://github.com/outsidenote/eventualize-js/tree/main/packages/adapters/relational-storage-adapter#readme",
+  "bugs": {
+    "url": "https://github.com/outsidenote/eventualize-js/issues"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
