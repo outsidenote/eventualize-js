@@ -1,0 +1,11 @@
+**/node_modules
+**/dist
+**/*.tsbuildinfo
+**/.env*
+.git
+.claude
+docs
+graphify-out
+.superpowers
+.vscode
+.github

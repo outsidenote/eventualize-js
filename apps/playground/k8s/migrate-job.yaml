@@ -1,0 +1,23 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: migrate
+spec:
+  backoffLimit: 4
+  template:
+    spec:
+      restartPolicy: OnFailure
+      initContainers:
+        - name: wait-for-postgres
+          image: postgres:18
+          command: ["sh", "-c", "until pg_isready -h postgres -U playground; do sleep 2; done"]
+      containers:
+        - name: migrate
+          image: evdb-playground-migrate:local
+          imagePullPolicy: Never
+          env:
+            - name: POSTGRES_CONNECTION
+              valueFrom:
+                secretKeyRef:
+                  name: postgres
+                  key: POSTGRES_CONNECTION

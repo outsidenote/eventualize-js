@@ -252,6 +252,21 @@ describe("EvDbStreamFactory.clone", () => {
     assert.strictEqual((await readEvents(adapter)).length, 5);
   });
 
+  test("offsetLimit 135 copies past the first page, in batches", async () => {
+    const adapter = new RecordingBatchAdapter();
+    adapter.seedEvents(Array.from({ length: 140 }, (_, i) => ev(i, "Added", { points: 1 })));
+    const target = await factory.clone(SRC, TGT, adapter, adapter, { offsetLimit: 135 });
+    assert.deepStrictEqual(
+      (await readEvents(adapter)).map((e) => e.streamCursor.offset),
+      Array.from({ length: 136 }, (_, i) => i),
+    );
+    // Default pageSize 100: page 1 is offsets 0..99, page 2 is offsets 100..135.
+    assert.deepStrictEqual(adapter.batchSizes, [100, 36]);
+    assert.strictEqual(target.views.Count.count, 136);
+    assert.strictEqual(target.views.Sum.sum, 136);
+    assert.strictEqual(target.storedOffset, 135);
+  });
+
   test("events appended to the source during the clone are not copied", async () => {
     const adapter = seeded();
     await factory.clone(SRC, TGT, adapter, adapter, {

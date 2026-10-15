@@ -145,3 +145,4 @@ vite.config.ts.timestamp-*
 # hidden
 
 .playwright-map/
+.claude/handoff-nudge-state.json
