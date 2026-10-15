@@ -3,7 +3,7 @@
 **Status:** Draft, for owner review
 **Date:** 2026-10-14
 **Branch:** `develop`
-**Builds on:** [Replay — `goToOffset`](2026-10-12-stream-replay-goto-offset-design.md), [docs/REPLAY.md](../../REPLAY.md)
+**Builds on:** [Replay — `goToOffset`](2026-10-12-stream-replay-goto-offset-design.md), [docs/guides/replay.md](../../guides/replay.md)
 
 ---
 

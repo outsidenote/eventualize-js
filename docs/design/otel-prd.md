@@ -65,7 +65,7 @@ Make eventualize-js a first-class OpenTelemetry (OTEL) native library that **sel
 
 ## API Design (Reference)
 
-For full details, see [`OTEL_API_DESIGN.md`](./OTEL_API_DESIGN.md).
+For full details, see [`OTEL_API_DESIGN.md`](./otel-api-design.md).
 
 ### Public API Surface
 

@@ -1,11 +1,21 @@
 {
   "name": "@eventualize/types",
   "version": "6.2.0",
-  "description": "",
+  "description": "Shared types for eventualize-js: events, outbox messages, stream cursors and storage adapter interfaces.",
+  "keywords": [
+    "event-sourcing",
+    "eventualize",
+    "typescript",
+    "types"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/outsidenote/eventualize-js",
     "directory": "packages/types"
+  },
+  "homepage": "https://github.com/outsidenote/eventualize-js/tree/main/packages/types#readme",
+  "bugs": {
+    "url": "https://github.com/outsidenote/eventualize-js/issues"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
