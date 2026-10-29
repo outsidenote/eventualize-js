@@ -21,9 +21,15 @@ pnpm add @eventualize/relational-storage-adapter @eventualize/postgres-storage-a
 import EvDbPostgresPrismaClientFactory from "@eventualize/postgres-storage-adapter/EvDbPostgresPrismaClientFactory";
 import { EvDbPrismaStorageAdapter } from "@eventualize/relational-storage-adapter/EvDbPrismaStorageAdapter";
 
-const storage = new EvDbPrismaStorageAdapter(EvDbPostgresPrismaClientFactory.create());
+const storage = new EvDbPrismaStorageAdapter(EvDbPostgresPrismaClientFactory.create(), {
+  kind: "postgres",
+});
 const stream = await MyStreamFactory.get("id-1", storage, storage);
 ```
+
+The optional `kind` option (`"postgres"`, `"mysql"` or `"relational"`) sets the
+`eventualize.adapter.kind` attribute on the adapter's OpenTelemetry spans.
+Default: `"relational"`.
 
 ## Prisma version
 

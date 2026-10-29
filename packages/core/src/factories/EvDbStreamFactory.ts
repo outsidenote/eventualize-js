@@ -8,6 +8,8 @@ import type EvDbMessage from "@eventualize/types/messages/EvDbMessage";
 import type IEvDbReadOnlyStream from "@eventualize/types/store/IEvDbReadOnlyStream";
 import type { IEvDbPayloadData } from "@eventualize/types/events/IEvDbPayloadData";
 import type StreamStoreAffected from "@eventualize/types/stream/StreamStoreAffected";
+import { EVDB_DEFAULT_SPANS } from "@eventualize/types/telemetry/EvDbSpanPolicy";
+import type { EvDbSpanPolicy } from "@eventualize/types/telemetry/EvDbSpanPolicy";
 
 import EvDbStream from "../store/EvDbStream.js";
 import { EvDbReadOnlyStream } from "../store/EvDbReadOnlyStream.js";
@@ -24,8 +26,7 @@ import type {
   EvDbCloneOptions,
   EvDbCloneSourceEvent,
 } from "./EvDbCloneTypes.js";
-import { getCoreTracer } from "../otel/tracers.js";
-import { withSpan } from "../otel/withSpan.js";
+import { withPolicySpan } from "../otel/withPolicySpan.js";
 
 const EMPTY_SNAPSHOT_ADAPTER = new EvDbEmptySnapshotAdapter();
 
@@ -151,8 +152,10 @@ export class EvDbStreamFactory<
   ) => StreamWithEventMethods<TEventMap, TViews>;
   private ReplayStreamClass: new (...args: StreamCtorArgs) => IEvDbReplayTarget<TViews>;
   private CloneStreamClass: new (...args: StreamCtorArgs) => IEvDbCloneTarget;
+  private readonly spanPolicy: EvDbSpanPolicy;
 
   constructor(private readonly config: EvDbStreamFactoryConfig<TEventMap, TStreamType>) {
+    this.spanPolicy = config.spanPolicy ?? EVDB_DEFAULT_SPANS;
     const classes = this.createDynamicStreamClasses();
     this.DynamicStreamClass = classes.stream;
     this.ReplayStreamClass = classes.replay;
@@ -167,6 +170,7 @@ export class EvDbStreamFactory<
   private createDynamicStreamClasses() {
     const eventTypes = this.config.eventTypes;
     const viewNames = this.config.viewNames;
+    const spanPolicy = this.spanPolicy;
 
     const messagesProducer: EVDbMessagesProducer = (
       event: EvDbEvent,
@@ -195,6 +199,7 @@ export class EvDbStreamFactory<
           streamId,
           lastStreamOffset,
           messagesProducer,
+          spanPolicy,
         );
 
         views.forEach((view, index) => {
@@ -340,7 +345,7 @@ export class EvDbStreamFactory<
     streamStorageAdapter: IEvDbStorageStreamAdapter,
     snapshotStorageAdapter: IEvDbStorageSnapshotAdapter | undefined = undefined,
   ): Promise<StreamWithEventMethods<TEventMap, TViews>> {
-    return withSpan(getCoreTracer(), "eventualize.stream.get", async (span) => {
+    return withPolicySpan(this.spanPolicy, "eventualize.stream.get", async (span) => {
       span.setAttribute("eventualize.stream.id", streamId);
       span.setAttribute("eventualize.stream.type", this.config.streamType);
 
@@ -419,7 +424,7 @@ export class EvDbStreamFactory<
     snapshotStorageAdapter?: IEvDbStorageSnapshotAdapter,
     pageSize: number = 100,
   ): Promise<IEvDbReadOnlyStream<TViews>> {
-    return withSpan(getCoreTracer(), "eventualize.stream.goToOffset", async (span) => {
+    return withPolicySpan(this.spanPolicy, "eventualize.stream.goToOffset", async (span) => {
       span.setAttribute("eventualize.stream.id", streamId);
       span.setAttribute("eventualize.stream.type", this.config.streamType);
       span.setAttribute("eventualize.stream.offset", offset);
@@ -456,6 +461,7 @@ export class EvDbStreamFactory<
         fromOffset,
         offset,
         pageSize,
+        spanPolicy: this.spanPolicy,
       });
     });
   }
@@ -507,7 +513,7 @@ export class EvDbStreamFactory<
   ): Promise<StreamWithEventMethods<TEventMap, TViews>> {
     const { offsetLimit, pageSize = 100, projectEvent, projectMessage } = options;
 
-    return withSpan(getCoreTracer(), "eventualize.stream.clone", async (span) => {
+    return withPolicySpan(this.spanPolicy, "eventualize.stream.clone", async (span) => {
       span.setAttribute("eventualize.stream.type", this.config.streamType);
       span.setAttribute("eventualize.stream.id", streamId);
       span.setAttribute("eventualize.clone.target_id", targetStreamId);

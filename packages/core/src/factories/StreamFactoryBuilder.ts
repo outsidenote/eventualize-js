@@ -1,5 +1,7 @@
 import type IEvDbEventMetadata from "@eventualize/types/events/IEvDbEventMetadata";
 import type EvDbMessage from "@eventualize/types/messages/EvDbMessage";
+import { resolveEvDbSpanPolicy } from "@eventualize/types/telemetry/EvDbSpanPolicy";
+import type { EvDbTelemetryOptions } from "@eventualize/types/telemetry/EvDbSpanPolicy";
 import { EvDbStreamFactory } from "./EvDbStreamFactory.js";
 import type { StreamWithEventMethods } from "./EvDbStreamFactory.js";
 import type { EventTypeConfig } from "./EvDbStreamFactoryTypes.js"; // used by withEvent
@@ -53,6 +55,7 @@ export class StreamFactoryBuilder<
   private viewFactories: ViewFactory<unknown, TEventMap>[] = [];
   private eventTypes: EventTypeConfig[] = [];
   private viewNames: string[] = [];
+  private telemetry: EvDbTelemetryOptions | undefined;
 
   constructor(private streamType: TStreamType) {}
 
@@ -120,6 +123,17 @@ export class StreamFactoryBuilder<
   }
 
   /**
+   * Choose which OpenTelemetry spans the factory's streams produce.
+   * Spans you do not list keep their `EVDB_DEFAULT_SPANS` value. A later call
+   * replaces an earlier one.
+   * Example: `.withTelemetry({ spans: { "eventualize.adapter.*": true } })`
+   */
+  public withTelemetry(options: EvDbTelemetryOptions): this {
+    this.telemetry = options;
+    return this;
+  }
+
+  /**
    * Build the stream factory using event types registered via `withEvent`.
    */
   public build() {
@@ -128,6 +142,7 @@ export class StreamFactoryBuilder<
       viewFactories: this.viewFactories,
       eventTypes: this.eventTypes,
       viewNames: this.viewNames,
+      spanPolicy: resolveEvDbSpanPolicy(this.telemetry),
     }) as EvDbStreamFactory<TEventMap, TStreamType, TViews>;
 
     // Return factory with type helper for stream type extraction

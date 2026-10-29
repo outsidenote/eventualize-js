@@ -138,7 +138,9 @@ business rule again, and retry.
 
 ## Tracing
 
-Every append, store, load, replay and clone runs in an OpenTelemetry span. Events and
+Store, load, replay and clone run in OpenTelemetry spans. Append and storage adapter
+spans are off by default; each stream factory can turn spans on or off with
+`.withTelemetry()`. Events and
 messages store the W3C `traceparent` of the code that appended them, so a
 consumer can continue the same trace. Without an OTel SDK, all of this is a
 no-op. See [OpenTelemetry](guides/opentelemetry.md).

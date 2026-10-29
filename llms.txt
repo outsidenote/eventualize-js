@@ -13,7 +13,7 @@ Import each module by its deep path (for example `@eventualize/core/factories/St
 - [Outbox delivery](https://raw.githubusercontent.com/outsidenote/eventualize-js/main/docs/guides/outbox.md): deliver outbox rows with a pg-boss trigger or Debezium CDC to Kafka; recommended: one queue/topic per channel, per-stream order
 - [Replay](https://raw.githubusercontent.com/outsidenote/eventualize-js/main/docs/guides/replay.md): `goToOffset` read-only stream at a past offset, `forward`, errors
 - [Clone](https://raw.githubusercontent.com/outsidenote/eventualize-js/main/docs/guides/clone.md): `clone` a stream into a new one, `projectEvent`/`projectMessage`, `EvDbCloneError`
-- [OpenTelemetry](https://raw.githubusercontent.com/outsidenote/eventualize-js/main/docs/guides/opentelemetry.md): SDK setup, span names, trace propagation
+- [OpenTelemetry](https://raw.githubusercontent.com/outsidenote/eventualize-js/main/docs/guides/opentelemetry.md): SDK setup, span names, span filtering (`withTelemetry`), trace propagation
 
 ## Packages
 
@@ -35,4 +35,5 @@ Import each module by its deep path (for example `@eventualize/core/factories/St
 - [AGENTS.md](https://raw.githubusercontent.com/outsidenote/eventualize-js/main/AGENTS.md): instructions for agents changing this repo
 - [CONTRIBUTING.md](https://raw.githubusercontent.com/outsidenote/eventualize-js/main/CONTRIBUTING.md): dev setup and release flow
 - [ADR 0001](https://raw.githubusercontent.com/outsidenote/eventualize-js/main/docs/adr/0001-replay-forward-only-navigation.md): why replay is forward-only
+- [ADR 0002](https://raw.githubusercontent.com/outsidenote/eventualize-js/main/docs/adr/0002-span-filtering-per-stream-factory.md): why spans are filtered per stream factory, and the defaults
 - [OpenTelemetry API design](https://raw.githubusercontent.com/outsidenote/eventualize-js/main/docs/design/otel-api-design.md)

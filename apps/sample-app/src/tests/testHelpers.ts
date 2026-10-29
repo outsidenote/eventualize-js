@@ -20,7 +20,9 @@ export default class Helpers {
   ): IEvDbStorageStreamAdapter & IEvDbStorageSnapshotAdapter {
     let storageAdapter: IEvDbStorageStreamAdapter & IEvDbStorageSnapshotAdapter;
     if ([EVENT_STORE_TYPE.POSTGRES, EVENT_STORE_TYPE.MYSQL].includes(storeType)) {
-      storageAdapter = new EvDbPrismaStorageAdapter(options);
+      storageAdapter = new EvDbPrismaStorageAdapter(options, {
+        kind: storeType === EVENT_STORE_TYPE.POSTGRES ? "postgres" : "mysql",
+      });
     } else if (storeType === EVENT_STORE_TYPE.DYNAMODB) {
       storageAdapter = EvDbDynamoDbStorageAdapter.withOptions(options ?? {});
     } else {

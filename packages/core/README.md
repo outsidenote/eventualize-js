@@ -34,6 +34,15 @@ await stream.store();
 stream.views.Sum.sum; // 50
 ```
 
+To choose which OpenTelemetry spans the factory's streams produce, add
+`.withTelemetry()` before `.build()`. Spans you do not list keep their default.
+See the [OpenTelemetry guide](https://github.com/outsidenote/eventualize-js/blob/main/docs/guides/opentelemetry.md#choose-which-spans-to-produce).
+
+```ts
+  .withTelemetry({ spans: { "eventualize.stream.append": true, "eventualize.adapter.*": true } })
+  .build();
+```
+
 ## Main modules
 
 Import each module by its path. There is no root index.
@@ -45,7 +54,7 @@ Import each module by its path. There is no root index.
 | `@eventualize/core/factories/EvDbCloneTypes` | `EvDbCloneOptions` |
 | `@eventualize/core/store/EvDbCloneError` | `EvDbCloneError` (default) |
 | `@eventualize/core/adapters/IEvDbStorageAdapter` | `IEvDbStorageAdapter` |
-| `@eventualize/core/otel` | `withSpan`, `startScopedSpan`, `eventualizeInstrumentation`, `EVDB_TRACER_NAMES`, tracer getters |
+| `@eventualize/core/otel` | `withSpan`, `startScopedSpan`, `eventualizeInstrumentation`, `EVDB_TRACER_NAMES`, tracer getters, `EVDB_DEFAULT_SPANS`, `EvDbTelemetryOptions` and the other span-filter types |
 
 ## Docs
 

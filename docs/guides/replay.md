@@ -137,7 +137,9 @@ console.log(before.views);
 `goToOffset` runs inside the OpenTelemetry span `eventualize.stream.goToOffset`,
 with the attributes `eventualize.stream.id`, `eventualize.stream.type` and
 `eventualize.stream.offset`. Each page read also creates the adapter's
-`eventualize.adapter.query.stream` span. See the [OpenTelemetry guide](opentelemetry.md).
+`eventualize.adapter.query.stream` span, when the factory turns it on (it is off
+by default). `forward()` follows the same factory setting. See the
+[OpenTelemetry guide](opentelemetry.md#choose-which-spans-to-produce).
 
 ## For storage adapter authors
 

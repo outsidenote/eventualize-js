@@ -17,14 +17,15 @@ Pick the page by what you need right now.
   redact data, sandbox, migrate event shapes).
 - [Outbox delivery](guides/outbox.md): send outbox messages to pg-boss workers,
   or to Kafka with Debezium CDC.
-- [OpenTelemetry](guides/opentelemetry.md): export spans, add custom spans,
-  carry trace context through a queue.
+- [OpenTelemetry](guides/opentelemetry.md): export spans, choose which spans to
+  produce, add custom spans, carry trace context through a queue.
 
 ## Understand (explanation)
 
 - [Concepts](concepts.md): streams, events, views, snapshots, outbox messages,
   optimistic concurrency.
 - [ADR 0001: replay is forward-only](adr/0001-replay-forward-only-navigation.md)
+- [ADR 0002: span filtering per stream factory](adr/0002-span-filtering-per-stream-factory.md)
 - [OpenTelemetry API design](design/otel-api-design.md) and
   [PRD](design/otel-prd.md)
 

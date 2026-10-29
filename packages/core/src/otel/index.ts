@@ -1,6 +1,17 @@
 // Constants + info helper
 export { EVDB_TRACER_NAMES, eventualizeInstrumentation } from "./tracers.js";
 
+// Span filtering (`StreamFactoryBuilder.withTelemetry`)
+export {
+  EVDB_DEFAULT_SPANS,
+  resolveEvDbSpanPolicy,
+  type EvDbSpanName,
+  type EvDbSpanGroup,
+  type EvDbSpanSelector,
+  type EvDbSpanPolicy,
+  type EvDbTelemetryOptions,
+} from "@eventualize/types/telemetry/EvDbSpanPolicy";
+
 // Optional utilities for user code
 export { withSpan } from "./withSpan.js";
 export { startScopedSpan, type IDisposableSpan } from "./startScopedSpan.js";
