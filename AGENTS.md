@@ -17,6 +17,7 @@ pnpm install
 pnpm build                 # tsc --build; run before tests and before running any app
 pnpm lint                  # eslint + prettier --check
 pnpm lint:fix
+pnpm typecheck:tests       # type-check core test files (pnpm build skips them)
 pnpm test:unit             # fast, no database
 pnpm test                  # everything; starts Postgres, MySQL, LocalStack via Testcontainers (needs Docker)
 pnpm test:postgres         # one database: test:postgres | test:mysql | test:dynamodb

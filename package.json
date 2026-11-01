@@ -24,6 +24,7 @@
     "lint": "eslint packages/ apps/ && prettier --check \"packages/**/*.ts\" \"apps/**/*.ts\"",
     "lint:fix": "eslint --fix packages/ apps/ && prettier --write \"packages/**/*.ts\" \"apps/**/*.ts\"",
     "build": "tsc --build",
+    "typecheck:tests": "tsc -p packages/core/tsconfig.test.json --noEmit --composite false --incremental false",
     "clean": "rimraf tsconfig.tsbuildinfo",
     "clear": "pnpm run clean && pnpm -r run clean",
     "cleanbuild": "tsc --build --clean && tsc --build",

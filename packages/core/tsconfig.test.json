@@ -5,6 +5,8 @@
     "moduleResolution": "NodeNext",
     "allowImportingTsExtensions": true,
     "preserveSymlinks": true,
+    // Type-check only. Some imports resolve to ../types/src through the root "paths".
+    "rootDir": "../..",
   },
   "include": ["src/**/*.test.ts", "src/**/*.test-support.ts"],
   "exclude": []
