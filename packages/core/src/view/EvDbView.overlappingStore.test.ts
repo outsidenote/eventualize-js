@@ -77,7 +77,7 @@ describe("EvDbView overlapping store", () => {
       offsets,
       [...offsets].sort((a, b) => a - b),
     );
-    assert.strictEqual(offsets.at(-1), 2);
+    assert.strictEqual(offsets[offsets.length - 1], 2);
     assert.strictEqual(view.storeOffset, 2);
   });
 
