@@ -270,6 +270,7 @@ export default class EvDbDynamoDbStorageAdapter
       snapshot.offset,
       new Date(Number(snapshot.stored_at)),
       snapshot.state.__state,
+      { kind: "row", offset: Number(snapshot.offset) },
     );
   }
 
@@ -277,6 +278,9 @@ export default class EvDbDynamoDbStorageAdapter
    * Save a snapshot
    */
   async storeSnapshotAsync(record: EvDbStoredSnapshotData): Promise<void> {
+    if (record.body.kind === "pointer") {
+      throw new Error("pointer snapshot rows are not supported by this adapter yet");
+    }
     const command = QueryProvider.saveSnapshot(record);
     await this.dynamoDbClient.send(command);
   }

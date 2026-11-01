@@ -213,6 +213,9 @@ export default class EvDbDynamoDbStorageAdapterQueries {
   }
 
   public static saveSnapshot(snapshot: EvDbStoredSnapshotData): PutItemCommand {
+    if (snapshot.body.kind === "pointer") {
+      throw new Error("pointer snapshot rows are not supported by this adapter yet");
+    }
     const viewAddress = new EvDbViewAddress(
       snapshot.streamType,
       snapshot.streamId,
@@ -225,7 +228,7 @@ export default class EvDbDynamoDbStorageAdapterQueries {
         offset: { N: snapshot.offset.toString() },
         state: {
           M: marshall(
-            { __state: snapshot.state },
+            { __state: snapshot.body.state },
             {
               convertClassInstanceToMap: true,
               removeUndefinedValues: true,

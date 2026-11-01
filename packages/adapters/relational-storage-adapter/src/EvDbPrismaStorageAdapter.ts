@@ -331,6 +331,7 @@ export class EvDbPrismaStorageAdapter
       Number(snapshot.offset),
       snapshot.stored_at,
       snapshot.state,
+      { kind: "row", offset: Number(snapshot.offset) },
     );
   }
 
@@ -338,13 +339,16 @@ export class EvDbPrismaStorageAdapter
    * Save a snapshot
    */
   async storeSnapshotAsync(record: EvDbStoredSnapshotData): Promise<void> {
+    if (record.body.kind === "pointer") {
+      throw new Error("pointer snapshot rows are not supported by this adapter yet");
+    }
     await this.queryProvider.saveSnapshot({
       id: record.id,
       stream_type: record.streamType,
       stream_id: record.streamId,
       view_name: record.viewName,
       offset: record.offset,
-      state: record.state as unknown as Prisma.InputJsonValue,
+      state: record.body.state as unknown as Prisma.InputJsonValue,
       stored_at: new Date(),
     });
   }

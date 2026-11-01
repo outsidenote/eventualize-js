@@ -32,12 +32,10 @@ export abstract class EvDbView<TState>
   }
 
   getSnapshotData(): EvDbStoredSnapshotData {
-    return EvDbStoredSnapshotData.fromAddress(
-      this.address,
-      this.memoryOffset,
-      this.storeOffset,
-      this._state,
-    );
+    return EvDbStoredSnapshotData.fromAddress(this.address, this.memoryOffset, this.storeOffset, {
+      kind: "full",
+      state: this._state,
+    });
   }
 
   public abstract handleOnApply(
