@@ -7,15 +7,17 @@ import type { IEvDbStorageAdapter } from "@eventualize/core/adapters/IEvDbStorag
 import EvDbViewAddress from "@eventualize/types/view/EvDbViewAddress";
 import { EvDbStoredSnapshotData } from "@eventualize/types/snapshots/EvDbStoredSnapshotData";
 import type { EvDbSnapshotBody } from "@eventualize/types/snapshots/EvDbSnapshotBody";
+import { createDynamoDBClient } from "@eventualize/dynamodb-storage-adapter/DynamoDbClient";
+import { PutItemCommand } from "@aws-sdk/client-dynamodb";
 import { EvDbStoredSnapshotResultRaw } from "@eventualize/types/snapshots/EvDbStoredSnapshotResultRaw";
 
 type StoreClientType = ReturnType<typeof Steps.createStoreClient>;
 
 // Databases whose adapter implements snapshot_v2 pointer rows.
-// Task 3 adds EVENT_STORE_TYPE.DYNAMODB here.
 const SNAPSHOT_V2_DATABASES: EVENT_STORE_TYPE[] = [
   EVENT_STORE_TYPE.POSTGRES,
   EVENT_STORE_TYPE.MYSQL,
+  EVENT_STORE_TYPE.DYNAMODB,
 ];
 
 const ADDRESS = new EvDbViewAddress("snapshot-v2-stream", "stream-1", "Sum");
@@ -44,6 +46,36 @@ describe("snapshot_v2 adapter integration", () => {
           adapter.storeSnapshotAsync(
             EvDbStoredSnapshotData.fromAddress(ADDRESS, offset, offset, body),
           );
+        const seedOldSnapshotTable = async (offset: number) => {
+          if (storeType === EVENT_STORE_TYPE.DYNAMODB) {
+            const dynamo = createDynamoDBClient(testManager.getDynamoDbOptions());
+            await dynamo.send(
+              new PutItemCommand({
+                TableName: "snapshots",
+                Item: {
+                  view_address: {
+                    S: `${ADDRESS.streamType}::${ADDRESS.streamId}::${ADDRESS.viewName}`,
+                  },
+                  offset: { N: offset.toString() },
+                  state: { M: { __state: { M: { sum: { N: "1" } } } } },
+                  stored_at: { S: Date.now().toString() },
+                },
+              }),
+            );
+            return;
+          }
+          assert.ok(storeClient, "relational store client expected");
+          await storeClient.snapshot.create({
+            data: {
+              id: crypto.randomUUID(),
+              stream_type: ADDRESS.streamType,
+              stream_id: ADDRESS.streamId,
+              view_name: ADDRESS.viewName,
+              offset,
+              state: { sum: 1 },
+            },
+          });
+        };
         const full = (offset: number, state: unknown) => store(offset, { kind: "full", state });
         const pointer = (offset: number, rowOffset: number) =>
           store(offset, { kind: "pointer", stateRef: { kind: "row", offset: rowOffset } });
@@ -134,17 +166,7 @@ describe("snapshot_v2 adapter integration", () => {
         await t.test(
           "Given a full row in the old snapshot table only, When getSnapshotAsync, Then the result is Empty",
           async () => {
-            assert.ok(storeClient, "relational store client expected");
-            await storeClient.snapshot.create({
-              data: {
-                id: crypto.randomUUID(),
-                stream_type: ADDRESS.streamType,
-                stream_id: ADDRESS.streamId,
-                view_name: ADDRESS.viewName,
-                offset: 4,
-                state: { sum: 1 },
-              },
-            });
+            await seedOldSnapshotTable(4);
             const result = await adapter.getSnapshotAsync(ADDRESS);
             assert.strictEqual(result.offset, -1);
           },

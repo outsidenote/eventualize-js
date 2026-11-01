@@ -19,6 +19,7 @@ async function createDynamoDBTables() {
     const tableSchemas = [
         "events-table-schema.json",
         "snapshots-table-schema.json",
+        "snapshot_v2-table-schema.json",
         "messages-table-schema.json",
     ];
 
