@@ -67,7 +67,7 @@ async function installOutboxTrigger(pool: pg.Pool): Promise<void> {
 
 async function main() {
   const storeClient = EvDbPostgresPrismaClientFactory.create(config.postgresConnection);
-  const storageAdapter = new EvDbPrismaStorageAdapter(storeClient);
+  const storageAdapter = new EvDbPrismaStorageAdapter(storeClient, { kind: "postgres" });
   const pool = new pg.Pool({ connectionString: config.postgresConnection });
 
   const boss = new PgBoss(config.postgresConnection);

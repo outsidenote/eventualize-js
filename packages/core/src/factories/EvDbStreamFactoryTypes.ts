@@ -1,4 +1,5 @@
 import type EVDbMessagesProducer from "@eventualize/types/messages/EvDbMessagesProducer";
+import type { EvDbSpanPolicy } from "@eventualize/types/telemetry/EvDbSpanPolicy";
 import type { ViewFactory } from "./EvDbViewFactory.js";
 
 /**
@@ -12,6 +13,8 @@ export interface EvDbStreamFactoryConfig<
   viewFactories: ViewFactory<unknown, TEventMap>[];
   eventTypes: EventTypeConfig[];
   viewNames: string[]; // Track view names for accessor creation
+  /** Spans this factory's streams produce. Default: `EVDB_DEFAULT_SPANS`. */
+  spanPolicy?: EvDbSpanPolicy;
 }
 
 /**

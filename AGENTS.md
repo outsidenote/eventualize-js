@@ -109,6 +109,7 @@ must keep the lint count. If a count goes up, revert and try another way.
 | Public API of a package | That package's `README.md`, and the guide in `docs/guides/` that covers it |
 | Replay (`goToOffset`, `forward`) | [docs/guides/replay.md](docs/guides/replay.md) |
 | Clone (`clone`) | [docs/guides/clone.md](docs/guides/clone.md) |
+| View snapshot strategy (`withView` snapshot callback) | [docs/guides/snapshots.md](docs/guides/snapshots.md) |
 | Outbox table or message fields | [docs/guides/outbox.md](docs/guides/outbox.md) |
 | OTel spans or attributes | [docs/guides/opentelemetry.md](docs/guides/opentelemetry.md) |
 | Adapter interface or schema | [docs/guides/storage-adapters.md](docs/guides/storage-adapters.md) |

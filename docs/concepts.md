@@ -92,7 +92,9 @@ A **snapshot** is a stored copy of a view's state at one offset. Without
 snapshots, loading a stream reads every event from offset 0. With them, `get()`
 loads the latest snapshot of each view and reads only newer events.
 
-Today a snapshot of each view is written on every `store()`.
+Snapshots are per view. By default a view writes a snapshot on every `store()`.
+A view can set a **snapshot strategy** to choose when it writes. See
+[Snapshots](guides/snapshots.md).
 
 ## Outbox message
 
@@ -138,7 +140,9 @@ business rule again, and retry.
 
 ## Tracing
 
-Every append, store, load, replay and clone runs in an OpenTelemetry span. Events and
+Store, load, replay and clone run in OpenTelemetry spans. Append and storage adapter
+spans are off by default; each stream factory can turn spans on or off with
+`.withTelemetry()`. Events and
 messages store the W3C `traceparent` of the code that appended them, so a
 consumer can continue the same trace. Without an OTel SDK, all of this is a
 no-op. See [OpenTelemetry](guides/opentelemetry.md).

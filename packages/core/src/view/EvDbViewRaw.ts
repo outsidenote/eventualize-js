@@ -9,6 +9,7 @@ export abstract class EvDbViewRaw implements IEvDbViewStore {
   private _memoryOffset: number;
   private _storeOffset: number;
   private _storedAt: Date;
+  private _snapshotRequested = false;
 
   protected constructor(
     private readonly _storageAdapter: IEvDbStorageSnapshotAdapter,
@@ -36,24 +37,44 @@ export abstract class EvDbViewRaw implements IEvDbViewStore {
   shouldStoreSnapshot(_offsetGapFromLastSave: number, _durationSinceLastSaveMs: number): boolean {
     return true;
   }
-  applyEvent(e: EvDbEvent): void {
+  /** True when an event rule asks to store a snapshot. Called once per applied event. */
+  protected matchesSnapshotEvent(_e: EvDbEvent): boolean {
+    return false;
+  }
+  /**
+   * @param evaluateSnapshotRules - false skips event rules (used when catching up on stored events).
+   */
+  applyEvent(e: EvDbEvent, evaluateSnapshotRules = true): void {
     const offset = e.streamCursor.offset;
     if (this.memoryOffset >= offset) {
       return;
     }
     this.onApplyEvent(e);
     this._memoryOffset = offset;
+    if (evaluateSnapshotRules && !this._snapshotRequested && this.matchesSnapshotEvent(e)) {
+      this._snapshotRequested = true;
+    }
   }
 
   async store(): Promise<void> {
-    const eventsSinceLatestSnapshot = this.memoryOffset - this.storeOffset;
-    const secondsSinceLatestSnapshot = new Date().getTime() - this.storedAt.getTime();
-    if (!this.shouldStoreSnapshot(eventsSinceLatestSnapshot, secondsSinceLatestSnapshot)) {
+    // A view with no snapshot has storeOffset -1, while a stream's first event is offset 1, so the base is 0.
+    const eventsSinceLatestSnapshot = this.memoryOffset - Math.max(this.storeOffset, 0);
+    const msSinceLatestSnapshot = new Date().getTime() - this.storedAt.getTime();
+    if (
+      !this._snapshotRequested &&
+      !this.shouldStoreSnapshot(eventsSinceLatestSnapshot, msSinceLatestSnapshot)
+    ) {
       return;
     }
+    // Capture before the await: events applied while the write is in flight are not in this snapshot.
+    const snapshotOffset = this._memoryOffset;
     const snapshotData = this.getSnapshotData();
     await this._storageAdapter.storeSnapshotAsync(snapshotData);
-    this._storeOffset = this._memoryOffset;
+    this._storeOffset = snapshotOffset;
+    this._storedAt = new Date();
+    if (this._memoryOffset === snapshotOffset) {
+      this._snapshotRequested = false;
+    }
   }
 
   protected abstract onApplyEvent(e: EvDbEvent): void;

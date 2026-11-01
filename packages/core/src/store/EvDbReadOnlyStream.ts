@@ -3,7 +3,10 @@ import type EvDbMessage from "@eventualize/types/messages/EvDbMessage";
 import type IEvDbStorageStreamAdapter from "@eventualize/types/adapters/IEvDbStorageStreamAdapter";
 import type EvDbStreamAddress from "@eventualize/types/stream/EvDbStreamAddress";
 import type IEvDbReadOnlyStream from "@eventualize/types/store/IEvDbReadOnlyStream";
+import { EVDB_DEFAULT_SPANS } from "@eventualize/types/telemetry/EvDbSpanPolicy";
+import type { EvDbSpanPolicy } from "@eventualize/types/telemetry/EvDbSpanPolicy";
 import { fetchPage } from "./fetchPage.js";
+import { withSpanPolicy } from "../otel/withPolicySpan.js";
 
 /**
  * The stream that replay folds events into. Implemented by the factory's
@@ -30,6 +33,8 @@ export interface EvDbReadOnlyStreamOpenOptions<TViews> {
   readonly offset: number;
   /** Events fetched per page. A positive integer. */
   readonly pageSize: number;
+  /** Span policy for the adapter calls of `forward()`. Default: `EVDB_DEFAULT_SPANS`. */
+  readonly spanPolicy?: EvDbSpanPolicy;
 }
 
 /** Builds the RangeError for an offset that the stream does not have. */
@@ -54,6 +59,7 @@ export class EvDbReadOnlyStream<TViews> implements IEvDbReadOnlyStream<TViews> {
     private _messages: ReadonlyArray<EvDbMessage>,
     private buffer: EvDbEvent[],
     private nextOffset: number,
+    private readonly spanPolicy: EvDbSpanPolicy,
   ) {}
 
   /**
@@ -91,6 +97,7 @@ export class EvDbReadOnlyStream<TViews> implements IEvDbReadOnlyStream<TViews> {
             messages,
             page.slice(i + 1),
             nextOffset,
+            options.spanPolicy ?? EVDB_DEFAULT_SPANS,
           );
           await stream.ensureLookahead();
           return stream;
@@ -146,7 +153,10 @@ export class EvDbReadOnlyStream<TViews> implements IEvDbReadOnlyStream<TViews> {
   /** Fetches the next page when the buffer is empty. */
   private async ensureLookahead(): Promise<void> {
     if (this.buffer.length > 0) return;
-    const page = await fetchPage(this.adapter, this.address, this.nextOffset, this.pageSize);
+    // forward() runs after goToOffset returned, outside its span policy context.
+    const page = await withSpanPolicy(this.spanPolicy, () =>
+      fetchPage(this.adapter, this.address, this.nextOffset, this.pageSize),
+    );
     if (page.length === 0) return;
     this.nextOffset = page[page.length - 1].streamCursor.offset + 1;
     this.buffer = page;

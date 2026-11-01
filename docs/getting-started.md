@@ -121,7 +121,7 @@ import PointsStreamFactory from "./points/PointsStreamFactory.js";
 const client = EvDbPostgresPrismaClientFactory.create(
   "postgres://evdb:evdbpassword@localhost:5432/evdb",
 );
-const storage = new EvDbPrismaStorageAdapter(client);
+const storage = new EvDbPrismaStorageAdapter(client, { kind: "postgres" });
 
 // Load the stream. A new stream id gives an empty stream.
 const stream = await PointsStreamFactory.get("user-1", storage, storage);

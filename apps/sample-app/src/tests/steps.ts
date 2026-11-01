@@ -63,6 +63,7 @@ export default class Steps {
     return [EVENT_STORE_TYPE.POSTGRES, EVENT_STORE_TYPE.MYSQL].includes(storeType)
       ? new EvDbPrismaStorageAdapter(
           storeClient as unknown as ConstructorParameters<typeof EvDbPrismaStorageAdapter>[0],
+          { kind: storeType === EVENT_STORE_TYPE.POSTGRES ? "postgres" : "mysql" },
         )
       : storeType === EVENT_STORE_TYPE.DYNAMODB
         ? EvDbDynamoDbStorageAdapter.withOptions(dynamoDbOptions ?? {})

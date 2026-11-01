@@ -229,4 +229,5 @@ await PointsStreamFactory.clone("points-1", "points-1-copy", storageAdapter, sna
 attributes `eventualize.stream.type`, `eventualize.stream.id` (source),
 `eventualize.clone.target_id` and `eventualize.clone.offset_limit` (when set).
 Each page read also creates the adapter's `eventualize.adapter.query.stream`
-span. See the [OpenTelemetry guide](opentelemetry.md).
+span, when the factory turns it on (it is off by default). See the
+[OpenTelemetry guide](opentelemetry.md#choose-which-spans-to-produce).

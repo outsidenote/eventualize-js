@@ -63,7 +63,8 @@ missing from the type and from the object, so you cannot write by mistake.
    A view without such a snapshot starts from its default state.
 2. Events are read from the lowest snapshot offset (or from 0) up to `offset`,
    and applied to the views. A view skips events it already holds.
-3. The stream stops on the event at `offset`.
+3. The stream stops on the event at `offset`. Snapshot strategy rules
+   (`onEvent` predicates) do not run during replay.
 
 Without a `snapshotStorageAdapter`, every view starts from its default state and
 folds from the first event. This is slower, but the views are still there.
@@ -137,7 +138,9 @@ console.log(before.views);
 `goToOffset` runs inside the OpenTelemetry span `eventualize.stream.goToOffset`,
 with the attributes `eventualize.stream.id`, `eventualize.stream.type` and
 `eventualize.stream.offset`. Each page read also creates the adapter's
-`eventualize.adapter.query.stream` span. See the [OpenTelemetry guide](opentelemetry.md).
+`eventualize.adapter.query.stream` span, when the factory turns it on (it is off
+by default). `forward()` follows the same factory setting. See the
+[OpenTelemetry guide](opentelemetry.md#choose-which-spans-to-produce).
 
 ## For storage adapter authors
 

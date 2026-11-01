@@ -10,7 +10,9 @@ When no OTEL SDK is registered, all instrumentation is a no-op with zero overhea
 
 ## Setup (once, at app startup)
 
-You configure an OTEL SDK. The library needs no extra options.
+You configure an OTEL SDK. The library needs no extra options. To choose which
+spans a stream factory produces, see
+[Choose which spans to produce](#choose-which-spans-to-produce).
 
 ### 1. Install OTEL packages
 
@@ -86,19 +88,86 @@ const { tracerNames } = eventualizeInstrumentation();
 
 ## Span Hierarchy
 
-A typical write operation produces this span tree:
+With all spans on, a typical write operation produces this span tree. By
+default, the spans marked `(off)` are not produced:
 
 ```
 [your code]
 └── eventualize.stream.get              (@eventualize/core)
-    └── eventualize.adapter.query.stream (@eventualize/relational-adapter)
-└── eventualize.stream.append           (@eventualize/core)
+    └── eventualize.adapter.query.stream (@eventualize/relational-adapter)  (off)
+└── eventualize.stream.append           (@eventualize/core)                (off)
 └── eventualize.stream.store            (@eventualize/core)
-    └── eventualize.adapter.store       (@eventualize/relational-adapter)
+    └── eventualize.adapter.store       (@eventualize/relational-adapter)  (off)
 ```
+
+When a span is off, the spans inside it attach to the nearest span that is on,
+or to your span. Spans from other instrumentation (for example `pg` or the AWS
+SDK) are not affected.
 
 Messages stored in the outbox carry a `traceparent` field populated from the
 active span at `appendEvent` time.
+
+Adapter spans carry the `eventualize.adapter.kind` attribute: `postgres`,
+`mysql`, `dynamodb`, or `relational`. The Prisma adapter reports the `kind`
+you pass to its constructor, and `relational` when you pass none:
+
+```typescript
+const storage = new EvDbPrismaStorageAdapter(client, { kind: "postgres" });
+```
+
+---
+
+## Choose which spans to produce
+
+Each stream factory decides which eventualize spans its streams produce. Use
+this to balance detail against noise. Call `.withTelemetry()` before `.build()`:
+
+```typescript
+const FundsStreamFactory = new StreamFactoryBuilder("FundsStream")
+  .withEvent("FundsDeposited")
+  .asType<FundsDeposited>()
+  .withView("Balance", { balance: 0 }, balanceHandlers)
+  .withTelemetry({
+    spans: {
+      "eventualize.stream.append": true, // turn on (default off)
+      "eventualize.adapter.*": true, // all adapter spans on
+      "eventualize.stream.goToOffset": false, // turn off (default on)
+    },
+  })
+  .build();
+```
+
+Without `.withTelemetry()`, the factory uses `EVDB_DEFAULT_SPANS`:
+
+| Span | Default |
+|------|---------|
+| `eventualize.stream.get` | on |
+| `eventualize.stream.store` | on |
+| `eventualize.stream.goToOffset` | on |
+| `eventualize.stream.clone` | on |
+| `eventualize.stream.append` | off (one span per event) |
+| `eventualize.adapter.store` | off |
+| `eventualize.adapter.query.stream` | off |
+
+Rules:
+
+- A key is a span name, a group (`"eventualize.stream.*"`, `"eventualize.adapter.*"`),
+  or `"*"` for all spans. Keys are typed, so a misspelled name is a compile error.
+- Spans that no key matches keep their default.
+- When several keys match a span, the most specific wins: span name, then group,
+  then `"*"`. For example, `{ "*": false, "eventualize.stream.store": true }`
+  produces only the store span.
+- The policy also covers the adapter spans. Core passes it to the storage
+  adapter in the OpenTelemetry context, so you do not configure the adapter.
+  An adapter that you call directly, outside a stream, uses the defaults.
+- The policy does not change trace propagation: events and outbox messages
+  still store the `traceparent` of the active span.
+
+The types and the defaults are exported from `@eventualize/core/otel`:
+
+```typescript
+import { EVDB_DEFAULT_SPANS, type EvDbTelemetryOptions } from "@eventualize/core/otel";
+```
 
 ---
 

@@ -1,3 +1,4 @@
+import type { EvDbSnapshotStrategy } from "../view/EvDbSnapshotStrategyBuilder.js";
 import type IEvDbEventMetadata from "@eventualize/types/events/IEvDbEventMetadata";
 
 /**
@@ -24,4 +25,6 @@ export interface ViewConfig<TState, TEventMap extends Record<string, object>> {
   streamType: string;
   defaultState: TState;
   handlers: Partial<EvDbStreamEventHandlersMap<TState, TEventMap>>;
+  /** When set, decides when the view stores a snapshot. Default: every store call writes. */
+  snapshotStrategy?: EvDbSnapshotStrategy<TState>;
 }

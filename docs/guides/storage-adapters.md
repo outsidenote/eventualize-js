@@ -24,7 +24,7 @@ import EvDbPostgresPrismaClientFactory from "@eventualize/postgres-storage-adapt
 import { EvDbPrismaStorageAdapter } from "@eventualize/relational-storage-adapter/EvDbPrismaStorageAdapter";
 
 const client = EvDbPostgresPrismaClientFactory.create("postgres://user:pass@host:5432/db");
-const storage = new EvDbPrismaStorageAdapter(client);
+const storage = new EvDbPrismaStorageAdapter(client, { kind: "postgres" });
 ```
 
 `create()` without an argument reads the `POSTGRES_CONNECTION` env var.
@@ -50,6 +50,7 @@ import { EvDbPrismaStorageAdapter } from "@eventualize/relational-storage-adapte
 const client = EvDbMySqlPrismaClientFactory.create("mariadb://user:pass@host:3306/db");
 const storage = new EvDbPrismaStorageAdapter(
   client as unknown as ConstructorParameters<typeof EvDbPrismaStorageAdapter>[0],
+  { kind: "mysql" },
 );
 ```
 
@@ -135,6 +136,16 @@ Implement both interfaces from `@eventualize/types/adapters/`:
 | `getSnapshotAsync(viewAddress, maxOffset?)` | Latest snapshot with `offset <= maxOffset` (or the latest one). Return the empty snapshot (offset `-1`) when there is none. |
 | `storeSnapshotAsync(data)` | Store one view snapshot. |
 | `close()` | Release connections. |
+
+To produce the adapter spans, get the tracer through
+`evDbTracerFor(spanName, tracer)` from `@eventualize/types/telemetry/EvDbSpanPolicy`.
+It returns a no-op tracer when the stream factory's span policy turns that span
+off:
+
+```typescript
+const tracer = evDbTracerFor("eventualize.adapter.store", trace.getTracer("my-adapter"));
+return tracer.startActiveSpan("eventualize.adapter.store", async (span) => { /* ... */ });
+```
 
 Use the existing adapters as reference:
 [`EvDbPrismaStorageAdapter.ts`](../../packages/adapters/relational-storage-adapter/src/EvDbPrismaStorageAdapter.ts)

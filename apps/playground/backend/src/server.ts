@@ -4,7 +4,7 @@ import { createListAccounts } from "./accounts/listAccounts.js";
 import { createApp } from "./http/createApp.js";
 
 const prisma = EvDbPostgresPrismaClientFactory.create(); // reads POSTGRES_CONNECTION
-const storage = new EvDbPrismaStorageAdapter(prisma);
+const storage = new EvDbPrismaStorageAdapter(prisma, { kind: "postgres" });
 const app = createApp({ storage, listAccounts: createListAccounts(prisma) });
 
 const port = Number(process.env.PORT ?? 3000);

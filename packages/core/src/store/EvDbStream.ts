@@ -12,10 +12,12 @@ import type IEvDbEventMetadata from "@eventualize/types/events/IEvDbEventMetadat
 import EvDbStreamCursor from "@eventualize/types/stream/EvDbStreamCursor";
 import type { EvDbStreamType } from "@eventualize/types/primitives/EvDbStreamType";
 import type EVDbMessagesProducer from "@eventualize/types/messages/EvDbMessagesProducer";
+import { EVDB_DEFAULT_SPANS } from "@eventualize/types/telemetry/EvDbSpanPolicy";
+import type { EvDbSpanPolicy } from "@eventualize/types/telemetry/EvDbSpanPolicy";
 import type { EvDbView } from "../view/EvDbView.js";
 import { context, propagation } from "@opentelemetry/api";
 import { getCoreTracer } from "../otel/tracers.js";
-import { withSpan } from "../otel/withSpan.js";
+import { withPolicySpan } from "../otel/withPolicySpan.js";
 
 type ImmutableIEvDbView = Readonly<EvDbView<unknown>>;
 
@@ -114,6 +116,7 @@ export default class EvDbStream implements IEvDbStreamStore, IEvDbStreamStoreDat
    *                           the starting cursor and for OCC checks.
    * @param messagesProducer - Function invoked after each `appendEvent` to derive
    *                           outbox messages from the new event and current view states.
+   * @param spanPolicy - Spans this stream produces. Default: `EVDB_DEFAULT_SPANS`.
    */
   public constructor(
     streamType: EvDbStreamType,
@@ -122,6 +125,7 @@ export default class EvDbStream implements IEvDbStreamStore, IEvDbStreamStoreDat
     streamId: string,
     lastStoredOffset: number,
     protected messagesProducer: EVDbMessagesProducer,
+    protected readonly spanPolicy: EvDbSpanPolicy = EVDB_DEFAULT_SPANS,
   ) {
     this._views = views.reduce(
       (acc, view) => {
@@ -160,14 +164,15 @@ export default class EvDbStream implements IEvDbStreamStore, IEvDbStreamStoreDat
   ): IEvDbEventMetadata {
     capturedBy = capturedBy ?? EvDbStream.DEFAULT_CAPTURE_BY;
 
-    const tracer = getCoreTracer();
-    const span = tracer.startSpan("eventualize.stream.append", {
-      attributes: {
-        "eventualize.stream.id": this.streamAddress.streamId,
-        "eventualize.stream.type": this.streamAddress.streamType,
-        "eventualize.event.type": eventType,
-      },
-    });
+    const span = this.spanPolicy["eventualize.stream.append"]
+      ? getCoreTracer().startSpan("eventualize.stream.append", {
+          attributes: {
+            "eventualize.stream.id": this.streamAddress.streamId,
+            "eventualize.stream.type": this.streamAddress.streamType,
+            "eventualize.event.type": eventType,
+          },
+        })
+      : undefined;
 
     try {
       const e = this.buildEvent(eventType, payload, new Date(), capturedBy);
@@ -177,7 +182,7 @@ export default class EvDbStream implements IEvDbStreamStore, IEvDbStreamStoreDat
 
       return e;
     } finally {
-      span.end();
+      span?.end();
     }
   }
 
@@ -225,10 +230,11 @@ export default class EvDbStream implements IEvDbStreamStore, IEvDbStreamStoreDat
    * `capturedAt`, `capturedBy`, trace context) instead of new values.
    *
    * @param e - The event to apply.
+   * @param evaluateSnapshotRules - false skips the views' snapshot event rules (replay never stores).
    * @returns The messages produced for `e`, stamped with `e`'s trace context.
    */
-  protected applyEvent(e: EvDbEvent): ReadonlyArray<EvDbMessage> {
-    this.applyToViews(e);
+  protected applyEvent(e: EvDbEvent, evaluateSnapshotRules = true): ReadonlyArray<EvDbMessage> {
+    this.applyToViews(e, evaluateSnapshotRules);
     return this.produceMessages(e);
   }
 
@@ -236,10 +242,11 @@ export default class EvDbStream implements IEvDbStreamStore, IEvDbStreamStoreDat
    * Applies an event to every view. Does not produce messages.
    * A view skips an event whose offset it has already applied.
    * @param e - The event to apply.
+   * @param evaluateSnapshotRules - false skips the views' snapshot event rules (replay never stores).
    */
-  protected applyToViews(e: EvDbEvent): void {
+  protected applyToViews(e: EvDbEvent, evaluateSnapshotRules = true): void {
     for (const view of Object.values(this._views)) {
-      view.applyEvent(e);
+      view.applyEvent(e, evaluateSnapshotRules);
     }
   }
 
@@ -317,7 +324,7 @@ export default class EvDbStream implements IEvDbStreamStore, IEvDbStreamStoreDat
    *          outbox messages were written.
    */
   public async store(): Promise<StreamStoreAffected> {
-    return withSpan(getCoreTracer(), "eventualize.stream.store", async (span) => {
+    return withPolicySpan(this.spanPolicy, "eventualize.stream.store", async (span) => {
       span.setAttribute("eventualize.stream.id", this.streamAddress.streamId);
       span.setAttribute("eventualize.stream.type", this.streamAddress.streamType);
       span.setAttribute("eventualize.event.count", this._pendingEvents.length);

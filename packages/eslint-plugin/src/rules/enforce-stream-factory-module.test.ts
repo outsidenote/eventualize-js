@@ -57,6 +57,27 @@ ruleTester.run("enforce-stream-factory-module", enforceStreamFactoryModule as an
       `,
     },
 
+    // withView with a snapshot strategy callback inside the builder chain
+    {
+      filename: "BalanceStreamFactory.ts",
+      code: `
+        import { StreamFactoryBuilder } from "@eventualize/core/factories/StreamFactoryBuilder";
+        import type { PointsAdded } from "./PointsAdded.js";
+        import type { AccountClosed } from "./AccountClosed.js";
+
+        const BalanceStreamFactory = new StreamFactoryBuilder("PointsStream")
+          .withEvent("PointsAdded").asType<PointsAdded>()
+          .withEvent("AccountClosed").asType<AccountClosed>()
+          .withView("Balance", 0, { PointsAdded: (s, e) => s + e.points }, (snapshot) => snapshot
+            .when(({ offsetGap, durationGapMs }) => offsetGap >= 50 || durationGapMs >= 300000)
+            .onEvent("AccountClosed")
+            .onEvent("PointsAdded", (_state, e) => e.points > 1000))
+          .build();
+
+        export default BalanceStreamFactory;
+      `,
+    },
+
     // PointsStreamFactory pattern: withView with external handler reference + multiple views
     {
       filename: "PointsStreamFactory.ts",
