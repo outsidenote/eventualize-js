@@ -393,6 +393,8 @@ export class EvDbPrismaStorageAdapter
     body: EvDbSnapshotBody,
   ): Pick<Prisma.snapshot_v2CreateInput, "state" | "state_offset"> {
     if (body.kind === "full") {
+      // Owner-approved cast at the persistence boundary: view state is typed `unknown`
+      // here and is assumed JSON-serializable. A runtime guard would cost O(state) per write.
       return {
         state: body.state === null ? Prisma.JsonNull : (body.state as Prisma.InputJsonValue),
         state_offset: offset,
