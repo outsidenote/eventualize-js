@@ -1,24 +1,18 @@
 import * as assert from "node:assert";
 import { test, describe, before, after } from "node:test";
 import Steps from "./steps.js";
-import { EVENT_STORE_TYPE } from "./EVENT_STORE_TYPE.js";
 import { TestManager } from "./TestContainerManager/TestManager.js";
 import type { IEvDbStorageAdapter } from "@eventualize/core/adapters/IEvDbStorageAdapter";
 import EvDbViewAddress from "@eventualize/types/view/EvDbViewAddress";
 import { EvDbStoredSnapshotData } from "@eventualize/types/snapshots/EvDbStoredSnapshotData";
 import type { EvDbSnapshotBody } from "@eventualize/types/snapshots/EvDbSnapshotBody";
-import { createDynamoDBClient } from "@eventualize/dynamodb-storage-adapter/DynamoDbClient";
-import { PutItemCommand } from "@aws-sdk/client-dynamodb";
+import {
+  SNAPSHOT_V2_DATABASES,
+  seedOldSnapshotTable as seedOldSnapshotTableFor,
+} from "./snapshotV2.test-support.js";
 import { EvDbStoredSnapshotResultRaw } from "@eventualize/types/snapshots/EvDbStoredSnapshotResultRaw";
 
 type StoreClientType = ReturnType<typeof Steps.createStoreClient>;
-
-// Databases whose adapter implements snapshot_v2 pointer rows.
-const SNAPSHOT_V2_DATABASES: EVENT_STORE_TYPE[] = [
-  EVENT_STORE_TYPE.POSTGRES,
-  EVENT_STORE_TYPE.MYSQL,
-  EVENT_STORE_TYPE.DYNAMODB,
-];
 
 const ADDRESS = new EvDbViewAddress("snapshot-v2-stream", "stream-1", "Sum");
 
@@ -46,36 +40,14 @@ describe("snapshot_v2 adapter integration", () => {
           adapter.storeSnapshotAsync(
             EvDbStoredSnapshotData.fromAddress(ADDRESS, offset, offset, body),
           );
-        const seedOldSnapshotTable = async (offset: number) => {
-          if (storeType === EVENT_STORE_TYPE.DYNAMODB) {
-            const dynamo = createDynamoDBClient(testManager.getDynamoDbOptions());
-            await dynamo.send(
-              new PutItemCommand({
-                TableName: "snapshots",
-                Item: {
-                  view_address: {
-                    S: `${ADDRESS.streamType}::${ADDRESS.streamId}::${ADDRESS.viewName}`,
-                  },
-                  offset: { N: offset.toString() },
-                  state: { M: { __state: { M: { sum: { N: "1" } } } } },
-                  stored_at: { S: Date.now().toString() },
-                },
-              }),
-            );
-            return;
-          }
-          assert.ok(storeClient, "relational store client expected");
-          await storeClient.snapshot.create({
-            data: {
-              id: crypto.randomUUID(),
-              stream_type: ADDRESS.streamType,
-              stream_id: ADDRESS.streamId,
-              view_name: ADDRESS.viewName,
-              offset,
-              state: { sum: 1 },
-            },
-          });
-        };
+        const seedOldSnapshotTable = (offset: number) =>
+          seedOldSnapshotTableFor(
+            storeType,
+            storeClient,
+            testManager.getDynamoDbOptions(),
+            ADDRESS,
+            offset,
+          );
         const full = (offset: number, state: unknown) => store(offset, { kind: "full", state });
         const pointer = (offset: number, rowOffset: number) =>
           store(offset, { kind: "pointer", stateRef: { kind: "row", offset: rowOffset } });
