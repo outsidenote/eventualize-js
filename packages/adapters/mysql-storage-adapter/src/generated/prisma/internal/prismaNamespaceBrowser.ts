@@ -53,7 +53,8 @@ export const AnyNull = runtime.AnyNull
 export const ModelName = {
   events: 'events',
   outbox: 'outbox',
-  snapshot: 'snapshot'
+  snapshot: 'snapshot',
+  snapshot_v2: 'snapshot_v2'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -122,6 +123,20 @@ export const SnapshotScalarFieldEnum = {
 export type SnapshotScalarFieldEnum = (typeof SnapshotScalarFieldEnum)[keyof typeof SnapshotScalarFieldEnum]
 
 
+export const Snapshot_v2ScalarFieldEnum = {
+  id: 'id',
+  stream_type: 'stream_type',
+  stream_id: 'stream_id',
+  view_name: 'view_name',
+  offset: 'offset',
+  state: 'state',
+  state_offset: 'state_offset',
+  stored_at: 'stored_at'
+} as const
+
+export type Snapshot_v2ScalarFieldEnum = (typeof Snapshot_v2ScalarFieldEnum)[keyof typeof Snapshot_v2ScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -135,6 +150,14 @@ export const JsonNullValueInput = {
 } as const
 
 export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
+
+
+export const NullableJsonNullValueInput = {
+  DbNull: DbNull,
+  JsonNull: JsonNull
+} as const
+
+export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
 
 
 export const JsonNullValueFilter = {
@@ -199,4 +222,14 @@ export const snapshotOrderByRelevanceFieldEnum = {
 } as const
 
 export type snapshotOrderByRelevanceFieldEnum = (typeof snapshotOrderByRelevanceFieldEnum)[keyof typeof snapshotOrderByRelevanceFieldEnum]
+
+
+export const snapshot_v2OrderByRelevanceFieldEnum = {
+  id: 'id',
+  stream_type: 'stream_type',
+  stream_id: 'stream_id',
+  view_name: 'view_name'
+} as const
+
+export type snapshot_v2OrderByRelevanceFieldEnum = (typeof snapshot_v2OrderByRelevanceFieldEnum)[keyof typeof snapshot_v2OrderByRelevanceFieldEnum]
 

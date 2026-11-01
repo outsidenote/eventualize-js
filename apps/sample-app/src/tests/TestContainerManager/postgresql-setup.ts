@@ -52,6 +52,20 @@ CREATE TABLE IF NOT EXISTS snapshot (
 );
 
 CREATE INDEX IF NOT EXISTS ix_snapshot_earlier_stored_at_7ae7ea3b165349e09b3fe6d66a69fd72 ON snapshot (stream_type, stream_id, view_name, stored_at);
+
+CREATE TABLE IF NOT EXISTS snapshot_v2 (
+    id UUID NOT NULL,
+    stream_type VARCHAR(150) NOT NULL,
+    stream_id VARCHAR(150) NOT NULL,
+    view_name VARCHAR(150) NOT NULL,
+    "offset" BIGINT NOT NULL,
+    state JSON,
+    state_offset BIGINT,
+    stored_at TIMESTAMPTZ(6) NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (stream_type, stream_id, view_name, "offset")
+);
+
+CREATE INDEX IF NOT EXISTS ix_snapshot_v2_stored_at ON snapshot_v2 (stream_type, stream_id, view_name, stored_at);
 `;
 
 export async function createPostgresSchema(connectionUri: string): Promise<void> {

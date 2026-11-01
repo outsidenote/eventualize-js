@@ -48,6 +48,18 @@ const MYSQL_SCHEMA_STATEMENTS = [
         PRIMARY KEY (stream_type, stream_id, view_name, \`offset\`),
         INDEX ix_snapshot_earlier_stored_at_7ae7ea3b165349e09b3fe6d66a69fd72 (stream_type, stream_id, view_name, stored_at)
     )`,
+  `CREATE TABLE IF NOT EXISTS snapshot_v2 (
+        id CHAR(36) NOT NULL,
+        stream_type VARCHAR(150) NOT NULL,
+        stream_id VARCHAR(150) NOT NULL,
+        view_name VARCHAR(150) NOT NULL,
+        \`offset\` BIGINT NOT NULL,
+        state JSON NULL,
+        state_offset BIGINT NULL,
+        stored_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+        PRIMARY KEY (stream_type, stream_id, view_name, \`offset\`),
+        INDEX ix_snapshot_v2_stored_at (stream_type, stream_id, view_name, stored_at)
+    )`,
 ];
 
 export async function createMysqlSchema(connectionUri: string): Promise<void> {

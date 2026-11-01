@@ -7,6 +7,7 @@ import type EvDbStreamAddress from "@eventualize/types/stream/EvDbStreamAddress"
 import type EvDbViewAddress from "@eventualize/types/view/EvDbViewAddress";
 import { EvDbStoredSnapshotResultRaw } from "@eventualize/types/snapshots/EvDbStoredSnapshotResultRaw";
 import type { EvDbStoredSnapshotData } from "@eventualize/types/snapshots/EvDbStoredSnapshotData";
+import type { EvDbSnapshotBody } from "@eventualize/types/snapshots/EvDbSnapshotBody";
 import EvDbEvent from "@eventualize/types/events/EvDbEvent";
 import StreamStoreAffected from "@eventualize/types/stream/StreamStoreAffected";
 import type EvDbContinuousFetchOptions from "@eventualize/types/primitives/EvDbContinuousFetchOptions";
@@ -15,7 +16,8 @@ import type { EvDbShardName } from "@eventualize/types/primitives/EvDbShardName"
 import { evDbTracerFor } from "@eventualize/types/telemetry/EvDbSpanPolicy";
 
 import { trace, SpanStatusCode } from "@opentelemetry/api";
-import type { Prisma, PrismaClient } from "./generated/prisma/client.js";
+import { Prisma } from "./generated/prisma/client.js";
+import type { PrismaClient } from "./generated/prisma/client.js";
 import { PrismaQueryProvider } from "./EvDbRelationalStorageAdapterQueries.js";
 
 const TRACER_NAME = "@eventualize/relational-adapter";
@@ -327,30 +329,67 @@ export class EvDbPrismaStorageAdapter
 
     if (!snapshot) return EvDbStoredSnapshotResultRaw.Empty;
 
-    return new EvDbStoredSnapshotResultRaw(
-      Number(snapshot.offset),
-      snapshot.stored_at,
-      snapshot.state,
-      { kind: "row", offset: Number(snapshot.offset) },
+    const offset = Number(snapshot.offset);
+    if (snapshot.state_offset === null) {
+      return new EvDbStoredSnapshotResultRaw(offset, snapshot.stored_at, undefined, {
+        kind: "default",
+      });
+    }
+
+    const stateOffset = Number(snapshot.state_offset);
+    if (stateOffset === offset) {
+      return new EvDbStoredSnapshotResultRaw(offset, snapshot.stored_at, snapshot.state, {
+        kind: "row",
+        offset,
+      });
+    }
+
+    const target = await this.queryProvider.getSnapshotState(
+      streamType,
+      streamId,
+      viewName,
+      stateOffset,
     );
+    if (!target) {
+      throw new Error(
+        `Snapshot pointer at offset ${offset} for ${streamType}/${streamId}/${viewName} ` +
+          `references missing state row at offset ${stateOffset}`,
+      );
+    }
+    return new EvDbStoredSnapshotResultRaw(offset, snapshot.stored_at, target.state, {
+      kind: "row",
+      offset: stateOffset,
+    });
   }
 
   /**
-   * Save a snapshot
+   * Save a snapshot. A full body writes its state; a pointer body writes no state and
+   * only the `state_offset` (null for a default-state pointer).
    */
   async storeSnapshotAsync(record: EvDbStoredSnapshotData): Promise<void> {
-    if (record.body.kind === "pointer") {
-      throw new Error("pointer snapshot rows are not supported by this adapter yet");
-    }
+    const { body } = record;
     await this.queryProvider.saveSnapshot({
       id: record.id,
       stream_type: record.streamType,
       stream_id: record.streamId,
       view_name: record.viewName,
       offset: record.offset,
-      state: record.body.state as unknown as Prisma.InputJsonValue,
+      ...this.toStateColumns(record.offset, body),
       stored_at: new Date(),
     });
+  }
+
+  private toStateColumns(
+    offset: number,
+    body: EvDbSnapshotBody,
+  ): Pick<Prisma.snapshot_v2CreateInput, "state" | "state_offset"> {
+    if (body.kind === "full") {
+      return {
+        state: body.state === null ? Prisma.JsonNull : (body.state as Prisma.InputJsonValue),
+        state_offset: offset,
+      };
+    }
+    return body.stateRef.kind === "row" ? { state_offset: body.stateRef.offset } : {};
   }
 
   /**
