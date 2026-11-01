@@ -4,6 +4,8 @@ import Steps from "./steps.js";
 import { EVENT_STORE_TYPE } from "./EVENT_STORE_TYPE.js";
 import { TestManager } from "./TestContainerManager/TestManager.js";
 import PointsStreamFactory from "../eventstore/PointsStream/PointsStreamFactory.js";
+import DefaultSpansPointsFactory from "./factories/DefaultSpansPointsFactory.js";
+import AdapterSpansPointsFactory from "./factories/AdapterSpansPointsFactory.js";
 import type { PointsStreamType } from "../eventstore/PointsStream/PointsStreamFactory.js";
 import type { IEvDbStorageAdapter } from "@eventualize/core/adapters/IEvDbStorageAdapter";
 import EvDbStreamCursor from "@eventualize/types/stream/EvDbStreamCursor";
@@ -12,9 +14,20 @@ import EvDbCloneError from "@eventualize/core/store/EvDbCloneError";
 import EvDbStreamAddress from "@eventualize/types/stream/EvDbStreamAddress";
 import EvDbViewAddress from "@eventualize/types/view/EvDbViewAddress";
 import { context, propagation, trace } from "@opentelemetry/api";
-import { NodeTracerProvider } from "@opentelemetry/sdk-trace-node";
+import {
+  InMemorySpanExporter,
+  NodeTracerProvider,
+  SimpleSpanProcessor,
+} from "@opentelemetry/sdk-trace-node";
 
 type StoreClientType = ReturnType<typeof Steps.createStoreClient>;
+
+const EXPECTED_ADAPTER_KIND: Record<EVENT_STORE_TYPE, string | undefined> = {
+  [EVENT_STORE_TYPE.STUB]: undefined,
+  [EVENT_STORE_TYPE.POSTGRES]: "postgres",
+  [EVENT_STORE_TYPE.MYSQL]: "mysql",
+  [EVENT_STORE_TYPE.DYNAMODB]: "dynamodb",
+};
 
 interface IntegrationTestData {
   storeClient?: StoreClientType;
@@ -32,7 +45,10 @@ describe("Database Integration Tests", () => {
   const testManager: TestManager = new TestManager();
   // Registers the W3C propagator and an async context manager, so events
   // capture the active span's trace context.
-  const tracerProvider = new NodeTracerProvider();
+  const spanExporter = new InMemorySpanExporter();
+  const tracerProvider = new NodeTracerProvider({
+    spanProcessors: [new SimpleSpanProcessor(spanExporter)],
+  });
 
   before(async () => {
     tracerProvider.register();
@@ -151,6 +167,42 @@ describe("Database Integration Tests", () => {
           assert.strictEqual(fetched.length, 11);
           for (const event of fetched) {
             assert.strictEqual(event.traceparent, expectedTraceparent);
+          }
+        });
+
+        await t.test("AND: adapter spans are off by default", async () => {
+          spanExporter.reset();
+          const factory = DefaultSpansPointsFactory;
+          const stream = factory.create("adapterSpansOff", testData.storageAdapter!);
+          await stream.appendEventPointsAdded({ points: 1 });
+          await stream.store();
+          await factory.get("adapterSpansOff", testData.storageAdapter!, testData.storageAdapter!);
+
+          const names = spanExporter.getFinishedSpans().map((s) => s.name);
+          assert.ok(names.includes("eventualize.stream.store"), "store span missing");
+          assert.ok(!names.some((n) => n.startsWith("eventualize.adapter.")));
+          assert.ok(!names.includes("eventualize.stream.append"));
+        });
+
+        await t.test("AND: adapter spans report the actual adapter kind", async () => {
+          spanExporter.reset();
+          const factory = AdapterSpansPointsFactory;
+          const stream = factory.create("adapterSpansOn", testData.storageAdapter!);
+          await stream.appendEventPointsAdded({ points: 1 });
+          await stream.store();
+          await factory.get("adapterSpansOn", testData.storageAdapter!, testData.storageAdapter!);
+
+          const adapterSpans = spanExporter
+            .getFinishedSpans()
+            .filter((s) => s.name.startsWith("eventualize.adapter."));
+          const names = new Set(adapterSpans.map((s) => s.name));
+          assert.ok(names.has("eventualize.adapter.store"), "store span missing");
+          assert.ok(names.has("eventualize.adapter.query.stream"), "query span missing");
+          for (const span of adapterSpans) {
+            assert.strictEqual(
+              span.attributes["eventualize.adapter.kind"],
+              EXPECTED_ADAPTER_KIND[storeType],
+            );
           }
         });
 

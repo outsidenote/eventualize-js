@@ -19,7 +19,7 @@ import EvDbPostgresPrismaClientFactory from "@eventualize/postgres-storage-adapt
 import { EvDbPrismaStorageAdapter } from "@eventualize/relational-storage-adapter/EvDbPrismaStorageAdapter";
 
 const client = EvDbPostgresPrismaClientFactory.create("postgres://user:pass@host:5432/db");
-const storage = new EvDbPrismaStorageAdapter(client);
+const storage = new EvDbPrismaStorageAdapter(client, { kind: "postgres" });
 ```
 
 `create()` without an argument reads the `POSTGRES_CONNECTION` env var.

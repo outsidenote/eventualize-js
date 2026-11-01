@@ -98,7 +98,8 @@ must keep the lint count. If a count goes up, revert and try another way.
 - Local DynamoDB is LocalStack on port **4566**. Any `8000` you see is stale.
 - Streams made with `factory.create()` start at offset **1**.
 - `.js`, `.d.ts`, `.js.map` files inside `src/` are stray emit, not sources.
-  Edit the `.ts` file.
+  Git ignores them. Edit the `.ts` file. A real `.js` source in `src/` needs a
+  `!` exception in `.gitignore` (see `asyncapi-parser-stub.js`).
 - CI (`.github/workflows/ci.yml`) runs build, unit and per-database integration
   tests on Node 24. It does not run lint, so run it yourself.
 
@@ -109,6 +110,7 @@ must keep the lint count. If a count goes up, revert and try another way.
 | Public API of a package | That package's `README.md`, and the guide in `docs/guides/` that covers it |
 | Replay (`goToOffset`, `forward`) | [docs/guides/replay.md](docs/guides/replay.md) |
 | Clone (`clone`) | [docs/guides/clone.md](docs/guides/clone.md) |
+| View snapshot strategy (`withView` snapshot callback) | [docs/guides/snapshots.md](docs/guides/snapshots.md) |
 | Outbox table or message fields | [docs/guides/outbox.md](docs/guides/outbox.md) |
 | OTel spans or attributes | [docs/guides/opentelemetry.md](docs/guides/opentelemetry.md) |
 | Adapter interface or schema | [docs/guides/storage-adapters.md](docs/guides/storage-adapters.md) |

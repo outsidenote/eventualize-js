@@ -45,13 +45,13 @@
   "type": "module",
   "dependencies": {
     "@eventualize/relational-storage-adapter": "workspace:^",
-    "@prisma/adapter-mariadb": "7.10.0",
-    "@prisma/client": "7.10.0"
+    "@prisma/adapter-mariadb": "7.10.1",
+    "@prisma/client": "7.10.1"
   },
   "devDependencies": {
-    "@prisma/client": "7.10.0",
-    "dotenv": "^18.0.7",
-    "prisma": "7.10.0"
+    "@prisma/client": "7.10.1",
+    "dotenv": "^18.0.9",
+    "prisma": "7.10.1"
   },
   "files": [
     "dist"

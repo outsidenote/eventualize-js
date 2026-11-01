@@ -26,6 +26,7 @@ Import each module by its path. Most modules have a default export.
 | `@eventualize/types/adapters/IEvDbStorageStreamAdapter` | Interface: read and store events and messages |
 | `@eventualize/types/adapters/IEvDbStorageSnapshotAdapter` | Interface: read and store view snapshots |
 | `@eventualize/types/store/IEvDbReadOnlyStream` | The stream returned by `goToOffset` |
+| `@eventualize/types/telemetry/EvDbSpanPolicy` | Span filter types and `EVDB_DEFAULT_SPANS`. Adapter authors: `evDbTracerFor(spanName, tracer)` |
 
 ## Docs
 

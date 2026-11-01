@@ -84,7 +84,7 @@ describe("playground API on Postgres", { timeout: 180_000 }, () => {
     await migrate(uri);
     prisma = EvDbPostgresPrismaClientFactory.create(uri);
     const app = createApp({
-      storage: new EvDbPrismaStorageAdapter(prisma),
+      storage: new EvDbPrismaStorageAdapter(prisma, { kind: "postgres" }),
       listAccounts: createListAccounts(prisma),
     });
     server = app.listen(0);

@@ -1,10 +1,14 @@
 import type IEvDbEventMetadata from "@eventualize/types/events/IEvDbEventMetadata";
 import type EvDbMessage from "@eventualize/types/messages/EvDbMessage";
+import { resolveEvDbSpanPolicy } from "@eventualize/types/telemetry/EvDbSpanPolicy";
+import type { EvDbTelemetryOptions } from "@eventualize/types/telemetry/EvDbSpanPolicy";
 import { EvDbStreamFactory } from "./EvDbStreamFactory.js";
 import type { StreamWithEventMethods } from "./EvDbStreamFactory.js";
 import type { EventTypeConfig } from "./EvDbStreamFactoryTypes.js"; // used by withEvent
 import type { ViewFactory, EvDbStreamEventHandlersMap } from "./EvDbViewFactory.js";
 import { createViewFactory } from "./EvDbViewFactory.js";
+import { createSnapshotStrategy } from "../view/EvDbSnapshotStrategyBuilder.js";
+import type { EvDbSnapshotStrategyConfigure } from "../view/EvDbSnapshotStrategyBuilder.js";
 
 /**
  * Maps TEventMap keys to view event handler functions with clean payload types
@@ -53,6 +57,7 @@ export class StreamFactoryBuilder<
   private viewFactories: ViewFactory<unknown, TEventMap>[] = [];
   private eventTypes: EventTypeConfig[] = [];
   private viewNames: string[] = [];
+  private telemetry: EvDbTelemetryOptions | undefined;
 
   constructor(private streamType: TStreamType) {}
 
@@ -75,11 +80,17 @@ export class StreamFactoryBuilder<
   /**
    * Add a view with inline handler definition
    * This can only be called AFTER withEvent calls to ensure type safety
+   *
+   * Pass a 4th argument to choose when the view stores a snapshot. Without it the
+   * view stores a snapshot on every save.
+   * Example:
+   * `.withView("Balance", 0, handlers, (snapshot) => snapshot.offsetGap(50).onEvent("AccountClosed"))`
    */
   public withView<TViewName extends string, TState>(
     viewName: TViewName,
     defaultState: TState,
     handlers: Partial<EventHandlersFromMap<TState, TEventMap>>,
+    snapshot?: EvDbSnapshotStrategyConfigure<TState, TEventMap>,
   ): StreamFactoryBuilder<TStreamType, TViews & Record<TViewName, TState>, TEventMap> {
     // Create the view factory
     const viewFactory = createViewFactory<TState, TEventMap>({
@@ -87,6 +98,7 @@ export class StreamFactoryBuilder<
       streamType: this.streamType,
       defaultState,
       handlers: handlers as unknown as Partial<EvDbStreamEventHandlersMap<TState, TEventMap>>,
+      snapshotStrategy: snapshot ? createSnapshotStrategy<TState, TEventMap>(snapshot) : undefined,
     });
 
     this.viewFactories.push(viewFactory as unknown as ViewFactory<unknown, TEventMap>);
@@ -120,6 +132,17 @@ export class StreamFactoryBuilder<
   }
 
   /**
+   * Choose which OpenTelemetry spans the factory's streams produce.
+   * Spans you do not list keep their `EVDB_DEFAULT_SPANS` value. A later call
+   * replaces an earlier one.
+   * Example: `.withTelemetry({ spans: { "eventualize.adapter.*": true } })`
+   */
+  public withTelemetry(options: EvDbTelemetryOptions): this {
+    this.telemetry = options;
+    return this;
+  }
+
+  /**
    * Build the stream factory using event types registered via `withEvent`.
    */
   public build() {
@@ -128,6 +151,7 @@ export class StreamFactoryBuilder<
       viewFactories: this.viewFactories,
       eventTypes: this.eventTypes,
       viewNames: this.viewNames,
+      spanPolicy: resolveEvDbSpanPolicy(this.telemetry),
     }) as EvDbStreamFactory<TEventMap, TStreamType, TViews>;
 
     // Return factory with type helper for stream type extraction

@@ -1,4 +1,5 @@
 import { EvDbView } from "../view/EvDbView.js";
+import type EvDbEvent from "@eventualize/types/events/EvDbEvent";
 import type IEvDbEventMetadata from "@eventualize/types/events/IEvDbEventMetadata";
 import type { IEvDbPayloadData } from "@eventualize/types/events/IEvDbPayloadData";
 import type IEvDbStorageSnapshotAdapter from "@eventualize/types/adapters/IEvDbStorageSnapshotAdapter";
@@ -20,6 +21,16 @@ class GenericView<TState, TEventMap extends Record<string, object>> extends EvDb
   ) {
     super(viewAddress, storageAdapter, snapshot, config.defaultState);
     this.config = config;
+  }
+
+  public override shouldStoreSnapshot(offsetGap: number, durationGapMs: number): boolean {
+    const strategy = this.config.snapshotStrategy;
+    return strategy === undefined ? true : strategy.shouldStore({ offsetGap, durationGapMs });
+  }
+
+  protected override matchesSnapshotEvent(e: EvDbEvent): boolean {
+    const strategy = this.config.snapshotStrategy;
+    return strategy === undefined ? false : strategy.matchesEvent(this.state, e.payload, e);
   }
 
   /**

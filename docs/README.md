@@ -13,18 +13,23 @@ Pick the page by what you need right now.
   DynamoDB, create the tables, write a new adapter.
 - [Replay](guides/replay.md): open a read-only stream at a past offset with
   `goToOffset`, and step forward.
+- [Snapshots](guides/snapshots.md): choose when each view stores a snapshot
+  (offset gap, time gap, specific events).
 - [Clone](guides/clone.md): copy a stream into a new one with `clone` (fix or
   redact data, sandbox, migrate event shapes).
 - [Outbox delivery](guides/outbox.md): send outbox messages to pg-boss workers,
   or to Kafka with Debezium CDC.
-- [OpenTelemetry](guides/opentelemetry.md): export spans, add custom spans,
-  carry trace context through a queue.
+- [OpenTelemetry](guides/opentelemetry.md): export spans, choose which spans to
+  produce, add custom spans, carry trace context through a queue.
 
 ## Understand (explanation)
 
 - [Concepts](concepts.md): streams, events, views, snapshots, outbox messages,
   optimistic concurrency.
 - [ADR 0001: replay is forward-only](adr/0001-replay-forward-only-navigation.md)
+- [ADR 0002: span filtering per stream factory](adr/0002-span-filtering-per-stream-factory.md)
+- [ADR 0003: per-view snapshot strategy](adr/0003-per-view-snapshot-strategy.md)
+- [ADR 0004: peer dependency ranges stop at the next major](adr/0004-peer-ranges-stop-at-next-major.md)
 - [OpenTelemetry API design](design/otel-api-design.md) and
   [PRD](design/otel-prd.md)
 

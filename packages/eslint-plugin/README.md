@@ -9,8 +9,9 @@ stream factory modules.
 pnpm add -D @eventualize/eslint-plugin
 ```
 
-Needs ESLint 9 or later (flat config). It depends on `@typescript-eslint/utils`,
-which today supports TypeScript below 6.1 and ESLint up to 10.
+Needs ESLint 9 or 10 (flat config). The peer range is `^9.0.0 || ^10.0.0`. It
+depends on `@typescript-eslint/utils`, which today supports TypeScript below 6.1
+and ESLint up to 10.
 
 ## Setup
 

@@ -14,6 +14,7 @@ import StreamStoreAffected from "@eventualize/types/stream/StreamStoreAffected";
 import type EvDbContinuousFetchOptions from "@eventualize/types/primitives/EvDbContinuousFetchOptions";
 import type EvDbMessageFilter from "@eventualize/types/messages/EvDbMessageFilter";
 import type { EvDbShardName } from "@eventualize/types/primitives/EvDbShardName";
+import { evDbTracerFor } from "@eventualize/types/telemetry/EvDbSpanPolicy";
 
 import { trace, SpanStatusCode } from "@opentelemetry/api";
 import type { DynamoDBClientOptions } from "./DynamoDbClient.js";
@@ -110,7 +111,7 @@ export default class EvDbDynamoDbStorageAdapter
     events: ReadonlyArray<EvDbEvent>,
     messages: ReadonlyArray<EvDbMessage>,
   ): Promise<StreamStoreAffected> {
-    return getTracer().startActiveSpan(
+    return evDbTracerFor("eventualize.adapter.store", getTracer()).startActiveSpan(
       "eventualize.adapter.store",
       {
         attributes: {
@@ -201,7 +202,8 @@ export default class EvDbDynamoDbStorageAdapter
     streamCursor: EvDbStreamCursor,
     pageSize: number = 100,
   ): AsyncGenerator<EvDbEvent, void, undefined> {
-    const span = getTracer().startSpan("eventualize.adapter.query.stream", {
+    const tracer = evDbTracerFor("eventualize.adapter.query.stream", getTracer());
+    const span = tracer.startSpan("eventualize.adapter.query.stream", {
       attributes: {
         "eventualize.adapter.kind": "dynamodb",
         "eventualize.stream.id": streamCursor.streamId,

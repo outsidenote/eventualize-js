@@ -76,7 +76,7 @@ async function appendFundsEvents(): Promise<void> {
   return tracer.startActiveSpan("appendFundsEvents", async (rootSpan) => {
     try {
       const storeClient = EvDbPostgresPrismaClientFactory.create(POSTGRES_URI);
-      const adapter = new EvDbPrismaStorageAdapter(storeClient);
+      const adapter = new EvDbPrismaStorageAdapter(storeClient, { kind: "postgres" });
 
       const streamId = `demo-account-${Date.now()}`;
       const stream = FundsEventsAndViewsStreamFactory.create(streamId, adapter, adapter);

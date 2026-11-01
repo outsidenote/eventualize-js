@@ -21,6 +21,7 @@ import { EvDbPrismaStorageAdapter } from "@eventualize/relational-storage-adapte
 const client = EvDbMySqlPrismaClientFactory.create("mariadb://user:pass@host:3306/db");
 const storage = new EvDbPrismaStorageAdapter(
   client as unknown as ConstructorParameters<typeof EvDbPrismaStorageAdapter>[0],
+  { kind: "mysql" },
 );
 ```
 

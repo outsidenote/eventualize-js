@@ -12,6 +12,7 @@ import StreamStoreAffected from "@eventualize/types/stream/StreamStoreAffected";
 import type EvDbContinuousFetchOptions from "@eventualize/types/primitives/EvDbContinuousFetchOptions";
 import type EvDbMessageFilter from "@eventualize/types/messages/EvDbMessageFilter";
 import type { EvDbShardName } from "@eventualize/types/primitives/EvDbShardName";
+import { evDbTracerFor } from "@eventualize/types/telemetry/EvDbSpanPolicy";
 
 import { trace, SpanStatusCode } from "@opentelemetry/api";
 import type { Prisma, PrismaClient } from "./generated/prisma/client.js";
@@ -29,6 +30,17 @@ const deserializePayload = (payload: unknown): IEvDbPayloadData => {
 };
 
 /**
+ * Database behind the Prisma client. Reported as the `eventualize.adapter.kind`
+ * span attribute. `"relational"` means the database is not specified.
+ */
+export type EvDbPrismaAdapterKind = "postgres" | "mysql" | "relational";
+
+export interface EvDbPrismaStorageAdapterOptions {
+  /** Default: `"relational"`. */
+  kind?: EvDbPrismaAdapterKind;
+}
+
+/**
  * Prisma-based storage adapter for EvDb
  * Replaces SQL Server-specific adapter with database-agnostic Prisma implementation
  */
@@ -37,9 +49,14 @@ export class EvDbPrismaStorageAdapter
 {
   private readonly queryProvider: PrismaQueryProvider;
   protected readonly databaseType: string = "prisma";
+  private readonly kind: EvDbPrismaAdapterKind;
 
-  constructor(private readonly prisma: PrismaClient) {
+  constructor(
+    private readonly prisma: PrismaClient,
+    options: EvDbPrismaStorageAdapterOptions = {},
+  ) {
     this.queryProvider = new PrismaQueryProvider(prisma);
+    this.kind = options.kind ?? "relational";
   }
   getFromOutbox(
     _filter: EvDbMessageFilter,
@@ -101,11 +118,11 @@ export class EvDbPrismaStorageAdapter
     events: ReadonlyArray<EvDbEvent>,
     messages: ReadonlyArray<EvDbMessage>,
   ): Promise<StreamStoreAffected> {
-    return getTracer().startActiveSpan(
+    return evDbTracerFor("eventualize.adapter.store", getTracer()).startActiveSpan(
       "eventualize.adapter.store",
       {
         attributes: {
-          "eventualize.adapter.kind": "relational",
+          "eventualize.adapter.kind": this.kind,
           "eventualize.event.count": events.length,
         },
       },
@@ -217,9 +234,10 @@ export class EvDbPrismaStorageAdapter
     streamCursor: EvDbStreamCursor,
     pageSize: number = 100,
   ): AsyncGenerator<EvDbEvent, void, undefined> {
-    const span = getTracer().startSpan("eventualize.adapter.query.stream", {
+    const tracer = evDbTracerFor("eventualize.adapter.query.stream", getTracer());
+    const span = tracer.startSpan("eventualize.adapter.query.stream", {
       attributes: {
-        "eventualize.adapter.kind": "relational",
+        "eventualize.adapter.kind": this.kind,
         "eventualize.stream.id": streamCursor.streamId,
         "eventualize.stream.type": streamCursor.streamType,
       },
