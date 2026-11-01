@@ -29,6 +29,7 @@ Pick the page by what you need right now.
 - [ADR 0001: replay is forward-only](adr/0001-replay-forward-only-navigation.md)
 - [ADR 0002: span filtering per stream factory](adr/0002-span-filtering-per-stream-factory.md)
 - [ADR 0003: per-view snapshot strategy](adr/0003-per-view-snapshot-strategy.md)
+- [ADR 0004: peer dependency ranges stop at the next major](adr/0004-peer-ranges-stop-at-next-major.md)
 - [OpenTelemetry API design](design/otel-api-design.md) and
   [PRD](design/otel-prd.md)
 

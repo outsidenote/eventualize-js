@@ -10,7 +10,7 @@ events, outbox messages and view snapshots.
 pnpm add @eventualize/dynamodb-storage-adapter @aws-sdk/client-dynamodb
 ```
 
-`@aws-sdk/client-dynamodb` is a peer dependency (`>=3.1111.0`).
+`@aws-sdk/client-dynamodb` is a peer dependency (`^3.1111.0`).
 
 ## Usage
 

@@ -43,8 +43,8 @@
   "license": "ISC",
   "type": "module",
   "peerDependencies": {
-    "@opentelemetry/api": ">=1.7.0",
-    "@aws-sdk/client-dynamodb": ">=3.1111.0"
+    "@opentelemetry/api": "^1.7.0",
+    "@aws-sdk/client-dynamodb": "^3.1111.0"
   },
   "peerDependenciesMeta": {
     "@opentelemetry/api": {
@@ -52,9 +52,9 @@
     }
   },
   "devDependencies": {
-    "@opentelemetry/api": "^1.9.1",
+    "@opentelemetry/api": "~1.9.1",
     "@types/node": "^24.19.2",
-    "@aws-sdk/client-dynamodb": "^3.1150.0"
+    "@aws-sdk/client-dynamodb": "^3.1161.0"
   },
   "files": [
     "dist"

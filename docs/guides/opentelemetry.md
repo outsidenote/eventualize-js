@@ -20,9 +20,11 @@ spans a stream factory produces, see
 pnpm add @opentelemetry/api @opentelemetry/sdk-node @opentelemetry/exporter-trace-otlp-proto
 ```
 
-`@opentelemetry/api` is listed as an optional peer dependency, but
+`@opentelemetry/api` is listed as an optional peer dependency (`^1.7.0`), but
 `@eventualize/types` and `@eventualize/core` import it. Install it in every app
-that uses eventualize-js.
+that uses eventualize-js. Pick the API version that your SDK accepts: the
+OpenTelemetry SDK 2.x needs `@opentelemetry/api` below 1.10, and SDK 3.x needs
+1.10.x.
 
 ### 2. Start the SDK before any other import
 
