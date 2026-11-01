@@ -98,7 +98,8 @@ must keep the lint count. If a count goes up, revert and try another way.
 - Local DynamoDB is LocalStack on port **4566**. Any `8000` you see is stale.
 - Streams made with `factory.create()` start at offset **1**.
 - `.js`, `.d.ts`, `.js.map` files inside `src/` are stray emit, not sources.
-  Edit the `.ts` file.
+  Git ignores them. Edit the `.ts` file. A real `.js` source in `src/` needs a
+  `!` exception in `.gitignore` (see `asyncapi-parser-stub.js`).
 - CI (`.github/workflows/ci.yml`) runs build, unit and per-database integration
   tests on Node 24. It does not run lint, so run it yourself.
 

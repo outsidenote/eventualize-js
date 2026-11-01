@@ -138,6 +138,23 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# Stray tsc emit next to sources (real output goes to dist/). A stale .js file
+# can shadow its .ts source: Vite loads src/App.js (JSX) before App.tsx, and
+# vite.config.js before vite.config.ts.
+**/src/**/*.js
+**/src/**/*.js.map
+**/src/**/*.d.ts
+!apps/e2e/funds/catalog/src/asyncapi-parser-stub.js
+**/vite.config.js
+**/vite.config.js.map
+**/vite.config.d.ts
+**/prisma.config.js
+**/prisma.config.js.map
+**/prisma.config.d.ts
+/setup-dynamodb.js
+/setup-dynamodb.js.map
+/setup-dynamodb.d.ts
 .claude/skills/software-architecture/.DS_Store
 
 .DS_Store
