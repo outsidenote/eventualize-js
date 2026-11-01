@@ -1,3 +1,4 @@
+import type { DeepReadonly } from "@eventualize/types/view/DeepReadonly";
 import type IEvDbEventMetadata from "@eventualize/types/events/IEvDbEventMetadata";
 import type { IEvDbPayloadData } from "@eventualize/types/events/IEvDbPayloadData";
 
@@ -23,7 +24,7 @@ export interface EvDbSnapshotStrategyBuilder<TState, TEventMap extends Record<st
   /** Any event. event is the union of all payloads. */
   onEvent(
     predicate: (
-      state: TState,
+      state: DeepReadonly<TState>,
       event: TEventMap[keyof TEventMap & string],
       metadata: IEvDbEventMetadata,
     ) => boolean,
@@ -35,7 +36,7 @@ export interface EvDbSnapshotStrategyBuilder<TState, TEventMap extends Record<st
   onEvent<K extends keyof TEventMap & string>(
     eventType: K,
     predicate?: (
-      state: TState,
+      state: DeepReadonly<TState>,
       event: TEventMap[K],
       metadata: IEvDbEventMetadata & { eventType: K },
     ) => boolean,
@@ -52,7 +53,11 @@ export interface EvDbSnapshotStrategy<TState> {
   readonly hasRules: boolean;
   readonly changeDetection: EvDbChangeDetection;
   shouldStore(ctx: EvDbSnapshotContext): boolean;
-  matchesEvent(state: TState, event: IEvDbPayloadData, metadata: IEvDbEventMetadata): boolean;
+  matchesEvent(
+    state: DeepReadonly<TState>,
+    event: IEvDbPayloadData,
+    metadata: IEvDbEventMetadata,
+  ): boolean;
 }
 
 export type EvDbSnapshotStrategyConfigure<TState, TEventMap extends Record<string, object>> = (
@@ -66,7 +71,7 @@ function assertNonNegative(name: string, value: number): void {
 }
 
 type EventRule<TState> = (
-  state: TState,
+  state: DeepReadonly<TState>,
   event: IEvDbPayloadData,
   metadata: IEvDbEventMetadata,
 ) => boolean;
@@ -90,7 +95,7 @@ class SnapshotStrategyBuilder<
 
   onEvent(
     predicate: (
-      state: TState,
+      state: DeepReadonly<TState>,
       event: TEventMap[keyof TEventMap & string],
       metadata: IEvDbEventMetadata,
     ) => boolean,
@@ -98,14 +103,14 @@ class SnapshotStrategyBuilder<
   onEvent<K extends keyof TEventMap & string>(
     eventType: K,
     predicate?: (
-      state: TState,
+      state: DeepReadonly<TState>,
       event: TEventMap[K],
       metadata: IEvDbEventMetadata & { eventType: K },
     ) => boolean,
   ): this;
   onEvent(
-    first: string | ((state: TState, event: never, metadata: never) => boolean),
-    predicate?: (state: TState, event: never, metadata: never) => boolean,
+    first: string | ((state: DeepReadonly<TState>, event: never, metadata: never) => boolean),
+    predicate?: (state: DeepReadonly<TState>, event: never, metadata: never) => boolean,
   ): this {
     if (typeof first === "function") {
       // Cast: the runtime payload is one of the map's payloads; the wrapper hides the type erasure.

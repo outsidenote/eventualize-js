@@ -1,3 +1,4 @@
+import type { DeepReadonly } from "@eventualize/types/view/DeepReadonly";
 import type { IEvDbViewStoreGeneric } from "@eventualize/types/view/IEvDbViewStoreGeneric";
 import type EvDbViewAddress from "@eventualize/types/view/EvDbViewAddress";
 import type IEvDbStorageSnapshotAdapter from "@eventualize/types/adapters/IEvDbStorageSnapshotAdapter";
@@ -16,8 +17,9 @@ export abstract class EvDbView<TState>
     return this.defaultState;
   }
   protected _state: TState = this.getDefaultState();
-  get state(): TState {
-    return this._state;
+  get state(): DeepReadonly<TState> {
+    // Cast only adds readonly; TS cannot prove a generic TState assignable to DeepReadonly<TState>.
+    return this._state as DeepReadonly<TState>;
   }
 
   public constructor(

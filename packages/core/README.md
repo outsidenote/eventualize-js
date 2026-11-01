@@ -34,6 +34,9 @@ await stream.store();
 stream.views.Sum.sum; // 50
 ```
 
+View state is read-only all the way down (`DeepReadonly<TState>`). A handler must return a
+new state, not mutate `state`. This is checked at compile time only.
+
 To store a view's snapshot less often, pass a snapshot strategy callback as the
 4th argument of `withView`. See the Snapshots guide below.
 
