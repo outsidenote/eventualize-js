@@ -132,4 +132,56 @@ describe("EvDbView overlapping store", () => {
       ["full"],
     );
   });
+  test("Given a settled store at 2, When event 3 is applied and stored, Then the row at offset 3 holds the state that includes event 3", async () => {
+    const adapter = new ControlledAdapter();
+    const view = viewFactory.create("s-1", adapter);
+
+    view.applyEvent(added(1));
+    view.applyEvent(added(2));
+    await view.store();
+    view.applyEvent(added(3));
+    await view.store();
+
+    assert.deepStrictEqual(adapter.writes, [
+      { offset: 2, body: { kind: "full", state: { sum: 2 } } },
+      { offset: 3, body: { kind: "full", state: { sum: 3 } } },
+    ]);
+    assert.deepStrictEqual(view.stateRef, { kind: "row", offset: 3 });
+    const reloaded = await viewFactory.get("s-1", adapter);
+    assert.strictEqual(reloaded.storeOffset, 3);
+    assert.strictEqual(reloaded.state.sum, 3);
+  });
+
+  test("Given a settled store at 1, When events 2 and 3 are applied and one store runs, Then the row offset is 3 and its state has both events", async () => {
+    const adapter = new ControlledAdapter();
+    const view = viewFactory.create("s-1", adapter);
+
+    view.applyEvent(added(1));
+    await view.store();
+    view.applyEvent(added(2));
+    view.applyEvent(added(3));
+    await view.store();
+
+    const last = adapter.writes[adapter.writes.length - 1];
+    assert.deepStrictEqual(last, { offset: 3, body: { kind: "full", state: { sum: 3 } } });
+  });
+
+  test("Given an event applied while a slow store is in flight, When a second store runs, Then a reload equals a full replay", async () => {
+    const adapter = new ControlledAdapter();
+    const view = viewFactory.create("s-1", adapter);
+    adapter.delays.set(1, 50);
+
+    view.applyEvent(added(1));
+    const first = view.store();
+    view.applyEvent(added(2));
+    const second = view.store();
+    await Promise.all([first, second]);
+
+    const reloaded = await viewFactory.get("s-1", adapter);
+    const replayed = viewFactory.create("s-1", new ControlledAdapter());
+    replayed.applyEvent(added(1));
+    replayed.applyEvent(added(2));
+    assert.strictEqual(reloaded.storeOffset, 2);
+    assert.deepStrictEqual(reloaded.state, replayed.state);
+  });
 });

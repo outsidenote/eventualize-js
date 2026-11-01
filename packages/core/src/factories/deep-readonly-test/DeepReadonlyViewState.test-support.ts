@@ -15,3 +15,17 @@ export const defaultState: ViewState = {
   nested: { flag: false },
   tags: new Map<string, number>(),
 };
+
+export interface RichViewState {
+  ids: Set<number>;
+  pair: [string, number];
+  meta: { list: number[] };
+  grid: number[][];
+}
+
+export const richDefaultState: RichViewState = {
+  ids: new Set<number>(),
+  pair: ["a", 1],
+  meta: { list: [] },
+  grid: [[1]],
+};

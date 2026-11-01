@@ -15,13 +15,14 @@ export const SNAPSHOT_V2_DATABASES: EVENT_STORE_TYPE[] = [
   EVENT_STORE_TYPE.DYNAMODB,
 ];
 
-// Writes a full row at `offset` for `address` into the old snapshot table.
+// Writes a full row at `offset` for `address` into the old snapshot table. The state is `{ sum }`.
 export async function seedOldSnapshotTable(
   storeType: EVENT_STORE_TYPE,
   storeClient: StoreClientType,
   dynamoDbOptions: DynamoDBClientOptions | undefined,
   address: EvDbViewAddress,
   offset: number,
+  sum = 1,
 ): Promise<void> {
   if (storeType === EVENT_STORE_TYPE.DYNAMODB) {
     const dynamo = createDynamoDBClient(dynamoDbOptions);
@@ -33,7 +34,7 @@ export async function seedOldSnapshotTable(
             S: `${address.streamType}::${address.streamId}::${address.viewName}`,
           },
           offset: { N: offset.toString() },
-          state: { M: { __state: { M: { sum: { N: "1" } } } } },
+          state: { M: { __state: { M: { sum: { N: sum.toString() } } } } },
           stored_at: { S: Date.now().toString() },
         },
       }),
@@ -48,7 +49,7 @@ export async function seedOldSnapshotTable(
       stream_id: address.streamId,
       view_name: address.viewName,
       offset,
-      state: { sum: 1 },
+      state: { sum },
     },
   });
 }

@@ -125,6 +125,29 @@ describe("snapshot_v2 adapter integration", () => {
         );
 
         await t.test(
+          "Given a full row whose state has nested objects and arrays, When getSnapshotAsync, Then the state is returned unchanged",
+          async () => {
+            const state = {
+              name: "nested",
+              flag: true,
+              missing: null,
+              list: [[1, 2], [3]],
+              deep: {
+                items: [
+                  { id: 1, tags: ["a", "b"] },
+                  { id: 2, tags: [] },
+                ],
+                inner: { n: 1.5 },
+              },
+            };
+            await full(12, state);
+            const result = await adapter.getSnapshotAsync(ADDRESS);
+            assert.strictEqual(result.offset, 12);
+            assert.deepStrictEqual(result.state, state);
+          },
+        );
+
+        await t.test(
           "Given a pointer to a missing row, When getSnapshotAsync, Then it throws naming the view and offsets",
           async () => {
             await pointer(8, 5);
