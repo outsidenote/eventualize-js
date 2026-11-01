@@ -10,11 +10,14 @@ Pick the page by what you need right now.
 ## Do a task (how-to guides)
 
 - [Storage adapters](guides/storage-adapters.md): connect PostgreSQL, MySQL or
-  DynamoDB, create the tables, write a new adapter.
+  DynamoDB, create the tables, move snapshots to `snapshot_v2`, write a new
+  adapter.
 - [Replay](guides/replay.md): open a read-only stream at a past offset with
   `goToOffset`, and step forward.
 - [Snapshots](guides/snapshots.md): choose when each view stores a snapshot
-  (offset gap, time gap, specific events).
+  (offset gap, time gap, specific events), pointer rows, change detection.
+- [Immutable view state](guides/immutable-state.md): set up TypeScript and
+  ESLint so handlers never mutate state, and a block for your `AGENTS.md`.
 - [Clone](guides/clone.md): copy a stream into a new one with `clone` (fix or
   redact data, sandbox, migrate event shapes).
 - [Outbox delivery](guides/outbox.md): send outbox messages to pg-boss workers,
@@ -30,6 +33,7 @@ Pick the page by what you need right now.
 - [ADR 0002: span filtering per stream factory](adr/0002-span-filtering-per-stream-factory.md)
 - [ADR 0003: per-view snapshot strategy](adr/0003-per-view-snapshot-strategy.md)
 - [ADR 0004: peer dependency ranges stop at the next major](adr/0004-peer-ranges-stop-at-next-major.md)
+- [ADR 0005: snapshot pointer rows and change detection](adr/0005-snapshot-pointer-rows.md)
 - [OpenTelemetry API design](design/otel-api-design.md) and
   [PRD](design/otel-prd.md)
 

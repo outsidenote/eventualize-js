@@ -15,8 +15,13 @@ const NEW_TABLE = "snapshot_v2";
  * `snapshot_v2`, as full rows (`state_offset` equals `offset`).
  * Safe to run again: a row that already exists in `snapshot_v2` is skipped.
  * The old table is not changed.
+ *
+ * Pass 1 finds the latest offset per view with a `Scan`, which is eventually consistent. A
+ * snapshot written while the scan runs can be missed, so run it again after a live migration.
+ * Pass 2 reads each latest row with a consistent `GetItem`. A view whose row is gone by then
+ * counts in `views` but not in `copied`.
  * @param client - A DynamoDB client.
- * @returns `views`: views found in the old table. `copied`: rows written to `snapshot_v2`.
+ * @returns `views`: views found by the scan. `copied`: rows written to `snapshot_v2`.
  */
 export async function copySnapshotsToV2(
   client: DynamoDBClient,

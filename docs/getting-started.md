@@ -15,12 +15,13 @@ docker run -d --name evdb-postgres -p 5432:5432 \
 
 ## 2. Create the tables
 
-eventualize-js stores data in three tables: `events`, `outbox` and `snapshot`.
-Run the PostgreSQL migrations from this repo, in order:
+eventualize-js stores data in three tables: `events`, `outbox` and
+`snapshot_v2`. The migrations also create `snapshot`, the table that older SDK
+versions use. Run the PostgreSQL migrations from this repo, in order:
 
 ```bash
 BASE=https://raw.githubusercontent.com/outsidenote/eventualize-js/main/packages/adapters/postgres-storage-adapter/prisma/migrations
-for m in 20251211113311_change_outbox_payload_to_json 20261011150000_replace_telemetry_context_with_traceparent; do
+for m in 20251211113311_change_outbox_payload_to_json 20261011150000_replace_telemetry_context_with_traceparent 20261101000000_add_snapshot_v2; do
   curl -s "$BASE/$m/migration.sql" | docker exec -i evdb-postgres psql -U evdb -d evdb
 done
 ```
