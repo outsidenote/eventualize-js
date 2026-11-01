@@ -46,6 +46,7 @@ This version writes snapshots to `snapshot_v2`. Roll out in this order:
 3. Copy the latest snapshot of each view:
 
    ```ts
+   import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
    import { copySnapshotsToV2 } from "@eventualize/dynamodb-storage-adapter/copySnapshotsToV2";
 
    const { views, copied } = await copySnapshotsToV2(new DynamoDBClient({ region: "eu-west-1" }));

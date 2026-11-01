@@ -41,10 +41,12 @@ state.tags.set("a", 1);   // TS2339: 'set' does not exist on ReadonlyMap
 const a: string[] = state.items; // TS4104: readonly array to mutable type
 ```
 
-Write handlers like this:
+Write handlers like this. Type the default state without a cast (see
+[Safe project setup](#safe-project-setup)): `new Array<string>()`, or explicit
+type arguments such as `.withView<"Cart", CartState>(...)`.
 
 ```ts
-.withView("Cart", { items: [] as string[], total: 0 }, {
+.withView("Cart", { items: new Array<string>(), total: 0 }, {
   ItemAdded: (state, e) => ({ ...state, items: [...state.items, e.sku], total: state.total + e.price }),
 })
 ```

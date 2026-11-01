@@ -24,7 +24,7 @@ async function createDynamoDBTables() {
     ];
 
     for (const schemaFile of tableSchemas) {
-        const schemaPath = path.join(__dirname, "packages/dynamodb-storage-adapter/models", schemaFile);
+        const schemaPath = path.join(__dirname, "packages/adapters/dynamodb-storage-adapter/models", schemaFile);
         const schemaData = JSON.parse(fs.readFileSync(schemaPath, "utf-8"));
 
         try {

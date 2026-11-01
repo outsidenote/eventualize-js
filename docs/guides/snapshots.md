@@ -61,9 +61,9 @@ const PointsFactory = new StreamFactoryBuilder("PointsStream")
     .onEvent("AccountClosed")                                  // any AccountClosed event
     .onEvent("PointsAdded", (_state, e) => e.points > 1_000))  // e is typed as PointsAdded
 
-  .withView("Audit", [] as string[], { /* ... */ })            // no strategy: full row on every change
+  .withView("Audit", new Array<string>(), { /* ... */ })       // no strategy: full row on every change
 
-  .withView("Risk", [] as string[], { /* ... */ }, (snapshot) => snapshot
+  .withView("Risk", new Array<string>(), { /* ... */ }, (snapshot) => snapshot
     .offsetGap(50)
     .durationGapMs(5 * 60_000)
     .onEvent((_s, _e, m) => m.streamCursor.offset === 1))      // first event of the stream
