@@ -37,5 +37,6 @@ Import each module by its deep path (for example `@eventualize/core/factories/St
 - [CONTRIBUTING.md](https://raw.githubusercontent.com/outsidenote/eventualize-js/main/CONTRIBUTING.md): dev setup and release flow
 - [ADR 0001](https://raw.githubusercontent.com/outsidenote/eventualize-js/main/docs/adr/0001-replay-forward-only-navigation.md): why replay is forward-only
 - [ADR 0002](https://raw.githubusercontent.com/outsidenote/eventualize-js/main/docs/adr/0002-span-filtering-per-stream-factory.md): why spans are filtered per stream factory, and the defaults
+- [ADR 0003](https://raw.githubusercontent.com/outsidenote/eventualize-js/main/docs/adr/0003-per-view-snapshot-strategy.md): why each view chooses when to store a snapshot, and how the rules combine
 - [ADR 0004](https://raw.githubusercontent.com/outsidenote/eventualize-js/main/docs/adr/0004-peer-ranges-stop-at-next-major.md): why peer dependency ranges stop at the next major
 - [OpenTelemetry API design](https://raw.githubusercontent.com/outsidenote/eventualize-js/main/docs/design/otel-api-design.md)

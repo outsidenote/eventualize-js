@@ -1,12 +1,11 @@
 # TODO — follow-ups
 
-Small cleanups noticed during the pnpm migration (Aug 2026) and the dependency update (Oct 2026), left out of those PRs on purpose.
+Small cleanups noticed during the pnpm migration (Aug 2026) and the dependency updates (Oct and Nov 2026), left out of those PRs on purpose.
 
 - **Delete `setup-dynamodb.ts`** at the repo root — it points at an old schema
   path and the wrong port (8000 vs LocalStack's 4566), and only exists as dead code.
 - **Fix or remove `generate:stream-factory`** — the script points at a file
   that doesn't exist on main.
-- **Run prettier** on the 27 files it currently complains about.
 - **TypeScript 7**: blocked until typescript-eslint supports it (8.72.1 accepts
   `typescript <6.1.0`). Then move root, apps and the eslint plugin together.
 - **Demo app majors** (`apps/e2e/funds`, `apps/e2e/funds/catalog`,
