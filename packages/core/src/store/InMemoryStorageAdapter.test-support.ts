@@ -111,25 +111,22 @@ export default class InMemoryStorageAdapter implements IEvDbStorageAdapter {
       });
     }
     const ref = latest.body.stateRef;
-    const row = ref.kind === "row" ? list.find((s) => s.offset === ref.offset) : undefined;
-    const state = row?.body.kind === "full" ? row.body.state : undefined;
-    return new EvDbStoredSnapshotResultRaw(latest.offset, new Date(), state, ref);
+    if (ref.kind === "default") {
+      return new EvDbStoredSnapshotResultRaw(latest.offset, new Date(), undefined, ref);
+    }
+    const row = list.find((s) => s.offset === ref.offset);
+    if (row?.body.kind !== "full") {
+      throw new Error(
+        `Snapshot pointer for view ${viewKey(viewAddress)} at offset ${latest.offset} names a full row at offset ${ref.offset} that does not exist`,
+      );
+    }
+    return new EvDbStoredSnapshotResultRaw(latest.offset, new Date(), row.body.state, ref);
   }
 
   async storeSnapshotAsync(data: EvDbStoredSnapshotData): Promise<void> {
     const key = `${data.streamType}/${data.streamId}/${data.viewName}`;
     const list = this.snapshots.get(key) ?? [];
-    const body: EvDbSnapshotBody =
-      data.body.kind === "full"
-        ? {
-            kind: "full",
-            state:
-              typeof data.body.state === "object" && data.body.state !== null
-                ? data.body.state
-                : {},
-          }
-        : data.body;
-    list.push({ offset: data.offset, body });
+    list.push({ offset: data.offset, body: data.body });
     list.sort((a, b) => a.offset - b.offset);
     this.snapshots.set(key, list);
   }

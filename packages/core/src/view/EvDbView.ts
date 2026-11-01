@@ -27,7 +27,9 @@ export abstract class EvDbView<TState>
     public readonly defaultState: TState,
   ) {
     super(storageAdapter, address, snapshot);
-    if (snapshot.offset < 0) this._state = this.getDefaultState();
+    // A default-state pointer row carries no state.
+    if (snapshot.offset < 0 || snapshot.stateRef.kind === "default")
+      this._state = this.getDefaultState();
     else this._state = snapshot.state;
   }
 
@@ -44,7 +46,9 @@ export abstract class EvDbView<TState>
     metadata: IEvDbEventMetadata,
   ): TState;
 
-  protected onApplyEvent(e: EvDbEvent): void {
+  /** Applies the event. A custom subclass cannot prove the state is unchanged, so this returns true. */
+  protected onApplyEvent(e: EvDbEvent): boolean {
     this._state = this.handleOnApply(this._state, e.payload, e);
+    return true;
   }
 }
