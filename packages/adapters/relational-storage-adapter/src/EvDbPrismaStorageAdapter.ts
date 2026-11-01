@@ -344,6 +344,11 @@ export class EvDbPrismaStorageAdapter
       });
     }
 
+    const pointerAt = `Snapshot pointer at offset ${offset} for ${streamType}/${streamId}/${viewName}`;
+    // A pointer names an earlier (or equal) full row; a later one is from a corrupt or hand-written row.
+    if (stateOffset > offset) {
+      throw new Error(`${pointerAt} references a later state row at offset ${stateOffset}`);
+    }
     const target = await this.queryProvider.getSnapshotState(
       streamType,
       streamId,
@@ -351,9 +356,13 @@ export class EvDbPrismaStorageAdapter
       stateOffset,
     );
     if (!target) {
+      throw new Error(`${pointerAt} references missing state row at offset ${stateOffset}`);
+    }
+    // The target must be a full row: a pointer row (or default-state pointer) carries no state.
+    if (target.state_offset === null || Number(target.state_offset) !== stateOffset) {
       throw new Error(
-        `Snapshot pointer at offset ${offset} for ${streamType}/${streamId}/${viewName} ` +
-          `references missing state row at offset ${stateOffset}`,
+        `${pointerAt} references a row at offset ${stateOffset} that is not a full row ` +
+          `(its state_offset is ${target.state_offset === null ? "null" : Number(target.state_offset)})`,
       );
     }
     return new EvDbStoredSnapshotResultRaw(offset, snapshot.stored_at, target.state, {

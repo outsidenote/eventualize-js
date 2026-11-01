@@ -136,6 +136,43 @@ describe("snapshot_v2 adapter integration", () => {
         );
 
         await t.test(
+          "Given a pointer at 8 to a pointer row at 5, When getSnapshotAsync, Then it throws naming the view and offsets",
+          async () => {
+            await full(2, { sum: 20 });
+            await pointer(5, 2);
+            await pointer(8, 5);
+            await assert.rejects(
+              adapter.getSnapshotAsync(ADDRESS),
+              /offset 8 for snapshot-v2-stream\/stream-1\/Sum.*offset 5/,
+            );
+          },
+        );
+
+        await t.test(
+          "Given a pointer at 8 to a default-state pointer row at 5, When getSnapshotAsync, Then it throws naming the view and offsets",
+          async () => {
+            await store(5, { kind: "pointer", stateRef: { kind: "default" } });
+            await pointer(8, 5);
+            await assert.rejects(
+              adapter.getSnapshotAsync(ADDRESS),
+              /offset 8 for snapshot-v2-stream\/stream-1\/Sum.*offset 5/,
+            );
+          },
+        );
+
+        await t.test(
+          "Given a pointer at 8 to a later full row at 10, When getSnapshotAsync with maxOffset 9, Then it throws naming the view and offsets",
+          async () => {
+            await full(10, { sum: 100 });
+            await pointer(8, 10);
+            await assert.rejects(
+              adapter.getSnapshotAsync(ADDRESS, 9),
+              /offset 8 for snapshot-v2-stream\/stream-1\/Sum.*offset 10/,
+            );
+          },
+        );
+
+        await t.test(
           "Given a full row in the old snapshot table only, When getSnapshotAsync, Then the result is Empty",
           async () => {
             await seedOldSnapshotTable(4);

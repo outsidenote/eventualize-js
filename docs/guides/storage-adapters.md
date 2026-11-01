@@ -102,12 +102,12 @@ endpoint, an access key and a secret. Missing values come from
 
 ### Tables
 
-| Table | Partition key | Sort key | Notes |
-|-------|---------------|----------|-------|
-| `events` | `stream_address` (S) | `offset` (N) | GSI `event_type__captured_at` |
-| `snapshot_v2` | `view_address` (S) | `offset` (N) | Snapshot rows. Attributes `state` and `state_offset` |
-| `snapshots` | `view_address` (S) | `offset` (N) | Old snapshot table, for older SDK versions only |
-| `messages` | `message_address` (S) | `captured_at` (S) | |
+| Table         | Partition key         | Sort key          | Notes                                                |
+| ------------- | --------------------- | ----------------- | ---------------------------------------------------- |
+| `events`      | `stream_address` (S)  | `offset` (N)      | GSI `event_type__captured_at`                        |
+| `snapshot_v2` | `view_address` (S)    | `offset` (N)      | Snapshot rows. Attributes `state` and `state_offset` |
+| `snapshots`   | `view_address` (S)    | `offset` (N)      | Old snapshot table, for older SDK versions only      |
+| `messages`    | `message_address` (S) | `captured_at` (S) |                                                      |
 
 Ready-made `CreateTable` inputs are in
 [`packages/adapters/dynamodb-storage-adapter/models`](../../packages/adapters/dynamodb-storage-adapter/models):
@@ -126,12 +126,12 @@ items (events + messages).
 Snapshots go to the table `snapshot_v2`. Each `store()` writes at most one row
 per view, of one of two kinds (see [Snapshots](snapshots.md#what-store-writes)):
 
-| Column | Full row | Pointer row | Default-state pointer |
-| --- | --- | --- | --- |
-| `offset` | offset of this row | offset of this row | offset of this row |
-| `state` | the view state (JSON) | `NULL` | `NULL` |
-| `state_offset` | equal to `offset` | offset of a full row | `NULL` |
-| `stored_at` | write time | write time | write time |
+| Column         | Full row              | Pointer row          | Default-state pointer |
+| -------------- | --------------------- | -------------------- | --------------------- |
+| `offset`       | offset of this row    | offset of this row   | offset of this row    |
+| `state`        | the view state (JSON) | `NULL`               | `NULL`                |
+| `state_offset` | equal to `offset`     | offset of a full row | `NULL`                |
+| `stored_at`    | write time            | write time           | write time            |
 
 - The key is the same as before: `(stream_type, stream_id, view_name, offset)`
   on SQL, `(view_address, offset)` on DynamoDB.
@@ -143,8 +143,14 @@ per view, of one of two kinds (see [Snapshots](snapshots.md#what-store-writes)):
 
 On load, the adapter reads the latest row with `offset <= maxOffset`. If it is
 a pointer, it reads the full row it names: a second query on SQL, a `GetItem`
-with `ConsistentRead: true` on DynamoDB. If that full row is missing, the load
-throws. Do not delete a full row that a newer pointer names.
+with `ConsistentRead: true` on DynamoDB. The load throws, naming the view and
+both offsets, when the named row:
+
+- is missing,
+- is not a full row (it is a pointer or a default-state pointer), or
+- has an offset greater than the pointer's own offset.
+
+Do not delete a full row that a newer pointer names.
 
 ### Moving from the old `snapshot` table
 
@@ -212,14 +218,14 @@ Implement both interfaces from `@eventualize/types/adapters/`. The snapshot
 types are in `@eventualize/types/snapshots/` (`EvDbSnapshotBody`,
 `EvDbStateRef`, `EvDbStoredSnapshotData`, `EvDbStoredSnapshotResultRaw`):
 
-| Method | Contract |
-|--------|----------|
-| `getEventsAsync(cursor, pageSize?)` | Async generator. Yield events with `offset >= cursor.offset`, in ascending order, each exactly once, reading `pageSize` (default 100) rows per query. |
-| `getLastOffsetAsync(address)` | Last stored offset of the stream, or `-1` when empty. |
-| `storeStreamAsync(events, messages)` | Store all of them atomically. If an event offset already exists, throw `Error("OPTIMISTIC_CONCURRENCY_VIOLATION")`. |
-| `getSnapshotAsync(viewAddress, maxOffset?)` | Latest row, full or pointer, with `offset <= maxOffset` (or the latest one). Return the empty snapshot (`EvDbStoredSnapshotResultRaw.Empty`, offset `-1`) when there is none. For a pointer, return the pointer's `offset` and `storedAt` with the state of the full row it names. Set `stateRef` to `{ kind: "row", offset }` (the full row's offset) or `{ kind: "default" }` with no state. Read the full row consistently: never a state from another offset. |
-| `storeSnapshotAsync(data)` | Store one row. `data.body` is `{ kind: "full", state }` or `{ kind: "pointer", stateRef }`. A pointer stores no state. |
-| `close()` | Release connections. |
+| Method                                      | Contract                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `getEventsAsync(cursor, pageSize?)`         | Async generator. Yield events with `offset >= cursor.offset`, in ascending order, each exactly once, reading `pageSize` (default 100) rows per query.                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `getLastOffsetAsync(address)`               | Last stored offset of the stream, or `-1` when empty.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `storeStreamAsync(events, messages)`        | Store all of them atomically. If an event offset already exists, throw `Error("OPTIMISTIC_CONCURRENCY_VIOLATION")`.                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `getSnapshotAsync(viewAddress, maxOffset?)` | Latest row, full or pointer, with `offset <= maxOffset` (or the latest one). Return the empty snapshot (`EvDbStoredSnapshotResultRaw.Empty`, offset `-1`) when there is none. For a pointer, return the pointer's `offset` and `storedAt` with the state of the full row it names. Set `stateRef` to `{ kind: "row", offset }` (the full row's offset) or `{ kind: "default" }` with no state. Read the full row consistently: never a state from another offset. Throw when the named row is missing, is not a full row, or has a greater offset than the pointer. |
+| `storeSnapshotAsync(data)`                  | Store one row. `data` has no `state` field: read `data.body` and switch on `body.kind`. `{ kind: "full", state }` is a full row: store `body.state`. `{ kind: "pointer", stateRef }` is a pointer row: store no state, only `stateRef` (the offset of a full row, or "default"). An adapter that reads `data.state` gets `undefined` and loses every snapshot.                                                                                                                                                                                                      |
+| `close()`                                   | Release connections.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 
 To produce the adapter spans, get the tracer through
 `evDbTracerFor(spanName, tracer)` from `@eventualize/types/telemetry/EvDbSpanPolicy`.
@@ -228,7 +234,9 @@ off:
 
 ```typescript
 const tracer = evDbTracerFor("eventualize.adapter.store", trace.getTracer("my-adapter"));
-return tracer.startActiveSpan("eventualize.adapter.store", async (span) => { /* ... */ });
+return tracer.startActiveSpan("eventualize.adapter.store", async (span) => {
+  /* ... */
+});
 ```
 
 Use the existing adapters as reference:

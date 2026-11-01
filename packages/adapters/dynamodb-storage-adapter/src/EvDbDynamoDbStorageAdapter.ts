@@ -280,12 +280,15 @@ export default class EvDbDynamoDbStorageAdapter
       });
     }
 
+    const pointerAt = `Snapshot pointer at offset ${offset} for ${viewAddress.streamType}/${viewAddress.streamId}/${viewAddress.viewName}`;
+    // A pointer names an earlier (or equal) full row; a later one is from a corrupt or hand-written row.
+    if (stateOffset > offset) {
+      throw new Error(`${pointerAt} references a later state row at offset ${stateOffset}`);
+    }
+    // A pointer row carries no state, so a pointer target reads as missing.
     const target = await this.readStateRow(viewAddress, stateOffset);
     if (!target) {
-      throw new Error(
-        `Snapshot pointer at offset ${offset} for ${viewAddress.streamType}/${viewAddress.streamId}/${viewAddress.viewName} ` +
-          `references missing state row at offset ${stateOffset}`,
-      );
+      throw new Error(`${pointerAt} references missing state row at offset ${stateOffset}`);
     }
     return new EvDbStoredSnapshotResultRaw(offset, storedAt, target.state, {
       kind: "row",

@@ -133,8 +133,9 @@ export class PrismaQueryProvider {
   }
 
   /**
-   * Get the state of one full snapshot row by its offset.
-   * @returns The row's `state` (may be null), or `null` when the row does not exist.
+   * Get the state of one snapshot row by its offset, with its `state_offset` so the
+   * caller can check that the row is a full row (`state_offset` equal to its offset).
+   * @returns The row's `state` (may be null) and `state_offset`, or `null` when the row does not exist.
    */
   async getSnapshotState(streamType: string, streamId: string, viewName: string, offset: number) {
     return this.prisma.snapshot_v2.findUnique({
@@ -146,7 +147,7 @@ export class PrismaQueryProvider {
           offset,
         },
       },
-      select: { state: true },
+      select: { state: true, state_offset: true },
     });
   }
 
