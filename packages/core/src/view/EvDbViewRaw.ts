@@ -15,6 +15,11 @@ export abstract class EvDbViewRaw implements IEvDbViewStore {
   private _stateRef: EvDbStateRef;
   /** True when an applied event may have changed the state since the last full row. */
   private _dirty = false;
+  /**
+   * Settles when the last queued store() settles; undefined when none is in flight.
+   * Serializes store() calls, so a slow write cannot finish after a later one and move stateRef back.
+   */
+  private _storeTail: Promise<void> | undefined;
 
   protected constructor(
     private readonly _storageAdapter: IEvDbStorageSnapshotAdapter,
@@ -59,7 +64,8 @@ export abstract class EvDbViewRaw implements IEvDbViewStore {
     if (this.memoryOffset >= offset) {
       return;
     }
-    if (this.onApplyEvent(e)) {
+    // Only an explicit false means "unchanged"; undefined (e.g. a plain-JS override) counts as changed.
+    if (this.onApplyEvent(e) !== false) {
       this._dirty = true;
     }
     this._memoryOffset = offset;
@@ -71,8 +77,25 @@ export abstract class EvDbViewRaw implements IEvDbViewStore {
   /**
    * Writes a pointer row when the state is unchanged since the last full row,
    * a full row when it changed and a snapshot is due, and nothing otherwise.
+   * Calls run one at a time, in call order. With no store in flight, the call starts at once,
+   * so it captures the offset at call time. A failed call rejects for its caller and does not
+   * block the calls queued after it.
    */
-  async store(): Promise<void> {
+  store(): Promise<void> {
+    const previous = this._storeTail;
+    const run = previous === undefined ? this.storeOnce() : previous.then(() => this.storeOnce());
+    const tail: Promise<void> = run
+      .catch(() => undefined)
+      .then(() => {
+        if (this._storeTail === tail) {
+          this._storeTail = undefined;
+        }
+      });
+    this._storeTail = tail;
+    return run;
+  }
+
+  private async storeOnce(): Promise<void> {
     // No new events since the latest row.
     if (this._memoryOffset <= this._storeOffset) {
       return;
@@ -119,6 +142,8 @@ export abstract class EvDbViewRaw implements IEvDbViewStore {
   /**
    * Applies one event to the state.
    * @returns true when the state may have changed; false only when it provably did not.
+   * Only an explicit `false` is read as "unchanged": any other value (such as `undefined`
+   * from a plain-JS override) marks the view as changed.
    */
   protected abstract onApplyEvent(e: EvDbEvent): boolean;
 }

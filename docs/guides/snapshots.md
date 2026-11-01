@@ -198,6 +198,9 @@ It is not the dirty flag.
   them. They are already stored. Replay does not run them either.
 - If an event is applied while a snapshot write is in flight, its match is
   kept for the next `store()`. The dirty flag is kept the same way.
+- `store()` calls on one view run one at a time, in call order. A call made
+  while another is in flight waits for it. A failed call does not block the
+  next one.
 
 Predicates must be pure. They can run once per event, or not at all when the
 flag is already `true`. An error thrown by a predicate goes to the caller of
