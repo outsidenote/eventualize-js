@@ -153,15 +153,18 @@ describe("playground API on Postgres", { timeout: 180_000 }, () => {
   });
 
   test("a snapshot is stored per view per event", async () => {
-    assert.strictEqual(await prisma.snapshot.count({ where: aliceSnapshots }), 3 * commands.length);
+    assert.strictEqual(
+      await prisma.snapshot_v2.count({ where: aliceSnapshots }),
+      3 * commands.length,
+    );
   });
 
   test("replay with snapshots reads the stored snapshot (tamper check)", async () => {
     const k = 2;
     const where = { ...aliceSnapshots, view_name: "balance", offset: k };
-    const original = await prisma.snapshot.findFirstOrThrow({ where });
+    const original = await prisma.snapshot_v2.findFirstOrThrow({ where });
     const tampered = { amount: -1, currency: "XXX" };
-    await prisma.snapshot.updateMany({ where, data: { state: tampered } });
+    await prisma.snapshot_v2.updateMany({ where, data: { state: tampered } });
     try {
       const withSnapshots = await replay(k, 1, true);
       assert.deepStrictEqual(withSnapshots.items[0].views.balance, tampered);
@@ -173,17 +176,25 @@ describe("playground API on Postgres", { timeout: 180_000 }, () => {
       const withoutSnapshots = await replay(k, 1, false);
       assert.deepStrictEqual(withoutSnapshots.items[0].views, reference.items[k].views);
     } finally {
-      await prisma.snapshot.updateMany({ where, data: { state: original.state ?? {} } });
+      await prisma.snapshot_v2.updateMany({ where, data: { state: original.state ?? {} } });
     }
     await sweep();
   });
 
   test("old snapshot plus folding newer events equals the full fold", async () => {
-    const deleted = await prisma.snapshot.deleteMany({
-      where: { ...aliceSnapshots, offset: { notIn: [0, 4] } },
+    // Offset 4 is WithdrawalDenied. The balance view has no handler for it, so its row at 4
+    // is a pointer to the full row at 3. Keep 3, or the pointer names a missing row.
+    const kept = [0, 3, 4];
+    const deleted = await prisma.snapshot_v2.deleteMany({
+      where: { ...aliceSnapshots, offset: { notIn: kept } },
     });
-    assert.strictEqual(deleted.count, 3 * (commands.length - 2));
-    assert.strictEqual(await prisma.snapshot.count({ where: aliceSnapshots }), 3 * 2);
+    assert.strictEqual(deleted.count, 3 * (commands.length - kept.length));
+    assert.strictEqual(await prisma.snapshot_v2.count({ where: aliceSnapshots }), 3 * kept.length);
+    const balanceAt4 = await prisma.snapshot_v2.findFirstOrThrow({
+      where: { ...aliceSnapshots, view_name: "balance", offset: 4 },
+    });
+    assert.strictEqual(balanceAt4.state, null);
+    assert.strictEqual(balanceAt4.state_offset, 3n);
     await sweep();
   });
 
@@ -196,7 +207,7 @@ describe("playground API on Postgres", { timeout: 180_000 }, () => {
     assert.strictEqual(res.status, 200);
     const body = await res.json();
     assert.deepStrictEqual([body.fromOffset, body.toOffset], [0, 59]);
-    const rows = await prisma.snapshot.count({
+    const rows = await prisma.snapshot_v2.count({
       where: { stream_type: "playground-funds", stream_id: "gen" },
     });
     assert.strictEqual(rows, 3 * Math.ceil(60 / 7));

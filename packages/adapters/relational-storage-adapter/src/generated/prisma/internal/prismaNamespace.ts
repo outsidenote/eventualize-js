@@ -399,7 +399,8 @@ type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRe
 export const ModelName = {
   events: 'events',
   outbox: 'outbox',
-  snapshot: 'snapshot'
+  snapshot: 'snapshot',
+  snapshot_v2: 'snapshot_v2'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -415,7 +416,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "events" | "outbox" | "snapshot"
+    modelProps: "events" | "outbox" | "snapshot" | "snapshot_v2"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -641,6 +642,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    snapshot_v2: {
+      payload: Prisma.$snapshot_v2Payload<ExtArgs>
+      fields: Prisma.snapshot_v2FieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.snapshot_v2FindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$snapshot_v2Payload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.snapshot_v2FindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$snapshot_v2Payload>
+        }
+        findFirst: {
+          args: Prisma.snapshot_v2FindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$snapshot_v2Payload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.snapshot_v2FindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$snapshot_v2Payload>
+        }
+        findMany: {
+          args: Prisma.snapshot_v2FindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$snapshot_v2Payload>[]
+        }
+        create: {
+          args: Prisma.snapshot_v2CreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$snapshot_v2Payload>
+        }
+        createMany: {
+          args: Prisma.snapshot_v2CreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.snapshot_v2CreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$snapshot_v2Payload>[]
+        }
+        delete: {
+          args: Prisma.snapshot_v2DeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$snapshot_v2Payload>
+        }
+        update: {
+          args: Prisma.snapshot_v2UpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$snapshot_v2Payload>
+        }
+        deleteMany: {
+          args: Prisma.snapshot_v2DeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.snapshot_v2UpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.snapshot_v2UpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$snapshot_v2Payload>[]
+        }
+        upsert: {
+          args: Prisma.snapshot_v2UpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$snapshot_v2Payload>
+        }
+        aggregate: {
+          args: Prisma.Snapshot_v2AggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateSnapshot_v2>
+        }
+        groupBy: {
+          args: Prisma.snapshot_v2GroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.Snapshot_v2GroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.snapshot_v2CountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.Snapshot_v2CountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -730,6 +805,20 @@ export const SnapshotScalarFieldEnum = {
 export type SnapshotScalarFieldEnum = (typeof SnapshotScalarFieldEnum)[keyof typeof SnapshotScalarFieldEnum]
 
 
+export const Snapshot_v2ScalarFieldEnum = {
+  id: 'id',
+  stream_type: 'stream_type',
+  stream_id: 'stream_id',
+  view_name: 'view_name',
+  offset: 'offset',
+  state: 'state',
+  state_offset: 'state_offset',
+  stored_at: 'stored_at'
+} as const
+
+export type Snapshot_v2ScalarFieldEnum = (typeof Snapshot_v2ScalarFieldEnum)[keyof typeof Snapshot_v2ScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -743,6 +832,14 @@ export const JsonNullValueInput = {
 } as const
 
 export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
+
+
+export const NullableJsonNullValueInput = {
+  DbNull: DbNull,
+  JsonNull: JsonNull
+} as const
+
+export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
 
 
 export const QueryMode = {
@@ -1013,6 +1110,7 @@ export type GlobalOmitConfig = {
   events?: Prisma.eventsOmit
   outbox?: Prisma.outboxOmit
   snapshot?: Prisma.snapshotOmit
+  snapshot_v2?: Prisma.snapshot_v2Omit
 }
 
 /* Types for Logging */

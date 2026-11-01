@@ -1,14 +1,15 @@
 import type { EvDbSnapshotStrategy } from "../view/EvDbSnapshotStrategyBuilder.js";
+import type { DeepReadonly } from "@eventualize/types/view/DeepReadonly";
 import type IEvDbEventMetadata from "@eventualize/types/events/IEvDbEventMetadata";
 
 /**
  * Handler function type for applying an event to state
  */
 export type EvDbViewEventHandler<TState, TEvent> = (
-  oldState: TState,
-  event: TEvent,
+  oldState: DeepReadonly<TState>,
+  event: Readonly<TEvent>,
   metadata: IEvDbEventMetadata,
-) => TState;
+) => DeepReadonly<TState>;
 
 /**
  * Map of event handlers keyed by event name from TEventMap

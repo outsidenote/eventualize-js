@@ -1,10 +1,11 @@
 import type EvDbStreamAddress from "../stream/EvDbStreamAddress.js";
-import type { EvDbStoredSnapshotResultRaw } from "./EvDbStoredSnapshotResultRaw.js";
 import type EvDbViewAddress from "../view/EvDbViewAddress.js";
+import type { EvDbSnapshotBody } from "./EvDbSnapshotBody.js";
+import { EvDbStoredSnapshotResultRaw } from "./EvDbStoredSnapshotResultRaw.js";
 import { EvDbStoredSnapshotDataBase } from "./EvDbStoredSnapshotDataBase.js";
 
 export class EvDbStoredSnapshotData extends EvDbStoredSnapshotDataBase {
-  readonly state: unknown;
+  readonly body: EvDbSnapshotBody;
 
   // Primary constructor equivalent
   constructor(
@@ -14,10 +15,10 @@ export class EvDbStoredSnapshotData extends EvDbStoredSnapshotDataBase {
     viewName: string,
     offset: number,
     storeOffset: number,
-    state: unknown,
+    body: EvDbSnapshotBody,
   ) {
     super(id, streamType, streamId, viewName, offset, storeOffset);
-    this.state = state;
+    this.body = body;
   }
 
   // Secondary constructor (overload)
@@ -25,7 +26,7 @@ export class EvDbStoredSnapshotData extends EvDbStoredSnapshotDataBase {
     address: EvDbViewAddress,
     offset: number,
     storeOffset: number,
-    state: unknown,
+    body: EvDbSnapshotBody,
   ): EvDbStoredSnapshotData {
     return new EvDbStoredSnapshotData(
       crypto.randomUUID(),
@@ -34,7 +35,7 @@ export class EvDbStoredSnapshotData extends EvDbStoredSnapshotDataBase {
       address.viewName,
       offset,
       storeOffset,
-      state,
+      body,
     );
   }
 
@@ -46,7 +47,7 @@ export class EvDbStoredSnapshotData extends EvDbStoredSnapshotDataBase {
     if (this.offset !== obj.offset) return false;
 
     // Compare any references (same as C# byte[] reference equality)
-    if (this.state !== obj.state) return false;
+    if (this.body.kind !== "full" || this.body.state !== obj.state) return false;
 
     return true;
   }
@@ -71,10 +72,17 @@ export class EvDbStoredSnapshotData extends EvDbStoredSnapshotDataBase {
   // Casting Overload (implicit operator in C# → explicit method in TS)
   // ------------------------------------------------------------------------------------
   toSnapshotResult(): EvDbStoredSnapshotResultRaw {
-    return {
-      offset: this.offset,
-      storedAt: this.storedAt,
-      state: this.state,
-    } as unknown as EvDbStoredSnapshotResultRaw;
+    if (this.body.kind === "full") {
+      return new EvDbStoredSnapshotResultRaw(this.offset, this.storedAt, this.body.state, {
+        kind: "row",
+        offset: this.offset,
+      });
+    }
+    return new EvDbStoredSnapshotResultRaw(
+      this.offset,
+      this.storedAt,
+      undefined,
+      this.body.stateRef,
+    );
   }
 }

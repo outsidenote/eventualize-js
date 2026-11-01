@@ -105,15 +105,15 @@ export class PrismaQueryProvider {
   }
 
   /**
-   * Get snapshot using Prisma
+   * Get the latest snapshot row (full or pointer) using Prisma
    * @param streamType - The stream type.
    * @param streamId - The stream id.
    * @param viewName - The view name.
    * @param maxOffset - Optional upper bound: only snapshots with offset `<= maxOffset` match.
-   * @returns The latest matching snapshot, or `null` when none matches.
+   * @returns The latest matching row, or `null` when none matches. `state` is null for pointers.
    */
   async getSnapshot(streamType: string, streamId: string, viewName: string, maxOffset?: number) {
-    return this.prisma.snapshot.findFirst({
+    return this.prisma.snapshot_v2.findFirst({
       where: {
         stream_type: streamType,
         stream_id: streamId,
@@ -122,6 +122,7 @@ export class PrismaQueryProvider {
       },
       select: {
         state: true,
+        state_offset: true,
         stored_at: true,
         offset: true,
       },
@@ -132,10 +133,29 @@ export class PrismaQueryProvider {
   }
 
   /**
-   * Save snapshot using Prisma
+   * Get the state of one snapshot row by its offset, with its `state_offset` so the
+   * caller can check that the row is a full row (`state_offset` equal to its offset).
+   * @returns The row's `state` (may be null) and `state_offset`, or `null` when the row does not exist.
    */
-  async saveSnapshot(data: Prisma.snapshotCreateInput) {
-    return this.prisma.snapshot.create({
+  async getSnapshotState(streamType: string, streamId: string, viewName: string, offset: number) {
+    return this.prisma.snapshot_v2.findUnique({
+      where: {
+        stream_type_stream_id_view_name_offset: {
+          stream_type: streamType,
+          stream_id: streamId,
+          view_name: viewName,
+          offset,
+        },
+      },
+      select: { state: true, state_offset: true },
+    });
+  }
+
+  /**
+   * Save snapshot row using Prisma
+   */
+  async saveSnapshot(data: Prisma.snapshot_v2CreateInput) {
+    return this.prisma.snapshot_v2.create({
       data,
     });
   }

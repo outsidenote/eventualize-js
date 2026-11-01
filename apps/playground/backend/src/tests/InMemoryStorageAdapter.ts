@@ -8,12 +8,13 @@ import EvDbStreamCursor from "@eventualize/types/stream/EvDbStreamCursor";
 import StreamStoreAffected from "@eventualize/types/stream/StreamStoreAffected";
 import type EvDbViewAddress from "@eventualize/types/view/EvDbViewAddress";
 import { EvDbStoredSnapshotResultRaw } from "@eventualize/types/snapshots/EvDbStoredSnapshotResultRaw";
+import type { EvDbSnapshotBody } from "@eventualize/types/snapshots/EvDbSnapshotBody";
 import type { EvDbStoredSnapshotData } from "@eventualize/types/snapshots/EvDbStoredSnapshotData";
 import type { IEvDbStorageAdapter } from "@eventualize/core/adapters/IEvDbStorageAdapter";
 
 interface StoredSnapshot {
   readonly offset: number;
-  readonly state: unknown;
+  readonly body: EvDbSnapshotBody;
 }
 
 const streamKey = (a: EvDbStreamAddress): string => `${a.streamType}/${a.streamId}`;
@@ -41,7 +42,7 @@ export default class InMemoryStorageAdapter implements IEvDbStorageAdapter {
   seedSnapshot(viewAddress: EvDbViewAddress, offset: number, state: unknown): void {
     const key = viewKey(viewAddress);
     const list = this.snapshots.get(key) ?? [];
-    list.push({ offset, state });
+    list.push({ offset, body: { kind: "full", state } });
     list.sort((a, b) => a.offset - b.offset);
     this.snapshots.set(key, list);
   }
@@ -100,13 +101,29 @@ export default class InMemoryStorageAdapter implements IEvDbStorageAdapter {
     const candidates = bound === undefined ? list : list.filter((s) => s.offset <= bound);
     const latest = candidates[candidates.length - 1];
     if (!latest) return EvDbStoredSnapshotResultRaw.Empty;
-    return new EvDbStoredSnapshotResultRaw(latest.offset, new Date(), latest.state);
+    if (latest.body.kind === "full") {
+      return new EvDbStoredSnapshotResultRaw(latest.offset, new Date(), latest.body.state, {
+        kind: "row",
+        offset: latest.offset,
+      });
+    }
+    const ref = latest.body.stateRef;
+    if (ref.kind === "default") {
+      return new EvDbStoredSnapshotResultRaw(latest.offset, new Date(), undefined, ref);
+    }
+    const row = list.find((s) => s.offset === ref.offset);
+    if (row?.body.kind !== "full") {
+      throw new Error(
+        `Snapshot pointer for view ${viewKey(viewAddress)} at offset ${latest.offset} names a full row at offset ${ref.offset} that does not exist`,
+      );
+    }
+    return new EvDbStoredSnapshotResultRaw(latest.offset, new Date(), row.body.state, ref);
   }
 
   async storeSnapshotAsync(data: EvDbStoredSnapshotData): Promise<void> {
     const key = `${data.streamType}/${data.streamId}/${data.viewName}`;
     const list = this.snapshots.get(key) ?? [];
-    list.push({ offset: data.offset, state: data.state });
+    list.push({ offset: data.offset, body: data.body });
     list.sort((a, b) => a.offset - b.offset);
     this.snapshots.set(key, list);
   }

@@ -11,4 +11,5 @@
 export type * from './models/events.js'
 export type * from './models/outbox.js'
 export type * from './models/snapshot.js'
+export type * from './models/snapshot_v2.js'
 export type * from './commonInputTypes.js'

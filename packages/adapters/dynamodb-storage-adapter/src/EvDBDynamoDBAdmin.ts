@@ -26,7 +26,7 @@ export default class EvDbDynamoDbAdmin implements IEvDbStorageAdmin {
       if (tableName === "events") {
         deleteRequest.DeleteRequest!.Key!["stream_address"] = item["stream_address"];
         deleteRequest.DeleteRequest!.Key!["offset"] = item["offset"];
-      } else if (tableName === "snapshots") {
+      } else if (tableName === "snapshots" || tableName === "snapshot_v2") {
         deleteRequest.DeleteRequest!.Key!["view_address"] = item["view_address"];
         deleteRequest.DeleteRequest!.Key!["offset"] = item["offset"];
       } else if (tableName === "messages") {
@@ -56,7 +56,7 @@ export default class EvDbDynamoDbAdmin implements IEvDbStorageAdmin {
       if (tableName === "events") {
         projectionExpression = "stream_address, #o";
         expressionAttributeNames = { "#o": "offset" };
-      } else if (tableName === "snapshots") {
+      } else if (tableName === "snapshots" || tableName === "snapshot_v2") {
         projectionExpression = "view_address, #o";
         expressionAttributeNames = { "#o": "offset" };
       } else {
@@ -102,6 +102,7 @@ export default class EvDbDynamoDbAdmin implements IEvDbStorageAdmin {
   public async clearEnvironmentAsync(): Promise<void> {
     await this.clearTableItems("events");
     await this.clearTableItems("snapshots");
+    await this.clearTableItems("snapshot_v2");
     await this.clearTableItems("messages");
   }
   dispose?(): void {

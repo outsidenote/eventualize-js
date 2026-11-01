@@ -1,4 +1,5 @@
 import type IEvDbEventMetadata from "@eventualize/types/events/IEvDbEventMetadata";
+import type { DeepReadonly } from "@eventualize/types/view/DeepReadonly";
 import type EvDbMessage from "@eventualize/types/messages/EvDbMessage";
 import { resolveEvDbSpanPolicy } from "@eventualize/types/telemetry/EvDbSpanPolicy";
 import type { EvDbTelemetryOptions } from "@eventualize/types/telemetry/EvDbSpanPolicy";
@@ -15,10 +16,10 @@ import type { EvDbSnapshotStrategyConfigure } from "../view/EvDbSnapshotStrategy
  */
 type EventHandlersFromMap<TState, TEventMap extends Record<string, object>> = {
   [K in keyof TEventMap]: (
-    oldState: Readonly<TState>,
+    oldState: DeepReadonly<TState>,
     event: Readonly<TEventMap[K]>,
     metadata: IEvDbEventMetadata,
-  ) => TState;
+  ) => DeepReadonly<TState>;
 };
 
 /**

@@ -17,6 +17,7 @@ pnpm install
 pnpm build                 # tsc --build; run before tests and before running any app
 pnpm lint                  # eslint + prettier --check
 pnpm lint:fix
+pnpm typecheck:tests       # type-check core test files (pnpm build skips them)
 pnpm test:unit             # fast, no database
 pnpm test                  # everything; starts Postgres, MySQL, LocalStack via Testcontainers (needs Docker)
 pnpm test:postgres         # one database: test:postgres | test:mysql | test:dynamodb
@@ -97,6 +98,9 @@ must keep the lint count. If a count goes up, revert and try another way.
 - Internal `@eventualize/*` dependencies use `workspace:^`.
 - Local DynamoDB is LocalStack on port **4566**. Any `8000` you see is stale.
 - Streams made with `factory.create()` start at offset **1**.
+- Snapshots live in `snapshot_v2` (full rows and pointer rows). The old
+  `snapshot` / `snapshots` table is kept only for older SDK versions; the adapters
+  no longer read or write it.
 - `.js`, `.d.ts`, `.js.map` files inside `src/` are stray emit, not sources.
   Git ignores them. Edit the `.ts` file. A real `.js` source in `src/` needs a
   `!` exception in `.gitignore` (see `asyncapi-parser-stub.js`).
@@ -111,6 +115,8 @@ must keep the lint count. If a count goes up, revert and try another way.
 | Replay (`goToOffset`, `forward`) | [docs/guides/replay.md](docs/guides/replay.md) |
 | Clone (`clone`) | [docs/guides/clone.md](docs/guides/clone.md) |
 | View snapshot strategy (`withView` snapshot callback) | [docs/guides/snapshots.md](docs/guides/snapshots.md) |
+| Change detection, pointer rows, `DeepReadonly` view state | [docs/guides/immutable-state.md](docs/guides/immutable-state.md) and [docs/guides/snapshots.md](docs/guides/snapshots.md) |
+| Snapshot table or copy scripts (`snapshot_v2`, `copySnapshotsToV2`) | [docs/guides/storage-adapters.md](docs/guides/storage-adapters.md) and the adapter READMEs |
 | Outbox table or message fields | [docs/guides/outbox.md](docs/guides/outbox.md) |
 | OTel spans or attributes | [docs/guides/opentelemetry.md](docs/guides/opentelemetry.md) |
 | Adapter interface or schema | [docs/guides/storage-adapters.md](docs/guides/storage-adapters.md) |

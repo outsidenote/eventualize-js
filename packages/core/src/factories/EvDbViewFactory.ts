@@ -34,6 +34,20 @@ class GenericView<TState, TEventMap extends Record<string, object>> extends EvDb
   }
 
   /**
+   * An event type with no handler cannot change the state, so it is skipped and reports no change.
+   */
+  protected override onApplyEvent(e: EvDbEvent): boolean {
+    // Own keys only: an event named like an Object.prototype member has no handler.
+    if (!Object.prototype.hasOwnProperty.call(this.config.handlers, e.eventType)) {
+      return false;
+    }
+    const previous = this.state;
+    super.onApplyEvent(e);
+    // "trusted": a handler that returns the same reference is taken as "no change".
+    return this.config.snapshotStrategy?.changeDetection !== "trusted" || this.state !== previous;
+  }
+
+  /**
    * Dynamically applies events based on the handlers map
    */
   public handleOnApply(

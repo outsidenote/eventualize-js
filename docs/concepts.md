@@ -92,8 +92,9 @@ A **snapshot** is a stored copy of a view's state at one offset. Without
 snapshots, loading a stream reads every event from offset 0. With them, `get()`
 loads the latest snapshot of each view and reads only newer events.
 
-Snapshots are per view. By default a view writes a snapshot on every `store()`.
-A view can set a **snapshot strategy** to choose when it writes. See
+Snapshots are per view. By default a view writes one row on every `store()`:
+the full state when it changed, or a small pointer row when it did not. A view
+can set a **snapshot strategy** to choose when it writes its full state. See
 [Snapshots](guides/snapshots.md).
 
 ## Outbox message

@@ -265,16 +265,53 @@ export default class EvDbDynamoDbStorageAdapter
     }
 
     const snapshot = unmarshall(response.Items[0]);
+    const offset = Number(snapshot.offset);
+    const storedAt = new Date(Number(snapshot.stored_at));
 
-    return new EvDbStoredSnapshotResultRaw(
-      snapshot.offset,
-      new Date(Number(snapshot.stored_at)),
-      snapshot.state.__state,
+    if (snapshot.state_offset === undefined) {
+      return new EvDbStoredSnapshotResultRaw(offset, storedAt, undefined, { kind: "default" });
+    }
+
+    const stateOffset = Number(snapshot.state_offset);
+    if (stateOffset === offset) {
+      return new EvDbStoredSnapshotResultRaw(offset, storedAt, snapshot.state.__state, {
+        kind: "row",
+        offset,
+      });
+    }
+
+    const pointerAt = `Snapshot pointer at offset ${offset} for ${viewAddress.streamType}/${viewAddress.streamId}/${viewAddress.viewName}`;
+    // A pointer names an earlier (or equal) full row; a later one is from a corrupt or hand-written row.
+    if (stateOffset > offset) {
+      throw new Error(`${pointerAt} references a later state row at offset ${stateOffset}`);
+    }
+    // A pointer row carries no state, so a pointer target reads as missing.
+    const target = await this.readStateRow(viewAddress, stateOffset);
+    if (!target) {
+      throw new Error(`${pointerAt} references missing state row at offset ${stateOffset}`);
+    }
+    return new EvDbStoredSnapshotResultRaw(offset, storedAt, target.state, {
+      kind: "row",
+      offset: stateOffset,
+    });
+  }
+
+  /** Reads the state of the full row at `offset`, or `undefined` when the row is missing. */
+  private async readStateRow(
+    viewAddress: EvDbViewAddress,
+    offset: number,
+  ): Promise<{ state: unknown } | undefined> {
+    const response = await this.dynamoDbClient.send(
+      QueryProvider.getSnapshotState(viewAddress, offset),
     );
+    if (!response.Item?.state) return undefined;
+    const item = unmarshall(response.Item);
+    return { state: item.state.__state };
   }
 
   /**
-   * Save a snapshot
+   * Save a snapshot. A full body writes its state; a pointer body writes no state and
+   * only the `state_offset` (absent for a default-state pointer).
    */
   async storeSnapshotAsync(record: EvDbStoredSnapshotData): Promise<void> {
     const command = QueryProvider.saveSnapshot(record);

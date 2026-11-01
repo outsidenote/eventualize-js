@@ -58,3 +58,17 @@ model snapshot {
   @@id([stream_type, stream_id, view_name, offset])
   @@index([stream_type, stream_id, view_name, stored_at], map: "ix_snapshot_earlier_stored_at_7ae7ea3b165349e09b3fe6d66a69fd72")
 }
+
+model snapshot_v2 {
+  id           String   @db.Char(36)
+  stream_type  String   @db.VarChar(150)
+  stream_id    String   @db.VarChar(150)
+  view_name    String   @db.VarChar(150)
+  offset       BigInt
+  state        Json?
+  state_offset BigInt?
+  stored_at    DateTime @default(now()) @db.DateTime(6)
+
+  @@id([stream_type, stream_id, view_name, offset])
+  @@index([stream_type, stream_id, view_name, stored_at], map: "ix_snapshot_v2_stored_at")
+}

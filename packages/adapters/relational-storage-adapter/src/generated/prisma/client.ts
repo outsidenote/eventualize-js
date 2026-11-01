@@ -56,3 +56,8 @@ export type outbox = Prisma.outboxModel
  * This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
  */
 export type snapshot = Prisma.snapshotModel
+/**
+ * Model snapshot_v2
+ * 
+ */
+export type snapshot_v2 = Prisma.snapshot_v2Model

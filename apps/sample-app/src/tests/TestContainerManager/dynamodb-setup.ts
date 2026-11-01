@@ -47,6 +47,11 @@ const SNAPSHOTS_TABLE_SCHEMA: CreateTableCommandInput = {
   BillingMode: "PAY_PER_REQUEST",
 };
 
+const SNAPSHOT_V2_TABLE_SCHEMA: CreateTableCommandInput = {
+  ...SNAPSHOTS_TABLE_SCHEMA,
+  TableName: "snapshot_v2",
+};
+
 const MESSAGES_TABLE_SCHEMA: CreateTableCommandInput = {
   TableName: "messages",
   AttributeDefinitions: [
@@ -74,7 +79,12 @@ export async function setupDynamoDBTables(config: DynamoDBConfig): Promise<void>
     region: config.region,
   });
 
-  const tableSchemas = [EVENTS_TABLE_SCHEMA, SNAPSHOTS_TABLE_SCHEMA, MESSAGES_TABLE_SCHEMA];
+  const tableSchemas = [
+    EVENTS_TABLE_SCHEMA,
+    SNAPSHOTS_TABLE_SCHEMA,
+    SNAPSHOT_V2_TABLE_SCHEMA,
+    MESSAGES_TABLE_SCHEMA,
+  ];
 
   for (const schema of tableSchemas) {
     try {

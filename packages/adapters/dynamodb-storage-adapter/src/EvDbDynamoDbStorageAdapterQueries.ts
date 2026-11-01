@@ -4,12 +4,13 @@ import type {
   PutItemCommandInput,
   TransactWriteItem,
 } from "@aws-sdk/client-dynamodb";
-import { PutItemCommand, QueryCommand } from "@aws-sdk/client-dynamodb";
+import { GetItemCommand, PutItemCommand, QueryCommand } from "@aws-sdk/client-dynamodb";
 import type EvDbStreamCursor from "@eventualize/types/stream/EvDbStreamCursor";
 import EvDbStreamAddress from "@eventualize/types/stream/EvDbStreamAddress";
 import EvDbEvent from "@eventualize/types/events/EvDbEvent";
 import EvDbViewAddress from "@eventualize/types/view/EvDbViewAddress";
 import type { EvDbStoredSnapshotData } from "@eventualize/types/snapshots/EvDbStoredSnapshotData";
+import type { EvDbSnapshotBody } from "@eventualize/types/snapshots/EvDbSnapshotBody";
 import { marshall } from "@aws-sdk/util-dynamodb";
 
 export class EventRecord {
@@ -77,6 +78,8 @@ const serializeMessageAddress = (m: MessageRecord) => {
 const serializeViewAddress = (viewAddress: EvDbViewAddress) => {
   return `${serializeStreamAddress(viewAddress)}::${viewAddress.viewName}`;
 };
+
+const SNAPSHOT_TABLE = "snapshot_v2";
 
 export default class EvDbDynamoDbStorageAdapterQueries {
   public static saveEvents(events: EventRecord[]): TransactWriteItem[] {
@@ -185,24 +188,27 @@ export default class EvDbDynamoDbStorageAdapterQueries {
   }
 
   /**
-   * Builds the query for the latest snapshot of a view.
+   * Builds the query for the latest snapshot row of a view in `snapshot_v2`.
    * @param viewAddress - The view address.
-   * @param maxOffset - Optional upper bound: only snapshots with offset `<= maxOffset` match.
-   * @returns A `QueryCommand` that returns at most one item: the latest matching snapshot.
+   * @param maxOffset - Optional upper bound: only rows with offset `<= maxOffset` match.
+   * @returns A `QueryCommand` that returns at most one item: the latest matching row.
+   *   It projects `state_offset` and `state`: a full row carries its own state; for a
+   *   row pointer the caller reads the target with {@link getSnapshotState}.
    */
   public static getSnapshot(viewAddress: EvDbViewAddress, maxOffset?: number) {
     const hasMax = maxOffset !== undefined;
     const queryParams = {
-      TableName: "snapshots",
+      TableName: SNAPSHOT_TABLE,
       KeyConditionExpression: hasMax ? "view_address = :sa AND #o <= :max" : "view_address = :sa",
 
       ExpressionAttributeValues: {
         ":sa": { S: serializeViewAddress(viewAddress) },
         ...(hasMax ? { ":max": { N: maxOffset.toString() } } : {}),
       },
-      ProjectionExpression: "#o, #s, stored_at",
+      ProjectionExpression: "#o, #so, #s, stored_at",
       ExpressionAttributeNames: {
         "#o": "offset",
+        "#so": "state_offset",
         "#s": "state",
       },
       ScanIndexForward: false, // false = descending order
@@ -212,6 +218,29 @@ export default class EvDbDynamoDbStorageAdapterQueries {
     return new QueryCommand(queryParams);
   }
 
+  /**
+   * Builds the read of the state held by the full row at `offset`.
+   * Uses a strongly consistent read: the pointer that names this row may have been
+   * written right after it.
+   */
+  public static getSnapshotState(viewAddress: EvDbViewAddress, offset: number): GetItemCommand {
+    return new GetItemCommand({
+      TableName: SNAPSHOT_TABLE,
+      Key: {
+        view_address: { S: serializeViewAddress(viewAddress) },
+        offset: { N: offset.toString() },
+      },
+      ProjectionExpression: "#s",
+      ExpressionAttributeNames: { "#s": "state" },
+      ConsistentRead: true,
+    });
+  }
+
+  /**
+   * Builds the put of one `snapshot_v2` row. A full body writes `state` and a
+   * `state_offset` equal to its own offset. A row pointer writes only `state_offset`.
+   * A default pointer writes neither.
+   */
   public static saveSnapshot(snapshot: EvDbStoredSnapshotData): PutItemCommand {
     const viewAddress = new EvDbViewAddress(
       snapshot.streamType,
@@ -219,19 +248,11 @@ export default class EvDbDynamoDbStorageAdapterQueries {
       snapshot.viewName,
     );
     const queryParams: PutItemCommandInput = {
-      TableName: "snapshots",
+      TableName: SNAPSHOT_TABLE,
       Item: {
         view_address: { S: serializeViewAddress(viewAddress) },
         offset: { N: snapshot.offset.toString() },
-        state: {
-          M: marshall(
-            { __state: snapshot.state },
-            {
-              convertClassInstanceToMap: true,
-              removeUndefinedValues: true,
-            },
-          ),
-        },
+        ...EvDbDynamoDbStorageAdapterQueries.toStateAttributes(snapshot.offset, snapshot.body),
         stored_at: { S: Date.now().toString() },
       },
       ConditionExpression:
@@ -243,5 +264,28 @@ export default class EvDbDynamoDbStorageAdapterQueries {
     };
 
     return new PutItemCommand(queryParams);
+  }
+
+  private static toStateAttributes(
+    offset: number,
+    body: EvDbSnapshotBody,
+  ): Record<string, AttributeValue> {
+    if (body.kind === "full") {
+      return {
+        state: {
+          M: marshall(
+            { __state: body.state },
+            {
+              convertClassInstanceToMap: true,
+              removeUndefinedValues: true,
+            },
+          ),
+        },
+        state_offset: { N: offset.toString() },
+      };
+    }
+    return body.stateRef.kind === "row"
+      ? { state_offset: { N: body.stateRef.offset.toString() } }
+      : {};
   }
 }

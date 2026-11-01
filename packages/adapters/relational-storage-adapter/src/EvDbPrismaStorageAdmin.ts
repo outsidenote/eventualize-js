@@ -7,6 +7,7 @@ export default class EvDbPrismaStorageAdmin implements IEvDbStorageAdmin {
     await Promise.all([
       this.prisma.events.deleteMany({}),
       this.prisma.snapshot.deleteMany({}),
+      this.prisma.snapshot_v2.deleteMany({}),
       this.prisma.outbox.deleteMany({}),
     ]);
   }

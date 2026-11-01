@@ -31,6 +31,15 @@ The optional `kind` option (`"postgres"`, `"mysql"` or `"relational"`) sets the
 `eventualize.adapter.kind` attribute on the adapter's OpenTelemetry spans.
 Default: `"relational"`.
 
+## Snapshots
+
+Snapshots are stored in the table `snapshot_v2`, as full rows or pointer rows. The old
+`snapshot` table is no longer read or written. Before you upgrade, create `snapshot_v2`
+with the `add_snapshot_v2` migration of your database package. Then copy the latest
+snapshots with that package's `scripts/copy-snapshot-to-snapshot-v2.sql`. See
+[Snapshot rows and `snapshot_v2`](https://github.com/outsidenote/eventualize-js/blob/main/docs/guides/storage-adapters.md#snapshot-rows-and-snapshot_v2)
+for the rollout order.
+
 ## Prisma version
 
 Prisma is a regular dependency, pinned to the exact version that generated the

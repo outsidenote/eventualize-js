@@ -24,13 +24,20 @@ Import each module by its path. Most modules have a default export.
 | `@eventualize/types/stream/EvDbStreamAddress` | Stream type + stream id |
 | `@eventualize/types/stream/EvDbStreamCursor` | Stream address + offset |
 | `@eventualize/types/adapters/IEvDbStorageStreamAdapter` | Interface: read and store events and messages |
-| `@eventualize/types/adapters/IEvDbStorageSnapshotAdapter` | Interface: read and store view snapshots |
+| `@eventualize/types/adapters/IEvDbStorageSnapshotAdapter` | Interface: read and store view snapshots (full rows and pointer rows) |
+| `@eventualize/types/snapshots/EvDbSnapshotBody` | `EvDbSnapshotBody`: `{ kind: "full", state }` or `{ kind: "pointer", stateRef }` |
+| `@eventualize/types/snapshots/EvDbStateRef` | `EvDbStateRef`: `{ kind: "row", offset }` or `{ kind: "default" }` |
+| `@eventualize/types/view/DeepReadonly` | `DeepReadonly<T>`: the type of view state in handlers and on `view.state` |
 | `@eventualize/types/store/IEvDbReadOnlyStream` | The stream returned by `goToOffset` |
 | `@eventualize/types/telemetry/EvDbSpanPolicy` | Span filter types and `EVDB_DEFAULT_SPANS`. Adapter authors: `evDbTracerFor(spanName, tracer)` |
+
+Adapter authors: `EvDbStoredSnapshotData` has a `body` (an `EvDbSnapshotBody`) instead of a
+`state`. `EvDbStoredSnapshotResultRaw` and `EvDbStoredSnapshotResult` have a `stateRef`.
 
 ## Docs
 
 - [Concepts](https://github.com/outsidenote/eventualize-js/blob/main/docs/concepts.md)
+- [Immutable view state](https://github.com/outsidenote/eventualize-js/blob/main/docs/guides/immutable-state.md)
 - [Writing a storage adapter](https://github.com/outsidenote/eventualize-js/blob/main/docs/guides/storage-adapters.md#writing-a-new-adapter)
 
 ## License

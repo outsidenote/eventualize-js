@@ -32,3 +32,8 @@ export type outbox = Prisma.outboxModel
  * 
  */
 export type snapshot = Prisma.snapshotModel
+/**
+ * Model snapshot_v2
+ * 
+ */
+export type snapshot_v2 = Prisma.snapshot_v2Model
