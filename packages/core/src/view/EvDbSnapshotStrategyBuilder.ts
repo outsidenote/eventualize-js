@@ -8,6 +8,15 @@ export interface EvDbSnapshotContext {
   readonly durationGapMs: number;
 }
 
+/**
+ * How a view decides that an applied event changed its state.
+ * - "always": a handled event always counts as a change. Safe.
+ * - "trusted": a handled event counts as a change only when the handler returns a new
+ *   reference. A handler that mutates its state in place and returns it is missed, and the
+ *   view then stores a pointer over a changed state.
+ */
+export type EvDbChangeDetection = "always" | "trusted";
+
 /** state is the view state after the event is applied. */
 export interface EvDbSnapshotStrategyBuilder<TState, TEventMap extends Record<string, object>> {
   when(predicate: (ctx: EvDbSnapshotContext) => boolean): this;
@@ -35,10 +44,13 @@ export interface EvDbSnapshotStrategyBuilder<TState, TEventMap extends Record<st
   offsetGap(events: number): this;
   /** Store when duration gap >= ms. */
   durationGapMs(ms: number): this;
+  /** Default "always". Not a store rule: it does not change when a snapshot is due. */
+  changeDetection(mode: EvDbChangeDetection): this;
 }
 
 export interface EvDbSnapshotStrategy<TState> {
   readonly hasRules: boolean;
+  readonly changeDetection: EvDbChangeDetection;
   shouldStore(ctx: EvDbSnapshotContext): boolean;
   matchesEvent(state: TState, event: IEvDbPayloadData, metadata: IEvDbEventMetadata): boolean;
 }
@@ -59,11 +71,13 @@ type EventRule<TState> = (
   metadata: IEvDbEventMetadata,
 ) => boolean;
 
-class SnapshotStrategyBuilder<TState, TEventMap extends Record<string, object>>
-  implements EvDbSnapshotStrategyBuilder<TState, TEventMap>, EvDbSnapshotStrategy<TState>
-{
+class SnapshotStrategyBuilder<
+  TState,
+  TEventMap extends Record<string, object>,
+> implements EvDbSnapshotStrategyBuilder<TState, TEventMap> {
   readonly #contextRules: Array<(ctx: EvDbSnapshotContext) => boolean> = [];
   readonly #eventRules: Array<EventRule<TState>> = [];
+  #changeDetection: EvDbChangeDetection = "always";
 
   get hasRules(): boolean {
     return this.#contextRules.length > 0 || this.#eventRules.length > 0;
@@ -118,13 +132,26 @@ class SnapshotStrategyBuilder<TState, TEventMap extends Record<string, object>>
     return this.when((ctx) => ctx.durationGapMs >= ms);
   }
 
-  shouldStore(ctx: EvDbSnapshotContext): boolean {
-    if (!this.hasRules) return true;
-    return this.#contextRules.some((rule) => rule(ctx));
+  changeDetection(mode: EvDbChangeDetection): this {
+    this.#changeDetection = mode;
+    return this;
   }
 
-  matchesEvent(state: TState, event: IEvDbPayloadData, metadata: IEvDbEventMetadata): boolean {
-    return this.#eventRules.some((rule) => rule(state, event, metadata));
+  /**
+   * Separate object: the builder method `changeDetection(mode)` and the strategy property
+   * `changeDetection` share a name, so one class cannot be both.
+   */
+  build(): EvDbSnapshotStrategy<TState> {
+    const hasRules = this.hasRules;
+    const contextRules = [...this.#contextRules];
+    const eventRules = [...this.#eventRules];
+    return {
+      hasRules,
+      changeDetection: this.#changeDetection,
+      shouldStore: (ctx) => !hasRules || contextRules.some((rule) => rule(ctx)),
+      matchesEvent: (state, event, metadata) =>
+        eventRules.some((rule) => rule(state, event, metadata)),
+    };
   }
 }
 
@@ -133,5 +160,5 @@ export function createSnapshotStrategy<TState, TEventMap extends Record<string, 
 ): EvDbSnapshotStrategy<TState> {
   const builder = new SnapshotStrategyBuilder<TState, TEventMap>();
   configure(builder);
-  return builder;
+  return builder.build();
 }

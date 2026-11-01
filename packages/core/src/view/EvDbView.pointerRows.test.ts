@@ -7,10 +7,16 @@ import EvDbViewAddress from "@eventualize/types/view/EvDbViewAddress";
 import { EvDbStoredSnapshotData } from "@eventualize/types/snapshots/EvDbStoredSnapshotData";
 import type { EvDbSnapshotBody } from "@eventualize/types/snapshots/EvDbSnapshotBody";
 import InMemoryStorageAdapter from "../store/InMemoryStorageAdapter.test-support.js";
+import { EvDbView } from "./EvDbView.js";
+import type IEvDbStorageSnapshotAdapter from "@eventualize/types/adapters/IEvDbStorageSnapshotAdapter";
+import { EvDbStoredSnapshotResult } from "@eventualize/types/snapshots/EvDbStoredSnapshotResult";
 import { createViewFactory } from "../factories/EvDbViewFactory.js";
 import type { EvDbStreamEventHandlersMap } from "../factories/EvDbViewFactory.js";
 import { createSnapshotStrategy } from "./EvDbSnapshotStrategyBuilder.js";
-import type { EvDbSnapshotStrategy } from "./EvDbSnapshotStrategyBuilder.js";
+import type {
+  EvDbSnapshotStrategy,
+  EvDbSnapshotStrategyBuilder,
+} from "./EvDbSnapshotStrategyBuilder.js";
 
 type Events = { Added: { points: number }; Closed: { reason: string } };
 type State = { sum: number; closed: boolean };
@@ -234,5 +240,92 @@ describe("EvDbView pointer rows", () => {
       }),
     );
     await assert.rejects(() => factory(closedOnly).get("s-1", adapter), /S\/s-1\/V.*5.*3/);
+  });
+
+  for (const mode of ["always", "trusted"] as const) {
+    const withMode = (extra?: (b: EvDbSnapshotStrategyBuilder<State, Events>) => void) =>
+      createSnapshotStrategy<State, Events>((b) => {
+        b.changeDetection(mode);
+        extra?.(b);
+      });
+
+    test(`Given a view loaded from a snapshot (${mode}), When catch-up events with a handler are applied without rules and store runs, Then a full row is written, not a pointer`, async () => {
+      const adapter = new RecordingAdapter();
+      await adapter.storeSnapshotAsync(
+        EvDbStoredSnapshotData.fromAddress(viewAddress, 2, -1, {
+          kind: "full",
+          state: { sum: 2, closed: false },
+        }),
+      );
+      adapter.writes = [];
+      const view = await factory(allHandlers, withMode()).get("s-1", adapter);
+      view.applyEvent(added(3), false);
+      view.applyEvent(added(4), false);
+      await view.store();
+      assert.deepStrictEqual(adapter.writes, [
+        { offset: 4, body: { kind: "full", state: { sum: 4, closed: false } } },
+      ]);
+    });
+
+    test(`Given a dirty view whose strategy is not due (${mode}), When a no-handler event follows and store runs, Then nothing is written`, async () => {
+      const adapter = new RecordingAdapter();
+      const view = factory(
+        closedOnly,
+        withMode((b) => b.offsetGap(5)),
+      ).create("s-1", adapter);
+      view.applyEvent(closed(1));
+      view.applyEvent(added(2));
+      await view.store();
+      assert.deepStrictEqual(adapter.writes, []);
+      assert.strictEqual(view.storeOffset, -1);
+    });
+  }
+
+  test("Given a custom EvDbView subclass, When any event is applied and store runs, Then a full row is written", async () => {
+    class CustomView extends EvDbView<number> {
+      constructor(
+        adapter: IEvDbStorageSnapshotAdapter,
+        snapshot: EvDbStoredSnapshotResult<number>,
+      ) {
+        super(viewAddress, adapter, snapshot, 0);
+      }
+      handleOnApply(oldState: number): number {
+        return oldState;
+      }
+    }
+    const adapter = new RecordingAdapter();
+    const view = new CustomView(adapter, EvDbStoredSnapshotResult.getEmptyState<number>());
+    view.applyEvent(added(1));
+    await view.store();
+    assert.deepStrictEqual(adapter.writes, [{ offset: 1, body: { kind: "full", state: 0 } }]);
+  });
+
+  test("Given a full write in flight, When an event with no handler is applied before it resolves, Then the next store writes a full row of the current state, not a pointer", async () => {
+    let release: () => void = () => {};
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const adapter = new RecordingAdapter();
+    const original = adapter.storeSnapshotAsync.bind(adapter);
+    let first = true;
+    adapter.storeSnapshotAsync = async (data) => {
+      if (first) {
+        first = false;
+        await gate;
+      }
+      return original(data);
+    };
+    const view = factory(closedOnly).create("s-1", adapter);
+    view.applyEvent(closed(1));
+    const firstStore = view.store();
+    view.applyEvent(added(2));
+    release();
+    await firstStore;
+    assert.deepStrictEqual(view.stateRef, { kind: "row", offset: 1 });
+    await view.store();
+    assert.deepStrictEqual(adapter.writes, [
+      { offset: 1, body: { kind: "full", state: { sum: 0, closed: true } } },
+      { offset: 2, body: { kind: "full", state: { sum: 0, closed: true } } },
+    ]);
   });
 });

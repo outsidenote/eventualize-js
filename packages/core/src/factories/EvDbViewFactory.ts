@@ -41,7 +41,10 @@ class GenericView<TState, TEventMap extends Record<string, object>> extends EvDb
     if (!Object.prototype.hasOwnProperty.call(this.config.handlers, e.eventType)) {
       return false;
     }
-    return super.onApplyEvent(e);
+    const previous = this.state;
+    super.onApplyEvent(e);
+    // "trusted": a handler that returns the same reference is taken as "no change".
+    return this.config.snapshotStrategy?.changeDetection !== "trusted" || this.state !== previous;
   }
 
   /**
