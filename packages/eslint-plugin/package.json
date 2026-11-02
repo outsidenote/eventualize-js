@@ -1,6 +1,6 @@
 {
   "name": "@eventualize/eslint-plugin",
-  "version": "6.0.2",
+  "version": "6.0.3",
   "description": "ESLint plugin enforcing EvDb StreamFactoryBuilder module structure",
   "keywords": [
     "event-sourcing",

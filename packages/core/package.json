@@ -1,6 +1,6 @@
 {
   "name": "@eventualize/core",
-  "version": "6.2.0",
+  "version": "7.0.0",
   "description": "Type-safe event sourcing for TypeScript: streams, views, snapshots, outbox messages, replay and OpenTelemetry tracing.",
   "keywords": [
     "event-sourcing",

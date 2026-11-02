@@ -1,6 +1,6 @@
 {
   "name": "@eventualize/dynamodb-storage-adapter",
-  "version": "8.0.0",
+  "version": "9.0.0",
   "description": "DynamoDB storage adapter for eventualize-js.",
   "keywords": [
     "event-sourcing",

@@ -1,6 +1,6 @@
 {
   "name": "@eventualize/postgres-storage-adapter",
-  "version": "6.2.0",
+  "version": "7.0.0",
   "description": "PostgreSQL storage for eventualize-js (Prisma client factory).",
   "keywords": [
     "event-sourcing",
