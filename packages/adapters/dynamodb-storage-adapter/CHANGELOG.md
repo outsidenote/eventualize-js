@@ -2,6 +2,8 @@
 
 ## 9.0.0
 
+All `@eventualize/*` packages now share one version, 9.0.0.
+
 ### Highlights
 
 - **Faster loads for quiet views.** Snapshots move to `snapshot_v2`. A view whose state did not change gets a small pointer row on `store()`, so loads no longer replay a long tail of events.
@@ -51,7 +53,7 @@ See the Snapshots, Storage adapters, Immutable view state and OpenTelemetry guid
 - Updated dependencies [006831e]
 - Updated dependencies [9511cfd]
 - Updated dependencies [a475276]
-  - @eventualize/types@7.0.0
+  - @eventualize/types@9.0.0
 
 ## 8.0.0
 

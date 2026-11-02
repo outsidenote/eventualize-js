@@ -1,6 +1,8 @@
 # @eventualize/types
 
-## 7.0.0
+## 9.0.0
+
+All `@eventualize/*` packages now share one version. Versions 7.x and 8.x were skipped to align with `@eventualize/dynamodb-storage-adapter`.
 
 ### Highlights
 

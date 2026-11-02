@@ -1,6 +1,8 @@
 # @eventualize/postgres-storage-adapter
 
-## 7.0.0
+## 9.0.0
+
+All `@eventualize/*` packages now share one version. Versions 7.x and 8.x were skipped to align with `@eventualize/dynamodb-storage-adapter`.
 
 ### Highlights
 
@@ -10,7 +12,7 @@
 ### Upgrading from 6.x
 
 1. Create the `snapshot_v2` table: apply the `add_snapshot_v2` migration (postgres, mysql) or create the DynamoDB table from `models/snapshot_v2-table-schema.json`.
-2. Deploy 7.x, then copy existing snapshots with `scripts/copy-snapshot-to-snapshot-v2.sql` (postgres, mysql) or `copySnapshotsToV2(client)` (DynamoDB). Without the copy, loads replay more events until new snapshots exist.
+2. Deploy 9.x, then copy existing snapshots with `scripts/copy-snapshot-to-snapshot-v2.sql` (postgres, mysql) or `copySnapshotsToV2(client)` (DynamoDB). Without the copy, loads replay more events until new snapshots exist.
 3. If you rely on `eventualize.stream.append` or `eventualize.adapter.*` spans, turn them back on with `.withTelemetry({ spans: { "eventualize.stream.append": true, "eventualize.adapter.*": true } })`. They are now off by default.
 4. Drop the old snapshot table only after every 6.x client is retired.
 
@@ -45,7 +47,7 @@ See the Snapshots, Storage adapters, Immutable view state and OpenTelemetry guid
 - Updated dependencies [a475276]
 - Updated dependencies [9511cfd]
 - Updated dependencies [a475276]
-  - @eventualize/relational-storage-adapter@7.0.0
+  - @eventualize/relational-storage-adapter@9.0.0
 
 ## 6.2.0
 

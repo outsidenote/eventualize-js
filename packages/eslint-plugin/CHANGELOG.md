@@ -1,6 +1,8 @@
 # @eventualize/eslint-plugin
 
-## 6.0.3
+## 9.0.0
+
+All `@eventualize/*` packages now share one version. This plugin jumps from 6.0.2 to 9.0.0 to align. It has no breaking changes.
 
 ### Patch Changes
 
